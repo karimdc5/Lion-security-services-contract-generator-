@@ -46,6 +46,15 @@
   .row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
   .hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.35}
 
+  .doccard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  .doccard .name{font-weight:700;color:var(--navy);font-size:14px;margin-bottom:3px}
+  .doccard .desc{font-size:12px;color:var(--muted);line-height:1.4;margin-bottom:10px}
+  .doclink{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#231a05;
+           background:var(--gold);padding:9px 14px;border-radius:8px;text-decoration:none}
+  .obsection{margin-bottom:26px}
+  .obsection h3{font:700 11px/1 inherit;letter-spacing:.16em;color:var(--gold);text-transform:uppercase;
+                border-bottom:2px solid var(--gold);padding-bottom:6px;margin:0 0 12px}
+
   .seg{display:flex;gap:6px;margin-top:6px}
   .seg label{flex:1;margin:0;padding:11px 6px;text-align:center;border:1px solid var(--line);border-radius:8px;
              background:#fff;font-size:12px;cursor:pointer;color:var(--muted)}
@@ -203,6 +212,7 @@
   <button role="tab" aria-selected="false" data-pane="pane-doc">Preview</button>
   <button role="tab" aria-selected="false" data-pane="pane-co">Company</button>
   <button role="tab" aria-selected="false" data-pane="pane-signed">Signed</button>
+  <button role="tab" aria-selected="false" data-pane="pane-onboard">Onboarding</button>
 </div>
 
 <!-- ================= FORM (edit mode only) ================= -->
@@ -250,10 +260,9 @@
     </div>
 
     <div id="ongoingWrap" style="display:none">
-      <div class="row">
-        <div><label>Term length</label><input id="termLen" type="number" min="1" inputmode="numeric" placeholder="Type a number, e.g. 6"></div>
-        <div><label>Unit</label><select id="termUnit"><option>months</option><option>weeks</option><option>days</option></select></div>
-      </div>
+      <div class="hint">Term length is calculated automatically from the start and end dates above — no need to enter it separately.</div>
+      <label>Shifts per week</label>
+      <input id="shiftsPerWeek" type="number" min="1" max="7" inputmode="numeric" placeholder="Type shifts per week, e.g. 5">
       <label><input type="checkbox" id="autoRenew" checked style="width:auto;margin-right:8px">Auto-renew unless notice is given</label>
       <label>Shift pattern</label>
       <input id="pattern" placeholder="Type the shift days and times">
@@ -270,7 +279,7 @@
   <fieldset>
     <legend>Money</legend>
     <div class="row">
-      <div><label>Rate / guard / hour</label><input id="rate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Type hourly rate per guard, e.g. 45"></div>
+      <div><label>Rate / guard / hour</label><input id="rate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Your rate sheet's hourly rate, e.g. 45"></div>
       <div><label>Total guard-hours</label><input id="ghours" type="text" readonly style="background:#F4F6F8" placeholder="Fills in automatically"></div>
     </div>
     <div class="row">
@@ -325,6 +334,41 @@
   <div id="signedList" class="hint">Loading…</div>
 </section>
 
+<!-- ================= ONBOARDING ================= -->
+<section class="pane" id="pane-onboard">
+  <p class="hint">Tax and onboarding paperwork, ready to open or send — no need to dig up separate files.</p>
+
+  <div class="obsection">
+    <h3>For Clients</h3>
+    <div class="doccard">
+      <div class="name">Lion of Seattle — W-9</div>
+      <div class="desc">Pre-filled with our EIN and business info. Send this whenever a client needs it for their own 1099 reporting.</div>
+      <a class="doclink" href="Lion-of-Seattle-W9.pdf" target="_blank" rel="noopener">Open W-9 →</a>
+    </div>
+  </div>
+
+  <div class="obsection">
+    <h3>For 1099 Contractors</h3>
+    <div class="doccard">
+      <div class="name">Blank W-9</div>
+      <div class="desc">For the contractor to fill out and return before their first payment.</div>
+      <a class="doclink" href="Blank-W9-for-Contractor.pdf" target="_blank" rel="noopener">Open W-9 →</a>
+    </div>
+    <div class="doccard">
+      <div class="name">Direct Deposit Authorization</div>
+      <div class="desc">Bank info for paying the contractor directly.</div>
+      <a class="doclink" href="Direct_Deposit_Authorization.pdf" target="_blank" rel="noopener">Open form →</a>
+    </div>
+    <div class="doccard">
+      <div class="name">Contractor Onboarding Guide</div>
+      <div class="desc">Required paperwork, independent contractor status, on-the-job expectations, and payment basics — one page.</div>
+      <a class="doclink" href="Contractor_Onboarding_Guide.pdf" target="_blank" rel="noopener">Open guide →</a>
+    </div>
+  </div>
+
+  <p class="hint">Opens the PDF right in Safari — tap the share icon there to text, email, or save it.</p>
+</section>
+
 <!-- ================= DOCUMENT (used in both edit-preview and sign mode) ================= -->
 <section class="pane" id="pane-doc">
   <div class="sheet" id="sheet">
@@ -370,9 +414,9 @@
       <h2 class="sec">Investment &amp; Payment</h2>
       <div class="stats">
         <div class="stat"><div class="k">RATE / GUARD / HOUR</div><div class="v" id="d_rate">—</div></div>
-        <div class="stat"><div class="k">TOTAL GUARD-HOURS</div><div class="v" id="d_gh">—</div></div>
+        <div class="stat"><div class="k" id="d_ghk">TOTAL GUARD-HOURS</div><div class="v" id="d_gh">—</div></div>
         <div class="stat"><div class="k" id="d_depk">DEPOSIT (25% OF TOTAL)</div><div class="v" id="d_dep">—</div></div>
-        <div class="stat hero"><div class="k">ESTIMATED TOTAL</div><div class="v" id="d_total">—</div></div>
+        <div class="stat hero"><div class="k" id="d_totk">ESTIMATED TOTAL</div><div class="v" id="d_total">—</div></div>
       </div>
       <div class="cols">
         <div>
@@ -561,7 +605,8 @@ function collectData(){
     guards:$('guards').value, hours:$('hours').value,
     etype: document.querySelector('input[name=etype]:checked').value,
     start:$('start').value, end:$('end').value,
-    termLen:$('termLen').value, termUnit:$('termUnit').value, autoRenew:$('autoRenew').checked,
+    autoRenew:$('autoRenew')?.checked,
+    shiftsPerWeek:$('shiftsPerWeek')?.value,
     pattern:$('pattern').value, posts:$('posts').value, orders:$('orders').value, hazards:$('hazards').value,
     rate:$('rate').value, netTerms:$('netTerms').value,
     coLic:$('coLic').value, coCarrier:$('coCarrier').value, coPolicy:$('coPolicy').value, coCoverage:$('coCoverage').value,
@@ -569,13 +614,34 @@ function collectData(){
   };
 }
 
+function deriveTerm(days){
+  if(!days || days<=0) return { termLen:0, termUnit:'months' };
+  if(days >= 60) return { termLen: Math.max(1, Math.round(days/30.44)), termUnit:'months' };
+  return { termLen: Math.max(1, Math.round(days/7)), termUnit:'weeks' };
+}
+
 function computeAll(raw){
   const g=+raw.guards||0, h=+raw.hours||0, r=+raw.rate||0;
+  const perShiftHours = g*h;
+  const perShiftTotal = perShiftHours*r;
+
+  if(raw.etype==='ongoing'){
+    const termDays = daysBetween(raw.start, raw.end);
+    const { termLen, termUnit } = deriveTerm(termDays);
+    const weeksInTerm = termDays>0 ? termDays/7 : 0;
+    const spw = +raw.shiftsPerWeek||0;
+    const totalShifts = Math.round(spw*weeksInTerm);
+    const total = perShiftTotal*totalShifts;
+    const firstMonthShifts = Math.round(spw*4.345); // avg weeks/month
+    const deposit = perShiftTotal*firstMonthShifts; // first month, paid upfront — not a % of the term
+    return {...raw, gh:perShiftHours, perShiftTotal, totalShifts, total, deposit, firstMonthShifts, termLen, termUnit};
+  }
+
   let shifts=1;
   if(raw.etype==='short'){ const d=daysBetween(raw.start,raw.end); shifts = d>0?d:1; }
-  const gh=g*h*shifts, total=gh*r;
+  const gh=perShiftHours*shifts, total=gh*r;
   const depositPct = raw.netTerms==='50% deposit, balance on completion' ? 0.5 : 0.25;
-  const deposit = total * depositPct;
+  const deposit = total*depositPct;
   return {...raw, gh, total, deposit, depositPct};
 }
 
@@ -603,18 +669,28 @@ function paint(d){
   put('d_rate', d.rate?money(d.rate):'—');
   put('d_gh', d.gh||'—');
   const pct = Math.round((d.depositPct||0.25)*100);
-  $('d_depk').textContent = `DEPOSIT (${pct}% OF TOTAL)`;
+  const isOngoing = d.etype==='ongoing';
+  $('d_ghk').textContent = isOngoing ? 'GUARD-HOURS / SHIFT' : 'TOTAL GUARD-HOURS';
+  $('d_depk').textContent = isOngoing ? 'DUE AT SIGNING (1ST MONTH)' : `DEPOSIT (${pct}% OF TOTAL)`;
+  $('d_totk').textContent = isOngoing ? 'EST. TOTAL (FULL TERM)' : 'ESTIMATED TOTAL';
   put('d_dep', d.deposit?money(d.deposit):'—');
   put('d_total', d.total?money(d.total):'—');
   const net=d.netTerms||'NET 30';
-  $('d_net').textContent = net==='Due on completion'
-    ? 'Deposit due at signing to reserve this date; remaining balance due on completion of services'
-    : net==='50% deposit, balance on completion'
-    ? `${pct}% deposit at signing; balance due on completion of services`
-    : `Balance due ${net} from date of invoice, less deposit paid at signing`;
+  if(isOngoing){
+    $('d_net').textContent = `First month (${money(d.deposit)}, ${d.firstMonthShifts||0} shifts) due upfront to begin service. Remaining months billed ${net} per invoice`;
+    if(d.perShiftTotal){
+      $('d_net').textContent += ` — billed at ${money(d.perShiftTotal)} per shift, approximately ${d.totalShifts||0} shifts over the ${d.termLen||'__'}-${(d.termUnit||'month').replace(/s$/,'')} term`;
+    }
+  }else{
+    $('d_net').textContent = net==='Due on completion'
+      ? 'Deposit due at signing to reserve this date; remaining balance due on completion of services'
+      : net==='50% deposit, balance on completion'
+      ? `${pct}% deposit at signing; balance due on completion of services`
+      : `Balance due ${net} from date of invoice, less deposit paid at signing`;
+  }
 
   if(d.etype==='ongoing'){
-    $('d_cx1').textContent = `A deposit of ${pct}% of one shift\u2019s total is due at signing and is non-refundable`;
+    $('d_cx1').textContent = `The first month\u2019s payment is due at signing, before service begins, and is non-refundable`;
     $('d_cx2').textContent = 'Shifts cancelled with less than 24 hours\u2019 notice are billed in full — no refund';
   }else{
     $('d_cx1').textContent = `A deposit of ${pct}% of the Estimated Total is due at signing to reserve this date, and is non-refundable once paid`;
@@ -661,14 +737,32 @@ function agrNumber(){
   return `LOS-${yr}-${ini}-${n}`;
 }
 
+function updateNetTermsOptions(isOngoing){
+  const sel = $('netTerms');
+  const current = sel.value;
+  if(isOngoing){
+    if(sel.dataset.mode==='ongoing') return; // already set, don't clobber the user's pick
+    sel.innerHTML = '<option value="NET 15">First month upfront, then NET 15</option><option value="NET 30">First month upfront, then NET 30</option>';
+    sel.value = current==='NET 15' ? 'NET 15' : 'NET 30';
+    sel.dataset.mode = 'ongoing';
+  }else{
+    if(sel.dataset.mode==='oneoff') return;
+    sel.innerHTML = '<option>NET 30</option><option>NET 15</option><option>Due on completion</option><option>50% deposit, balance on completion</option>';
+    const valid = ['NET 30','NET 15','Due on completion','50% deposit, balance on completion'];
+    sel.value = valid.includes(current) ? current : 'NET 30';
+    sel.dataset.mode = 'oneoff';
+  }
+}
+
 function render(){
   const t = document.querySelector('input[name=etype]:checked').value;
   $('ongoingWrap').style.display = t==='ongoing' ? 'block':'none';
   $('endWrap').style.display     = t==='single'  ? 'none':'block';
+  updateNetTermsOptions(t==='ongoing');
   $('typeHint').textContent =
     t==='single' ? 'One date, one invoice. Ends when the job is done and paid.'
     : t==='short' ? 'A defined stretch — a tournament weekend, a two-week site. Ends on the end date, no renewal.'
-    : 'Recurring coverage with a renewal clause and a 30-day notice period on both sides.';
+    : 'Recurring coverage. Term length comes from your start/end dates, and shifts per week sets the total — fill in all three below.';
 
   const raw = collectData();
   const d = computeAll(raw);
@@ -680,7 +774,7 @@ function render(){
   $('deposit').value = d.deposit ? money(d.deposit) : '';
   const pctH = Math.round((d.depositPct||0.25)*100);
   $('depHint').textContent = t==='ongoing'
-    ? `Ongoing contract — the figures above are per shift. Consider billing monthly rather than a single total. Deposit is ${pctH}% of one shift\u2019s total.`
+    ? (d.perShiftTotal ? `Estimated total is the full term: ${money(d.perShiftTotal)}/shift × ${d.totalShifts||0} shifts over ${d.termLen||'__'} ${d.termUnit||'months'}. First month (${money(d.deposit)}) is due upfront to begin service — pick NET 15 or NET 30 below for how the rest gets billed.` : 'Fill in start date, end date, and shifts per week to calculate the full-term total.')
     : `Deposit is calculated automatically — ${pctH}% of the estimated total (matches the invoice terms below). Non-refundable once the date is reserved.`;
 
   $('agrPreview').textContent = d.agrNo;
