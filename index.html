@@ -380,12 +380,12 @@
     <div class="doccard">
       <div class="name">Direct Deposit Authorization</div>
       <div class="desc">Bank info for paying the contractor directly.</div>
-      <a class="doclink" href="DirectDepositAuthoriztion.pdf" target="_blank" rel="noopener">Open form →</a>
+      <a class="doclink" href="Direct%20Deposit%20Authorization.pdf" target="_blank" rel="noopener">Open form →</a>
     </div>
     <div class="doccard">
       <div class="name">Contractor Onboarding Guide</div>
       <div class="desc">Required paperwork, independent contractor status, on-the-job expectations, and payment basics — one page.</div>
-      <a class="doclink" href="ContractorOnboardingGuide.pdf" target="_blank" rel="noopener">Open guide →</a>
+      <a class="doclink" href="Contractor%20Onboarding%20Guide.pdf" target="_blank" rel="noopener">Open guide →</a>
     </div>
   </div>
 
@@ -894,7 +894,7 @@ function render(){
   const t = document.querySelector('input[name=etype]:checked').value;
   $('ongoingWrap').style.display = t==='ongoing' ? 'block':'none';
   $('daysWrap').style.display    = t==='single'  ? 'none':'block';
-  $('shortBillingWrap').style.display = t==='short' ? 'block':'none';
+  $('shortBillingWrap').style.display = (t==='short' || t==='ongoing') ? 'block':'none';
   $('endWrap').style.display     = t==='single'  ? 'none':'block';
   const raw = collectData();
   $('dowWarning').style.display = (t!=='single' && raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
