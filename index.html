@@ -61,6 +61,12 @@
   .seg input{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
   .seg label:has(input:checked){background:var(--navy);color:#fff;border-color:var(--navy)}
 
+  .dow{display:flex;gap:4px;margin-top:6px}
+  .dow label{flex:1;margin:0;padding:10px 2px;text-align:center;border:1px solid var(--line);border-radius:8px;
+             background:#fff;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .dow input{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+  .dow label:has(input:checked){background:var(--gold);color:#231a05;border-color:var(--gold)}
+
   .agrno{background:var(--navy);color:#fff;border-radius:10px;padding:14px;margin-bottom:6px}
   .agrno .k{font-size:10px;letter-spacing:.2em;color:var(--goldlt)}
   .agrno .v{font:700 20px/1.2 ui-monospace,Menlo,monospace;margin-top:5px}
@@ -138,16 +144,16 @@
         font:700 9px/1.7 Arial;letter-spacing:.13em}
   .foot span{display:block;color:#9FB3C6;font-weight:400;letter-spacing:.02em;font-size:8.5px}
 
-  #signPanel{max-width:816px;margin:18px auto 0;background:#fff;border-radius:12px;box-shadow:0 4px 22px rgba(0,0,0,.10);padding:20px}
-  #signPanel h3{margin:0 0 4px;font-size:15px;color:var(--navy)}
-  #signPanel p{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+  #signPanel,#receiptCard{max-width:816px;margin:18px auto 0;background:#fff;border-radius:12px;box-shadow:0 4px 22px rgba(0,0,0,.10);padding:20px}
+  #signPanel h3,#receiptCard h3{margin:0 0 4px;font-size:15px;color:var(--navy)}
+  #signPanel p,#receiptCard p{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.5}
   .signed-banner{background:#eef7ee;border:1px solid #bfe3bf;color:#2b5c2b;border-radius:10px;padding:12px 14px;font-size:12.5px;margin-bottom:14px}
   .chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-size:12px;color:var(--ink);line-height:1.4}
   .chk input{width:18px;height:18px;margin-top:1px;flex:0 0 18px}
   .legalnote{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 
   @media print{
-    .bar,.tabs,.actions,.toast,.modal-wrap,#signPanel{display:none!important}
+    .bar,.tabs,.actions,.toast,.modal-wrap,#signPanel,.no-print{display:none!important}
     html,body{background:#fff;height:auto}
     .pane{padding:0;max-width:none;margin:0}
     .pane:not(#pane-doc){display:none!important}
@@ -259,13 +265,26 @@
       <div id="endWrap"><label>End date</label><input id="end" type="date"></div>
     </div>
 
+    <div id="daysWrap" style="display:none">
+      <label>Which days are worked?</label>
+      <div class="dow" id="dowPicker">
+        <label><input type="checkbox" id="dow0">Sun</label>
+        <label><input type="checkbox" id="dow1" checked>Mon</label>
+        <label><input type="checkbox" id="dow2" checked>Tue</label>
+        <label><input type="checkbox" id="dow3" checked>Wed</label>
+        <label><input type="checkbox" id="dow4" checked>Thu</label>
+        <label><input type="checkbox" id="dow5" checked>Fri</label>
+        <label><input type="checkbox" id="dow6">Sat</label>
+      </div>
+      <div class="hint">Shift totals only count the days checked here — leave all 7 checked for a job that runs every day (a tournament, a full-week post). Defaults to Mon–Fri.</div>
+      <div class="hint" id="dowWarning" style="display:none;color:#a33;font-weight:600">No days are checked — totals will be $0. Check at least one day.</div>
+    </div>
+
     <div id="ongoingWrap" style="display:none">
       <div class="hint">Term length is calculated automatically from the start and end dates above — no need to enter it separately.</div>
-      <label>Shifts per week</label>
-      <input id="shiftsPerWeek" type="number" min="1" max="7" inputmode="numeric" placeholder="Type shifts per week, e.g. 5">
       <label><input type="checkbox" id="autoRenew" checked style="width:auto;margin-right:8px">Auto-renew unless notice is given</label>
-      <label>Shift pattern</label>
-      <input id="pattern" placeholder="Type the shift days and times">
+      <label>Shift pattern (for the schedule line on the document)</label>
+      <input id="pattern" placeholder="Type the shift days and times, e.g. Mon–Fri 6pm–2am">
     </div>
 
     <label>Post location(s)</label>
@@ -284,9 +303,13 @@
     </div>
     <div class="row">
       <div><label>Estimated total</label><input id="total" type="text" readonly style="background:#F4F6F8;font-weight:700" placeholder="Fills in once rate is entered"></div>
-      <div><label>Deposit due at signing</label><input id="deposit" type="text" readonly style="background:#F4F6F8" placeholder="Fills in automatically"></div>
+      <div><label id="depositLbl">Deposit due at signing</label><input id="deposit" type="text" readonly style="background:#F4F6F8" placeholder="Fills in automatically"></div>
     </div>
     <div class="hint" id="depHint">Deposit is calculated automatically — 25% of the estimated total, the standard for reservation-based services. Non-refundable once the date is reserved.</div>
+    <div id="shortBillingWrap" style="display:none">
+      <label><input type="checkbox" id="firstMonthBilling" style="width:auto;margin-right:8px">Bill first month upfront instead of a % deposit</label>
+      <div class="hint">Use this for engagements of a month or longer, so the deposit isn't 25% of the whole contract.</div>
+    </div>
     <label>Invoice terms</label>
     <select id="netTerms"><option>NET 30</option><option>NET 15</option><option>Due on completion</option><option>50% deposit, balance on completion</option></select>
   </fieldset>
@@ -366,6 +389,23 @@
     </div>
   </div>
 
+  <div class="obsection">
+    <h3>Cash Receipts</h3>
+    <div class="doccard">
+      <label>Contractor / guard name</label>
+      <input id="crName" placeholder="Type their full name">
+      <div class="row">
+        <div><label>Amount paid (cash)</label><input id="crAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 260"></div>
+        <div><label>Date</label><input id="crDate" type="date"></div>
+      </div>
+      <label>Job / client</label>
+      <input id="crJob" placeholder="e.g. Somali Health Board, 8/14">
+      <button class="btn btn-dark" id="btnCrLink" style="width:100%;padding:12px;border:0;border-radius:8px;font:700 13px/1 inherit;background:var(--navy);color:#fff;cursor:pointer;margin-top:10px">Generate receipt link</button>
+      <div class="hint" style="margin-top:8px">Send this link to the contractor — they open it and type their name to confirm they received the cash. Signed receipts show up below.</div>
+    </div>
+    <div id="crList" class="hint">Loading receipts…</div>
+  </div>
+
   <p class="hint">Opens the PDF right in Safari — tap the share icon there to text, email, or save it.</p>
 </section>
 
@@ -423,8 +463,8 @@
           <h3 class="sub">Payment terms</h3>
           <ul class="cl">
             <li id="d_net">Balance due NET 30 from date of invoice, less deposit paid at signing</li>
-            <li>3% discount for payment received within 10 days</li>
-            <li>5% late fee after 45 days · 15% late fee after 90 days</li>
+            <li id="d_discount">3% discount for payment received within 10 days of invoice</li>
+            <li id="d_latefee">5% late fee after 45 days · 15% late fee after 90 days</li>
             <li>Any hours worked beyond the scheduled coverage require Client's prior written approval and are billed at 1.5× the hourly rate</li>
           </ul>
         </div>
@@ -494,6 +534,12 @@
   <div id="signPanel" style="display:none"></div>
 </section>
 
+<section class="pane" id="pane-receipt">
+  <div id="receiptCard">
+    <div id="receiptBody"></div>
+  </div>
+</section>
+
 <div class="actions" id="editActions">
   <button class="btn btn-ghost" id="btnNew">Clear</button>
   <button class="btn btn-dark" id="btnLink">Send to client</button>
@@ -502,8 +548,8 @@
 
 <div class="modal-wrap" id="linkModal">
   <div class="modal">
-    <h3>Link for the client</h3>
-    <p>This link contains the whole filled-in agreement. Opening it shows the client a read-only copy with a place to type their name and sign — no login, no app. Copy it into a text or email.</p>
+    <h3 id="linkModalTitle">Link for the client</h3>
+    <p id="linkModalDesc">This link contains the whole filled-in agreement. Opening it shows the client a read-only copy with a place to type their name and sign — no login, no app. Copy it into a text or email.</p>
     <div class="linktext" id="linkOut"></div>
     <div class="row">
       <button class="btn btn-primary" id="btnCopyLink" style="flex:1">Copy link</button>
@@ -561,6 +607,47 @@ async function fetchSignedAgreements(){
   return res.json();
 }
 
+// Short links — instead of putting the whole filled-in document in the URL (which produces a
+// huge wall-of-text link), the data is saved to Supabase under a short random id and the link
+// just carries that id. Used for both client agreement links and contractor cash-receipt links.
+// Unlike signed_agreements (write-once, never updated — the permanent legal record), rows here
+// CAN be updated: that's what lets a client or contractor's own copy show "already signed" the
+// next time they open the same link, instead of resetting to a blank form.
+function shortId(len=7){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; // no 0/O/1/l/I — avoids look-alikes when read aloud or retyped
+  const arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => chars[b % chars.length]).join('');
+}
+async function saveShareLink(kind, data){
+  const id = shortId();
+  try{
+    const res = await fetch(SUPABASE_URL + '/rest/v1/share_links', {
+      method:'POST',
+      headers:{ ...SB_HEADERS, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+      body: JSON.stringify({ id, kind, data })
+    });
+    if(!res.ok){ console.error('share_links insert failed:', res.status, await res.text().catch(()=>'')); return null; }
+    return id;
+  }catch(e){ console.error('share_links insert failed:', e); return null; }
+}
+async function loadShareLink(id){
+  const res = await fetch(SUPABASE_URL + '/rest/v1/share_links?id=eq.'+encodeURIComponent(id)+'&select=kind,data', { headers: SB_HEADERS });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const rows = await res.json();
+  return rows[0] || null;
+}
+async function updateShareLink(id, data){
+  try{
+    const res = await fetch(SUPABASE_URL + '/rest/v1/share_links?id=eq.'+encodeURIComponent(id), {
+      method:'PATCH',
+      headers:{ ...SB_HEADERS, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+      body: JSON.stringify({ data })
+    });
+    return res.ok;
+  }catch(e){ console.error('share_links update failed:', e); return false; }
+}
+
 /* ---------- pure helpers ---------- */
 const money = n => (n||n===0) ? '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
 const initials = s => (s||'').replace(/[^A-Za-z ]/g,'').trim().split(/\s+/)
@@ -571,7 +658,7 @@ const fmtStamp = iso => { if(!iso) return ''; const d=new Date(iso); return d.to
 const put = (id,v,ph='') => { const el=$(id); if(!el) return; el.textContent = v || ph; el.classList.toggle('empty', !v); };
 function daysBetween(a,b){ if(!a||!b) return 0; return Math.round((new Date(b)-new Date(a))/86400000)+1; }
 
-function termLinesPure(t,start,end,termLen,termUnit,autoRenew){
+function termLinesPure(t,start,end,termLen,termUnit,autoRenew,daysSet){
   const s=fmtDate(start), e=fmtDate(end);
   if(t==='single') return [
     `This Agreement covers a single engagement on ${s||'____________'} for the coverage described above.`,
@@ -579,16 +666,16 @@ function termLinesPure(t,start,end,termLen,termUnit,autoRenew){
     `If Client requests additional dates, a new agreement will be issued.`
   ];
   if(t==='short'){
-    const d = daysBetween(start,end);
+    const n = matchingDaysCount(start,end,daysSet);
     return [
-      `Coverage runs from ${s||'____________'} through ${e||'____________'}${d?` (${d} day${d>1?'s':''})`:''}.`,
+      `Coverage runs from ${s||'____________'} through ${e||'____________'}, on ${dowLabel(daysSet)}${n?` (${n} shift${n>1?'s':''} total)`:''}.`,
       `This Agreement terminates automatically at the end of that period. It does not renew.`,
       `Either party may terminate early with 72 hours' written notice; coverage already delivered remains payable.`
     ];
   }
   const len = termLen || '____', unit = termUnit || 'months';
   return [
-    `Initial term of ${len} ${unit}, beginning ${s||'____________'}.`,
+    `Initial term of ${len} ${unit}, beginning ${s||'____________'}, covering ${dowLabel(daysSet)}.`,
     autoRenew
       ? `Automatically renews for successive ${len}-${String(unit).replace(/s$/,'')} terms unless either party gives 30 days' written notice before the term ends.`
       : `Does not renew automatically. A new agreement is required to continue coverage.`,
@@ -606,9 +693,10 @@ function collectData(){
     etype: document.querySelector('input[name=etype]:checked').value,
     start:$('start').value, end:$('end').value,
     autoRenew:$('autoRenew')?.checked,
-    shiftsPerWeek:$('shiftsPerWeek')?.value,
+    daysSet: [0,1,2,3,4,5,6].map(i => $('dow'+i) ? $('dow'+i).checked : true),
     pattern:$('pattern').value, posts:$('posts').value, orders:$('orders').value, hazards:$('hazards').value,
     rate:$('rate').value, netTerms:$('netTerms').value,
+    firstMonthBilling: $('firstMonthBilling')?.checked || false,
     coLic:$('coLic').value, coCarrier:$('coCarrier').value, coPolicy:$('coPolicy').value, coCoverage:$('coCoverage').value,
     coSigner:$('coSigner').value, coTitle:$('coTitle').value,
   };
@@ -620,29 +708,65 @@ function deriveTerm(days){
   return { termLen: Math.max(1, Math.round(days/7)), termUnit:'weeks' };
 }
 
+// Count actual calendar days between start/end (inclusive) that fall on a checked weekday —
+// e.g. a 1-month range with only Mon-Fri checked correctly returns ~22, not 30.
+function matchingDaysCount(startStr, endStr, daysSet){
+  if(!startStr || !endStr) return 0;
+  const set = daysSet ? daysSet : [1,1,1,1,1,1,1]; // field missing entirely (old saved link) → assume every day; an explicit all-unchecked selection is honored as 0
+  const [sy,sm,sd] = startStr.split('-').map(Number);
+  const [ey,em,ed] = endStr.split('-').map(Number);
+  const cur = new Date(sy, sm-1, sd);
+  const end = new Date(ey, em-1, ed);
+  if(cur > end) return 0;
+  let count = 0;
+  while(cur <= end){
+    if(set[cur.getDay()]) count++;
+    cur.setDate(cur.getDate()+1);
+  }
+  return count;
+}
+
+function dowLabel(daysSet){
+  if(!daysSet) return 'every day';
+  const names=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const checked = daysSet.map((v,i)=>v?i:null).filter(v=>v!==null);
+  if(checked.length===7) return 'every day';
+  if(checked.length===0) return 'no days selected';
+  if(checked.join(',')==='1,2,3,4,5') return 'Monday–Friday';
+  if(checked.join(',')==='0,6') return 'weekends only';
+  return checked.map(i=>names[i]).join(', ');
+}
+
 function computeAll(raw){
   const g=+raw.guards||0, h=+raw.hours||0, r=+raw.rate||0;
   const perShiftHours = g*h;
   const perShiftTotal = perShiftHours*r;
+  const useFMU = raw.etype==='ongoing' || (raw.etype==='short' && raw.firstMonthBilling);
 
-  if(raw.etype==='ongoing'){
+  if(useFMU){
     const termDays = daysBetween(raw.start, raw.end);
     const { termLen, termUnit } = deriveTerm(termDays);
-    const weeksInTerm = termDays>0 ? termDays/7 : 0;
-    const spw = +raw.shiftsPerWeek||0;
-    const totalShifts = Math.round(spw*weeksInTerm);
+    const totalShifts = matchingDaysCount(raw.start, raw.end, raw.daysSet);
     const total = perShiftTotal*totalShifts;
-    const firstMonthShifts = Math.round(spw*4.345); // avg weeks/month
+    // first month upfront = actual matching days from the start date through one calendar month later (or the end date, if sooner)
+    let firstMonthEnd = raw.end;
+    if(raw.start){
+      const [sy,sm,sd] = raw.start.split('-').map(Number);
+      const fm = new Date(sy, sm-1+1, sd-1); // one month later, minus a day
+      const fmStr = `${fm.getFullYear()}-${String(fm.getMonth()+1).padStart(2,'0')}-${String(fm.getDate()).padStart(2,'0')}`;
+      if(!raw.end || fmStr < raw.end) firstMonthEnd = fmStr;
+    }
+    const firstMonthShifts = matchingDaysCount(raw.start, firstMonthEnd, raw.daysSet);
     const deposit = perShiftTotal*firstMonthShifts; // first month, paid upfront — not a % of the term
     return {...raw, gh:perShiftHours, perShiftTotal, totalShifts, total, deposit, firstMonthShifts, termLen, termUnit};
   }
 
   let shifts=1;
-  if(raw.etype==='short'){ const d=daysBetween(raw.start,raw.end); shifts = d>0?d:1; }
+  if(raw.etype==='short'){ shifts = matchingDaysCount(raw.start, raw.end, raw.daysSet) || 1; }
   const gh=perShiftHours*shifts, total=gh*r;
   const depositPct = raw.netTerms==='50% deposit, balance on completion' ? 0.5 : 0.25;
   const deposit = total*depositPct;
-  return {...raw, gh, total, deposit, depositPct};
+  return {...raw, gh, shifts, total, deposit, depositPct};
 }
 
 /* ---------- paint the document ---------- */
@@ -661,7 +785,10 @@ function paint(d){
   put('d_period', d.etype==='single' ? (s||'____________')
       : d.etype==='short' ? ((s&&e)?`${s} – ${e}`:'____________')
       : (s?`${s} · ${d.termLen||'__'} ${d.termUnit||'months'}`:'____________'));
-  put('d_pattern', d.etype==='ongoing' ? (d.pattern||'As scheduled') : `${d.hours||'__'} hr shift`);
+  put('d_pattern',
+    d.etype==='ongoing' ? (d.pattern || `${dowLabel(d.daysSet)}, ${d.hours||'__'} hr shift`)
+    : d.etype==='short' ? `${dowLabel(d.daysSet)}, ${d.hours||'__'} hr shift`
+    : `${d.hours||'__'} hr shift`);
   put('d_posts',d.posts,'____________');
   put('d_orders',d.orders,'____________');
   put('d_haz',d.hazards,'None disclosed');
@@ -670,13 +797,14 @@ function paint(d){
   put('d_gh', d.gh||'—');
   const pct = Math.round((d.depositPct||0.25)*100);
   const isOngoing = d.etype==='ongoing';
-  $('d_ghk').textContent = isOngoing ? 'GUARD-HOURS / SHIFT' : 'TOTAL GUARD-HOURS';
-  $('d_depk').textContent = isOngoing ? 'DUE AT SIGNING (1ST MONTH)' : `DEPOSIT (${pct}% OF TOTAL)`;
-  $('d_totk').textContent = isOngoing ? 'EST. TOTAL (FULL TERM)' : 'ESTIMATED TOTAL';
+  const isFMU = isOngoing || (d.etype==='short' && d.firstMonthBilling);
+  $('d_ghk').textContent = isFMU ? 'GUARD-HOURS / SHIFT' : 'TOTAL GUARD-HOURS';
+  $('d_depk').textContent = isFMU ? 'DUE AT SIGNING (1ST MONTH)' : `DEPOSIT (${pct}% OF TOTAL)`;
+  $('d_totk').textContent = isFMU ? 'EST. TOTAL (FULL TERM)' : 'ESTIMATED TOTAL';
   put('d_dep', d.deposit?money(d.deposit):'—');
   put('d_total', d.total?money(d.total):'—');
   const net=d.netTerms||'NET 30';
-  if(isOngoing){
+  if(isFMU){
     $('d_net').textContent = `First month (${money(d.deposit)}, ${d.firstMonthShifts||0} shifts) due upfront to begin service. Remaining months billed ${net} per invoice`;
     if(d.perShiftTotal){
       $('d_net').textContent += ` — billed at ${money(d.perShiftTotal)} per shift, approximately ${d.totalShifts||0} shifts over the ${d.termLen||'__'}-${(d.termUnit||'month').replace(/s$/,'')} term`;
@@ -689,7 +817,15 @@ function paint(d){
       : `Balance due ${net} from date of invoice, less deposit paid at signing`;
   }
 
-  if(d.etype==='ongoing'){
+  // Discount/late-fee clauses only make sense where there's an invoice float to be early or late against —
+  // "Due on completion" and "50% deposit" have no invoice cycle, so the balance is due the moment the job ends.
+  const isNetBased = isFMU || net==='NET 15' || net==='NET 30';
+  $('d_discount').style.display = isNetBased ? '' : 'none';
+  $('d_latefee').textContent = isNetBased
+    ? '5% late fee if not received within 45 days of invoice · 15% if not received within 90 days'
+    : '5% late fee if not received within 45 days of completion · 15% if not received within 90 days';
+
+  if(isFMU){
     $('d_cx1').textContent = `The first month\u2019s payment is due at signing, before service begins, and is non-refundable`;
     $('d_cx2').textContent = 'Shifts cancelled with less than 24 hours\u2019 notice are billed in full — no refund';
   }else{
@@ -704,7 +840,7 @@ function paint(d){
 
   const termEl = $('d_term');
   termEl.innerHTML = '';
-  termLinesPure(d.etype,d.start,d.end,d.termLen,d.termUnit,d.autoRenew).forEach(line=>{
+  termLinesPure(d.etype,d.start,d.end,d.termLen,d.termUnit,d.autoRenew,d.daysSet).forEach(line=>{
     const li = document.createElement('li');
     li.textContent = line;
     termEl.appendChild(li);
@@ -737,34 +873,38 @@ function agrNumber(){
   return `LOS-${yr}-${ini}-${n}`;
 }
 
-function updateNetTermsOptions(isOngoing){
+function updateNetTermsOptions(useFMU){
   const sel = $('netTerms');
   const current = sel.value;
-  if(isOngoing){
-    if(sel.dataset.mode==='ongoing') return; // already set, don't clobber the user's pick
+  if(useFMU){
+    if(sel.dataset.mode==='fmu') return; // already set, don't clobber the user's pick
     sel.innerHTML = '<option value="NET 15">First month upfront, then NET 15</option><option value="NET 30">First month upfront, then NET 30</option>';
     sel.value = current==='NET 15' ? 'NET 15' : 'NET 30';
-    sel.dataset.mode = 'ongoing';
+    sel.dataset.mode = 'fmu';
   }else{
-    if(sel.dataset.mode==='oneoff') return;
+    if(sel.dataset.mode==='standard') return;
     sel.innerHTML = '<option>NET 30</option><option>NET 15</option><option>Due on completion</option><option>50% deposit, balance on completion</option>';
     const valid = ['NET 30','NET 15','Due on completion','50% deposit, balance on completion'];
     sel.value = valid.includes(current) ? current : 'NET 30';
-    sel.dataset.mode = 'oneoff';
+    sel.dataset.mode = 'standard';
   }
 }
 
 function render(){
   const t = document.querySelector('input[name=etype]:checked').value;
   $('ongoingWrap').style.display = t==='ongoing' ? 'block':'none';
+  $('daysWrap').style.display    = t==='single'  ? 'none':'block';
+  $('shortBillingWrap').style.display = t==='short' ? 'block':'none';
   $('endWrap').style.display     = t==='single'  ? 'none':'block';
-  updateNetTermsOptions(t==='ongoing');
+  const raw = collectData();
+  $('dowWarning').style.display = (t!=='single' && raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
+  const useFMU = t==='ongoing' || (t==='short' && $('firstMonthBilling').checked);
+  updateNetTermsOptions(useFMU);
   $('typeHint').textContent =
     t==='single' ? 'One date, one invoice. Ends when the job is done and paid.'
-    : t==='short' ? 'A defined stretch — a tournament weekend, a two-week site. Ends on the end date, no renewal.'
-    : 'Recurring coverage. Term length comes from your start/end dates, and shifts per week sets the total — fill in all three below.';
+    : t==='short' ? 'A defined stretch — a tournament weekend, a two-week site, a fixed-length contract. Pick which days below actually run; totals only count those days. For a month or longer, consider first-month-upfront billing below.'
+    : 'Recurring coverage. Term length comes from your start/end dates, and the shift total is based on the days you check below.';
 
-  const raw = collectData();
   const d = computeAll(raw);
   d.agrNo = agrNumber();
   d.genDate = fmtDate(new Date().toISOString().slice(0,10));
@@ -772,9 +912,12 @@ function render(){
   $('ghours').value = d.gh || '';
   $('total').value  = d.total ? money(d.total) : '';
   $('deposit').value = d.deposit ? money(d.deposit) : '';
+  $('depositLbl').textContent = useFMU ? 'Due at signing (1st month)' : 'Deposit due at signing';
   const pctH = Math.round((d.depositPct||0.25)*100);
-  $('depHint').textContent = t==='ongoing'
-    ? (d.perShiftTotal ? `Estimated total is the full term: ${money(d.perShiftTotal)}/shift × ${d.totalShifts||0} shifts over ${d.termLen||'__'} ${d.termUnit||'months'}. First month (${money(d.deposit)}) is due upfront to begin service — pick NET 15 or NET 30 below for how the rest gets billed.` : 'Fill in start date, end date, and shifts per week to calculate the full-term total.')
+  $('depHint').textContent = useFMU
+    ? (d.perShiftTotal ? `Estimated total is the full term: ${money(d.perShiftTotal)}/shift × ${d.totalShifts||0} shifts (${dowLabel(d.daysSet)}) over ${d.termLen||'__'} ${d.termUnit||'months'}. First month (${money(d.deposit)}) is due upfront to begin service — pick NET 15 or NET 30 below for how the rest gets billed.` : 'Fill in start date, end date, and which days are worked to calculate the full-term total.')
+    : t==='short'
+    ? `Deposit is calculated automatically — ${pctH}% of the estimated total, based on ${d.shifts||0} shift${d.shifts===1?'':'s'} (${dowLabel(d.daysSet)}). Non-refundable once the date is reserved.`
     : `Deposit is calculated automatically — ${pctH}% of the estimated total (matches the invoice terms below). Non-refundable once the date is reserved.`;
 
   $('agrPreview').textContent = d.agrNo;
@@ -813,6 +956,7 @@ document.querySelectorAll('.tabs button').forEach(b=>{
     $(b.dataset.pane).classList.add('on');
     window.scrollTo(0,0);
     if(b.dataset.pane === 'pane-signed') loadSignedList();
+    if(b.dataset.pane === 'pane-onboard') loadReceiptList();
   });
 });
 async function loadSignedList(){
@@ -859,9 +1003,15 @@ $('btnLink').addEventListener('click', async ()=>{
     const raw = collectData();
     raw.agrNo = agrNumber();
     raw.genDate = fmtDate(new Date().toISOString().slice(0,10));
-    const url = location.href.split('#')[0] + '#' + toHash(raw);
+    const id = await saveShareLink('agreement', raw);
+    const url = id
+      ? location.href.split('#')[0] + '#id=' + id
+      : location.href.split('#')[0] + '#' + toHash(raw); // offline/Supabase down → fall back to the long link so sending is never blocked
+    $('linkModalTitle').textContent = 'Link for the client';
+    $('linkModalDesc').textContent = 'Opening it shows the client a read-only copy with a place to type their name and sign — no login, no app. Copy it into a text or email.';
     $('linkOut').textContent = url;
     $('linkModal').classList.add('on');
+    if(!id) toast('Could not shorten this link (offline?) — sent the full-length version instead.');
   }catch(err){
     toast('Could not build the link: ' + err.message);
   }
@@ -941,8 +1091,17 @@ function enterSignMode(raw){
     btn.disabled = true; btn.textContent = 'Signing…'; btn.style.opacity='.7';
     raw.sigName = nameEl.value.trim();
     raw.sigAt = new Date().toISOString();
-    const url = location.href.split('#')[0] + '#' + toHash(raw);
-    history.replaceState(null,'',url);
+    let url;
+    if(raw._linkId){
+      // short-link mode: the data lives in Supabase under this id — update it in place so
+      // reopening the same link shows "already signed" instead of resetting to blank
+      url = location.href.split('#')[0] + '#id=' + raw._linkId;
+      await updateShareLink(raw._linkId, raw);
+    }else{
+      // legacy long-hash link (sent before short links existed) — keep working exactly as before
+      url = location.href.split('#')[0] + '#' + toHash(raw);
+      history.replaceState(null,'',url);
+    }
     const withTotal = computeAll(raw);
     raw._recorded = await recordSignedAgreement(withTotal, url);
     enterSignMode(raw);
@@ -950,14 +1109,145 @@ function enterSignMode(raw){
 }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
+/* ================= CASH RECEIPTS ================= */
+function receiptText(d){
+  return `I, ${d.crName||'[name]'}, confirm I received ${money(d.crAmount)} in cash from Lion of Seattle Security Services on ${fmtDate(d.crDate)} for ${d.crJob||'[job/client]'}.`;
+}
+
+async function loadReceiptList(){
+  const el = $('crList');
+  el.textContent = 'Loading receipts…';
+  try{
+    const res = await fetch(SUPABASE_URL + '/rest/v1/share_links?kind=eq.cash_receipt&select=id,data,created_at&order=created_at.desc&limit=25', { headers: SB_HEADERS });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const rows = await res.json();
+    if(!rows.length){ el.textContent = 'No cash receipts yet.'; return; }
+    el.innerHTML = rows.map(r=>{
+      const d = r.data||{};
+      const status = d.signedName
+        ? `✓ Signed by ${escapeHtml(d.signedName)} on ${fmtStamp(d.signedAt)}`
+        : 'Pending signature';
+      return `<div style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
+        <div style="font-weight:700;color:var(--navy);font-size:14px">${escapeHtml(d.crName||'—')} — ${money(d.crAmount)}</div>
+        <div style="font-size:12px;color:var(--muted)">${escapeHtml(d.crJob||'')}${d.crDate?' · '+fmtDate(d.crDate):''}</div>
+        <div style="font-size:12px;margin-top:4px">${status}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    el.textContent = 'Could not load receipts — check your connection and try again.';
+  }
+}
+
+$('btnCrLink').addEventListener('click', async ()=>{
+  const data = {
+    crName: $('crName').value.trim(),
+    crAmount: $('crAmount').value,
+    crJob: $('crJob').value.trim(),
+    crDate: $('crDate').value || new Date().toISOString().slice(0,10),
+  };
+  if(!data.crName || !data.crAmount){ toast('Enter at least a name and amount first.'); return; }
+  const id = await saveShareLink('cash_receipt', data);
+  if(!id){ toast('Could not create the link — check your connection and try again.'); return; }
+  $('linkModalTitle').textContent = 'Link for the contractor';
+  $('linkModalDesc').textContent = 'Opening it shows the amount and lets them type their name to confirm they received the cash — no login, no app. Text or email it to them.';
+  $('linkOut').textContent = location.href.split('#')[0] + '#cr=' + id;
+  $('linkModal').classList.add('on');
+  ['crName','crAmount','crJob'].forEach(f=>$(f).value='');
+  loadReceiptList();
+});
+
+async function enterReceiptSignMode(id){
+  document.body.classList.add('sign-mode');
+  $('tabs').style.display='none';
+  $('editActions').style.display='none';
+  $('barTitle').textContent = 'CASH RECEIPT';
+  $('barSub').textContent = 'LION OF SEATTLE SECURITY SERVICES';
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  $('pane-receipt').classList.add('on');
+  const body = $('receiptBody');
+  body.innerHTML = '<p>Loading…</p>';
+
+  let row;
+  try{ row = await loadShareLink(id); }catch(e){ row = null; }
+  if(!row || row.kind!=='cash_receipt'){
+    body.innerHTML = '<h3>Link not found</h3><p>This receipt link is broken or has expired. Ask Lion of Seattle to send a new one.</p>';
+    return;
+  }
+  const d = row.data;
+
+  if(d.signedName){
+    body.innerHTML = `
+      <h3>Receipt signed</h3>
+      <div class="signed-banner">✓ Signed by <b>${escapeHtml(d.signedName)}</b> on ${fmtStamp(d.signedAt)}.</div>
+      <p>${escapeHtml(receiptText(d))}</p>
+      <button class="btn btn-primary no-print" id="btnDownloadReceipt" style="width:100%;padding:14px;border:0;border-radius:10px;font:700 14px/1 inherit;background:var(--gold);color:#231a05;cursor:pointer;margin-top:6px">Keep a copy for yourself (PDF)</button>
+    `;
+    $('btnDownloadReceipt').addEventListener('click', ()=>setTimeout(()=>window.print(),100));
+    return;
+  }
+
+  body.innerHTML = `
+    <h3>Cash payment receipt</h3>
+    <p>${escapeHtml(receiptText(d))}</p>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--navy);margin:14px 0 5px">Type your full legal name to confirm</label>
+    <input id="crSigInput" placeholder="Full legal name" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-size:16px">
+    <div class="chk"><input type="checkbox" id="crSigAgree"><label for="crSigAgree">I confirm I received this cash payment in full.</label></div>
+    <button class="btn btn-primary" id="btnCrSign" disabled style="width:100%;padding:14px;border:0;border-radius:10px;font:700 14px/1 inherit;background:var(--gold);color:#231a05;cursor:pointer;opacity:.5;margin-top:10px">Confirm &amp; sign</button>
+    <div class="legalnote">Typing your name and confirming above is a valid electronic signature under the U.S. ESIGN Act and Washington's UETA, with the same legal effect as a handwritten signature.</div>
+  `;
+  const nameEl=$('crSigInput'), chk=$('crSigAgree'), btn=$('btnCrSign');
+  function upd(){ const ok = nameEl.value.trim().length>1 && chk.checked; btn.disabled=!ok; btn.style.opacity= ok?'1':'.5'; }
+  nameEl.addEventListener('input',upd); chk.addEventListener('change',upd);
+  btn.addEventListener('click', async ()=>{
+    if(btn.disabled) return;
+    btn.disabled = true; btn.textContent = 'Signing…'; btn.style.opacity='.7';
+    d.signedName = nameEl.value.trim();
+    d.signedAt = new Date().toISOString();
+    const ok = await updateShareLink(id, d);
+    if(!ok){
+      toast('Could not save — check your connection and try again.');
+      btn.disabled=false; btn.textContent='Confirm & sign'; btn.style.opacity='1';
+      return;
+    }
+    enterReceiptSignMode(id);
+  });
+}
+
 /* ================= boot ================= */
-const hashData = fromHash(location.hash.slice(1));
-if(hashData){
-  enterSignMode(hashData);
-}else{
+(async function boot(){
+  const hash = location.hash.slice(1);
+  const mCr = hash.match(/(?:^|&)cr=([^&]+)/);
+  const mId = hash.match(/(?:^|&)id=([^&]+)/);
+
+  if(mCr){ await enterReceiptSignMode(decodeURIComponent(mCr[1])); return; }
+
+  if(mId){
+    document.body.classList.add('sign-mode');
+    $('tabs').style.display='none';
+    $('editActions').style.display='none';
+    $('barTitle').textContent = 'LOADING…';
+    $('barSub').textContent = 'LION OF SEATTLE SECURITY SERVICES';
+    let row;
+    try{ row = await loadShareLink(decodeURIComponent(mId[1])); }catch(e){ row = null; }
+    if(row && row.kind==='agreement'){
+      row.data._linkId = decodeURIComponent(mId[1]);
+      enterSignMode(row.data);
+    }else{
+      document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+      $('pane-doc').classList.add('on');
+      $('barTitle').textContent = 'LINK NOT FOUND';
+      $('signPanel').style.display = 'block';
+      $('signPanel').innerHTML = '<h3>Link not found</h3><p>This link is broken or has expired. Ask Lion of Seattle to send a new one.</p>';
+    }
+    return;
+  }
+
+  const legacy = fromHash(hash);
+  if(legacy){ enterSignMode(legacy); return; }
+
   $('start').value = new Date().toISOString().slice(0,10);
   loadCompany().then(render);
-}
+})();
 </script>
 </body>
 </html>
