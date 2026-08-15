@@ -380,12 +380,12 @@
     <div class="doccard">
       <div class="name">Direct Deposit Authorization</div>
       <div class="desc">Bank info for paying the contractor directly.</div>
-      <a class="doclink" href="Direct%20Deposit%20Authorization.pdf" target="_blank" rel="noopener">Open form →</a>
+      <a class="doclink" href="DirectDepositAuthorization.pdf" target="_blank" rel="noopener">Open form →</a>
     </div>
     <div class="doccard">
       <div class="name">Contractor Onboarding Guide</div>
       <div class="desc">Required paperwork, independent contractor status, on-the-job expectations, and payment basics — one page.</div>
-      <a class="doclink" href="Contractor%20Onboarding%20Guide.pdf" target="_blank" rel="noopener">Open guide →</a>
+      <a class="doclink" href="ContractorOnboardingGuide.pdf" target="_blank" rel="noopener">Open guide →</a>
     </div>
   </div>
 
@@ -894,7 +894,7 @@ function render(){
   const t = document.querySelector('input[name=etype]:checked').value;
   $('ongoingWrap').style.display = t==='ongoing' ? 'block':'none';
   $('daysWrap').style.display    = t==='single'  ? 'none':'block';
-  $('shortBillingWrap').style.display = (t==='short' || t==='ongoing') ? 'block':'none';
+  $('shortBillingWrap').style.display = t==='short' ? 'block':'none';
   $('endWrap').style.display     = t==='single'  ? 'none':'block';
   const raw = collectData();
   $('dowWarning').style.display = (t!=='single' && raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
@@ -993,6 +993,8 @@ $('btnNew').addEventListener('click', async ()=>{
   if($('org').value){ seqCache[key]=(seqCache[key]||1)+1; localSet('los:seq',seqCache); renderHistory(); }
   ['org','clientName','clientTitle','clientPhone','addr','siteContact','posts','orders','hazards','deposit','notes','pattern','start','end']
     .forEach(f=>$(f).value='');
+  [0,1,2,3,4,5,6].forEach(i=>$('dow'+i).checked = (i>=1 && i<=5)); // reset to Mon-Fri default, not last client's picks
+  $('firstMonthBilling').checked = false;
   toast('Cleared. Next agreement for that client will number up.');
   render();
 });
@@ -1145,14 +1147,14 @@ $('btnCrLink').addEventListener('click', async ()=>{
     crJob: $('crJob').value.trim(),
     crDate: $('crDate').value || new Date().toISOString().slice(0,10),
   };
-  if(!data.crName || !data.crAmount){ toast('Enter at least a name and amount first.'); return; }
+  if(!data.crName || !(+data.crAmount > 0)){ toast('Enter a name and an amount greater than $0.'); return; }
   const id = await saveShareLink('cash_receipt', data);
   if(!id){ toast('Could not create the link — check your connection and try again.'); return; }
   $('linkModalTitle').textContent = 'Link for the contractor';
   $('linkModalDesc').textContent = 'Opening it shows the amount and lets them type their name to confirm they received the cash — no login, no app. Text or email it to them.';
   $('linkOut').textContent = location.href.split('#')[0] + '#cr=' + id;
   $('linkModal').classList.add('on');
-  ['crName','crAmount','crJob'].forEach(f=>$(f).value='');
+  ['crName','crAmount','crJob','crDate'].forEach(f=>$(f).value='');
   loadReceiptList();
 });
 
@@ -1235,6 +1237,7 @@ async function enterReceiptSignMode(id){
     }else{
       document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
       $('pane-doc').classList.add('on');
+      $('sheet').style.display = 'none';
       $('barTitle').textContent = 'LINK NOT FOUND';
       $('signPanel').style.display = 'block';
       $('signPanel').innerHTML = '<h3>Link not found</h3><p>This link is broken or has expired. Ask Lion of Seattle to send a new one.</p>';
