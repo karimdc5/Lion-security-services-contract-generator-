@@ -273,7 +273,7 @@
     <input id="clientName" placeholder="Type the contact's full name">
     <div class="row">
       <div><label>Title</label><input id="clientTitle" placeholder="Type their job title"></div>
-      <div><label>Phone</label><input id="clientPhone" placeholder="Type their phone number" inputmode="tel"></div>
+      <div><label>Phone</label><input id="clientPhone" placeholder="Type their phone number" inputmode="tel"><div class="hint" id="phoneHint" style="display:none;color:#a33;margin-top:2px"></div></div>
     </div>
     <label>Service address</label>
     <textarea id="addr" placeholder="Type the full service address"></textarea>
@@ -997,6 +997,12 @@ function paint(d){
 }
 
 /* ================= EDIT MODE ================= */
+// The agreement counter used to live only in this device's localStorage — meaning you and
+// Abdinasir's phones each kept a separate count, and could hand out the exact same agreement
+// number to two different clients. It's now backed by a shared Supabase counter: agrNumber()
+// still shows a fast local best-guess while you type (no network call per keystroke), synced
+// in the background; claimAgrNumber() does the real, atomic, cross-device-safe assignment —
+// called once, right when a link is actually generated.
 let seqCache = {};
 function agrNumber(){
   const yr = ($('start').value || new Date().toISOString().slice(0,10)).slice(0,4);
@@ -1004,6 +1010,46 @@ function agrNumber(){
   const key = yr+'-'+ini;
   const n = String(seqCache[key] || 1).padStart(2,'0');
   return `LOS-${yr}-${ini}-${n}`;
+}
+let agrPeekTimer;
+function scheduleAgrPeek(key){
+  if(!key || key.endsWith('-')) return; // no org typed yet — nothing meaningful to look up
+  clearTimeout(agrPeekTimer);
+  agrPeekTimer = setTimeout(async ()=>{
+    try{
+      const res = await fetch(SUPABASE_URL+'/rest/v1/rpc/peek_agreement_seq', {
+        method:'POST', headers:{ ...(await authedHeaders()), 'Content-Type':'application/json' },
+        body: JSON.stringify({ p_key: key })
+      });
+      if(res.ok){
+        const n = await res.json();
+        if(seqCache[key] !== n){ seqCache[key] = n; $('agrPreview').textContent = agrNumber(); }
+      }
+    }catch(e){ /* offline — keep showing the local best-guess, harmless either way */ }
+  }, 500);
+}
+async function claimAgrNumber(){
+  const yr = ($('start').value || new Date().toISOString().slice(0,10)).slice(0,4);
+  const ini = initials($('org').value);
+  const key = yr+'-'+ini;
+  let n;
+  try{
+    const res = await fetch(SUPABASE_URL+'/rest/v1/rpc/advance_agreement_seq', {
+      method:'POST',
+      headers:{ ...(await authedHeaders()), 'Content-Type':'application/json' },
+      body: JSON.stringify({ p_key: key })
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    n = await res.json();
+  }catch(e){
+    // offline/Supabase down — fall back to the local guess so sending is never blocked;
+    // this is the one case a collision is still possible (two devices both offline at once)
+    n = seqCache[key] || 1;
+  }
+  seqCache[key] = n + 1;
+  localSet('los:seq', seqCache);
+  renderHistory();
+  return `LOS-${yr}-${ini}-${String(n).padStart(2,'0')}`;
 }
 
 function updateNetTermsOptions(useFMU){
@@ -1031,6 +1077,15 @@ function render(){
   $('endWrap').style.display     = t==='single'  ? 'none':'block';
   const raw = collectData();
   $('dowWarning').style.display = (t!=='single' && raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
+
+  const phoneDigits = (raw.clientPhone||'').replace(/\D/g,'');
+  const phoneHint = $('phoneHint');
+  if(phoneDigits.length > 0 && phoneDigits.length < 10){
+    phoneHint.textContent = 'That looks like too few digits for a phone number — double-check it.';
+    phoneHint.style.display = 'block';
+  }else{
+    phoneHint.style.display = 'none';
+  }
   const useFMU = t==='ongoing' || (t==='short' && $('firstMonthBilling').checked);
   updateNetTermsOptions(useFMU);
   $('typeHint').textContent =
@@ -1041,6 +1096,10 @@ function render(){
   const d = computeAll(raw);
   d.agrNo = agrNumber();
   d.genDate = fmtDate(new Date().toISOString().slice(0,10));
+  if(currentSession && raw.org){
+    const yr = (raw.start || new Date().toISOString().slice(0,10)).slice(0,4);
+    scheduleAgrPeek(yr+'-'+initials(raw.org));
+  }
 
   $('ghours').value = d.gh || '';
   $('total').value  = d.total ? money(d.total) : '';
@@ -1072,9 +1131,9 @@ async function loadCompany(){
   renderHistory();
 }
 function renderHistory(){
-  const keys = Object.keys(seqCache);
+  const keys = Object.keys(seqCache).filter(k => seqCache[k] > 1); // seqCache[k]==1 means none issued yet for that key
   $('history').innerHTML = keys.length
-    ? keys.sort().map(k=>`<div style="padding:4px 0"><b>${k}</b> — ${seqCache[k]} agreement${seqCache[k]>1?'s':''}</div>`).join('')
+    ? keys.sort().map(k=>{ const n = seqCache[k]-1; return `<div style="padding:4px 0"><b>${k}</b> — ${n} agreement${n>1?'s':''}</div>`; }).join('')
     : 'No agreements generated yet.';
 }
 
@@ -1092,20 +1151,31 @@ document.querySelectorAll('.tabs button').forEach(b=>{
     if(b.dataset.pane === 'pane-onboard') loadReceiptList();
   });
 });
+function namesLookMismatched(listed, signer){
+  if(!listed || !signer) return false;
+  const norm = s => s.toLowerCase().replace(/[^a-z ]/g,'').split(' ').filter(Boolean);
+  const a = norm(listed), b = norm(signer);
+  return !a.some(word => b.includes(word)); // flag only if there's no shared word at all — avoids false alarms over middle names, nicknames, etc.
+}
+
 async function loadSignedList(){
   const el = $('signedList');
   el.textContent = 'Loading…';
   try{
     const rows = await fetchSignedAgreements();
     if(!rows.length){ el.textContent = 'No signed agreements yet.'; return; }
-    el.innerHTML = rows.map(r => `
+    el.innerHTML = rows.map(r => {
+      const mismatch = namesLookMismatched(r.client_name, r.signer_name);
+      return `
       <div style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
         <div style="font-weight:700;color:var(--navy);font-size:14px">${escapeHtml(r.org||'Untitled')}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:ui-monospace,Menlo,monospace">${escapeHtml(r.agreement_no||'')}</div>
         <div style="font-size:13px;margin-top:6px">Signed by <b>${escapeHtml(r.signer_name||'—')}</b></div>
         <div style="font-size:12px;color:var(--muted)">${r.signed_at ? fmtStamp(r.signed_at) : ''}${r.amount ? ' · $'+escapeHtml(r.amount) : ''}</div>
+        ${mismatch ? `<div style="font-size:11.5px;color:#a3720b;margin-top:6px">⚠ Signer name doesn't match the listed contact (${escapeHtml(r.client_name)}) — worth a quick check</div>` : ''}
         ${r.link ? `<a href="${r.link}" style="display:inline-block;margin-top:8px;font-size:12px;color:var(--gold);font-weight:700;text-decoration:none">Open agreement →</a>` : ''}
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }catch(e){
     el.textContent = 'Could not load the list — check your connection and try again.';
   }
@@ -1121,14 +1191,14 @@ $('btnPrint').addEventListener('click',()=>{
 });
 
 $('btnNew').addEventListener('click', async ()=>{
-  const yr = ($('start').value||new Date().toISOString().slice(0,10)).slice(0,4);
-  const key = yr+'-'+initials($('org').value);
-  if($('org').value){ seqCache[key]=(seqCache[key]||1)+1; localSet('los:seq',seqCache); renderHistory(); }
+  // The counter itself now only advances when a link is actually generated (claimAgrNumber,
+  // called from "Send to client") — not just from clicking Clear. That's the real, shared,
+  // cross-device count; clearing the form doesn't consume a number.
   ['org','clientName','clientTitle','clientPhone','addr','siteContact','posts','orders','hazards','deposit','notes','pattern','start','end']
     .forEach(f=>$(f).value='');
   [0,1,2,3,4,5,6].forEach(i=>$('dow'+i).checked = (i>=1 && i<=5)); // reset to Mon-Fri default, not last client's picks
   $('firstMonthBilling').checked = false;
-  toast('Cleared. Next agreement for that client will number up.');
+  toast('Cleared.');
   render();
 });
 
@@ -1141,11 +1211,15 @@ function missingFields(raw){
   if(!raw.start) missing.push('Start date');
   if(raw.etype !== 'single' && !raw.end) missing.push('End date');
   if(raw.etype !== 'single' && raw.daysSet && !raw.daysSet.some(Boolean)) missing.push('At least one day of the week');
+  if(!raw.coLic) missing.push('WA security company license number (Company tab) — the document states you hold one, so this has to be filled in before it goes out');
   return missing;
 }
 
 function toHash(d){ return 's='+btoa(encodeURIComponent(JSON.stringify(d))); }
 $('btnLink').addEventListener('click', async ()=>{
+  const btn = $('btnLink');
+  if(btn.disabled) return;
+  const originalLabel = btn.textContent;
   try{
     const raw = collectData();
     const missing = missingFields(raw);
@@ -1153,7 +1227,9 @@ $('btnLink').addEventListener('click', async ()=>{
       toast('Fill in first: ' + missing.join(', '));
       return;
     }
-    raw.agrNo = agrNumber();
+    btn.disabled = true;
+    btn.textContent = 'Generating…'; btn.style.opacity = '.7';
+    raw.agrNo = await claimAgrNumber();
     raw.genDate = fmtDate(new Date().toISOString().slice(0,10));
     const id = await saveShareLink('agreement', raw);
     const url = id
@@ -1166,6 +1242,8 @@ $('btnLink').addEventListener('click', async ()=>{
     if(!id) toast('Could not shorten this link (offline?) — sent the full-length version instead.');
   }catch(err){
     toast('Could not build the link: ' + err.message);
+  }finally{
+    btn.textContent = originalLabel; btn.style.opacity = '1'; btn.disabled = false;
   }
 });
 $('btnCloseModal').addEventListener('click',()=>$('linkModal').classList.remove('on'));
@@ -1305,7 +1383,7 @@ $('btnCrLink').addEventListener('click', async ()=>{
     crJob: $('crJob').value.trim(),
     crDate: $('crDate').value || new Date().toISOString().slice(0,10),
   };
-  if(!data.crName || !(+data.crAmount > 0)){ toast('Enter a name and an amount greater than $0.'); return; }
+  if(!data.crName || !(+data.crAmount > 0) || !data.crJob){ toast('Enter a name, amount, and job/client before generating the link.'); return; }
   const id = await saveShareLink('cash_receipt', data);
   if(!id){ toast('Could not create the link — check your connection and try again.'); return; }
   $('linkModalTitle').textContent = 'Link for the contractor';
