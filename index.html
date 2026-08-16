@@ -642,9 +642,9 @@ const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xvkpbbra';
 
 // Fill these in once you've created your EmailJS account (see setup notes) — the contractor
 // confirmation email silently no-ops until all three are set, so nothing breaks in the meantime.
-const EMAILJS_SERVICE_ID = '';   // e.g. 'service_abc1234'
-const EMAILJS_TEMPLATE_ID = '';  // e.g. 'template_xyz789'
-const EMAILJS_PUBLIC_KEY = '';   // from EmailJS Account settings
+const EMAILJS_SERVICE_ID = 'service_ap6wo5x';
+const EMAILJS_TEMPLATE_ID = 'template_n6ta9r9';
+const EMAILJS_PUBLIC_KEY = 'hF1r9AflJq5A0MSR6';
 if (EMAILJS_PUBLIC_KEY && window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
 // Storage bucket for contractor onboarding PDFs — run storage_setup.sql once in the
@@ -698,8 +698,8 @@ const SSN_TAX_CLASSES = new Set(['individual', 'smllc']);
 
 // Signature/Date aren't real form fields on the IRS PDF — coordinates
 // (PDF points, bottom-left origin) measured directly off the blank W-9 template.
-const W9_SIGNATURE_POS = { x: 80,  y: 219, size: 13 };
-const W9_DATE_POS      = { x: 390, y: 219, size: 11 };
+const W9_SIGNATURE_POS = { x: 78,  y: 209.5, size: 9 };
+const W9_DATE_POS      = { x: 388, y: 209.5, size: 8.5 };
 
 async function fillW9(templateBytes, d) {
   const { PDFDocument, rgb, StandardFonts } = PDFLib;
