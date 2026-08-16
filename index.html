@@ -153,6 +153,8 @@
   .radiorow:has(input:checked){border-color:var(--gold);background:#fdf8ee}
   .radiorow input{width:auto;flex:0 0 auto;margin:0}
   .example{font-size:11.5px;color:var(--muted);margin-top:-3px;margin-bottom:4px;font-style:italic}
+  .fielderr{font-size:11.5px;color:#B4232C;margin-top:3px;font-weight:600;display:none}
+  .fielderr.on{display:block}
   .chk input{width:18px;height:18px;margin-top:1px;flex:0 0 18px}
   .legalnote{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 
@@ -825,26 +827,48 @@ async function generateOnboardingPdfs(d){
 
 // Best-effort archive copy for Karim — only he (logged in) can read this bucket back;
 // contractors never need to, since their download regenerates the PDF locally instead.
+// Never a data-loss risk either way: the record itself is already safely saved in
+// Supabase by the time this runs, and any PDF can be regenerated from it on demand.
 async function archiveOnboardingPdfs(id, filledW9, filledDD){
   try{
-    await sb.storage.from(CONTRACTOR_DOCS_BUCKET).upload(`${id}/W9.pdf`,
-      new Blob([filledW9], { type: 'application/pdf' }), { contentType: 'application/pdf', upsert: true });
-    await sb.storage.from(CONTRACTOR_DOCS_BUCKET).upload(`${id}/DirectDeposit.pdf`,
-      new Blob([filledDD], { type: 'application/pdf' }), { contentType: 'application/pdf', upsert: true });
+    await withRetry(()=> sb.storage.from(CONTRACTOR_DOCS_BUCKET).upload(`${id}/W9.pdf`,
+      new Blob([filledW9], { type: 'application/pdf' }), { contentType: 'application/pdf', upsert: true }));
+    await withRetry(()=> sb.storage.from(CONTRACTOR_DOCS_BUCKET).upload(`${id}/DirectDeposit.pdf`,
+      new Blob([filledDD], { type: 'application/pdf' }), { contentType: 'application/pdf', upsert: true }));
   }catch(e){ console.error('PDF archive to storage failed (non-blocking):', e); }
 }
 
-// No-ops silently until EMAILJS_SERVICE_ID/TEMPLATE_ID/PUBLIC_KEY are filled in above.
+// Returns a short status string instead of swallowing failures — so the
+// caller can report what happened back to Karim (see notifyKarimByEmail).
+// Generic retry — used for the two notification sends below, since a
+// contractor signing in the field on spotty cell service shouldn't lose a
+// notification to one dropped packet.
+async function withRetry(fn, attempts=2, delayMs=1500){
+  let lastErr;
+  for(let i=0;i<attempts;i++){
+    try{ return await fn(); }
+    catch(e){ lastErr=e; if(i<attempts-1) await new Promise(r=>setTimeout(r, delayMs)); }
+  }
+  throw lastErr;
+}
+
 async function emailContractorConfirmation(d, linkId){
-  if(!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY || !d.email) return;
+  if(!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) return 'skipped: EmailJS not configured';
+  if(!d.email) return 'skipped: no email on file';
+  if(!window.emailjs) return 'failed: emailjs library did not load (script blocked or offline)';
   try{
     const viewLink = location.href.split('#')[0] + '#onboard=' + encodeURIComponent(linkId);
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    await withRetry(()=> emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
       to_name: d.legalName,
       to_email: d.email,
       link: viewLink,
-    });
-  }catch(e){ console.error('contractor confirmation email failed (non-blocking):', e); }
+    }));
+    return 'sent to ' + d.email;
+  }catch(e){
+    const msg = (e && (e.text || e.message)) || JSON.stringify(e);
+    console.error('contractor confirmation email failed (non-blocking):', e);
+    return 'failed: ' + msg;
+  }
 }
 const SUPABASE_KEY = 'sb_publishable_29IrAUCUNA1zdT3qny3c9A_0wV339Ns';
 
@@ -1011,11 +1035,11 @@ async function loadShareLink(id){
 }
 async function updateShareLink(id, data){
   try{
-    const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/update_share_link', {
+    const res = await withRetry(()=> fetch(SUPABASE_URL + '/rest/v1/rpc/update_share_link', {
       method:'POST',
       headers:{ ...SB_HEADERS, 'Content-Type':'application/json' },
       body: JSON.stringify({ link_id: id, new_data: data })
-    });
+    }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r; }));
     return res.ok;
   }catch(e){ console.error('share_links update failed:', e); return false; }
 }
@@ -1754,7 +1778,7 @@ $('btnOnbLink').addEventListener('click', async ()=>{
 // blocks their submission (which is already safely saved in Supabase by the time this runs).
 // SSN and account number are masked to last-4 here; the "view full record" link opens the
 // real entry in the app for whoever is logged in, where the full numbers are already waiting.
-async function notifyKarimByEmail(d, linkId){
+async function notifyKarimByEmail(d, linkId, contractorEmailStatus){
   if(!FORMSPREE_ENDPOINT) return;
   try{
     const taxDigits = (d.taxId||'').replace(/\D/g,'');
@@ -1763,7 +1787,7 @@ async function notifyKarimByEmail(d, linkId){
       ? 'Not provided — contractor chose to skip this for now'
       : (d.bankName ? `${d.bankName} · ${d.acctType==='savings'?'Savings':'Checking'} · account ending ${(d.accountNumber||'').slice(-4)||'????'}` : 'Not provided');
     const viewLink = location.href.split('#')[0] + '#onboard=' + encodeURIComponent(linkId);
-    await fetch(FORMSPREE_ENDPOINT, {
+    await withRetry(()=> fetch(FORMSPREE_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
       body: JSON.stringify({
@@ -1778,9 +1802,10 @@ async function notifyKarimByEmail(d, linkId){
         handbook_agreed: d.handbookAgreed ? 'Yes' : 'No',
         signed_at: fmtStamp(d.signedAt),
         view_full_record: viewLink,
+        contractor_confirmation_email: contractorEmailStatus || '(not attempted)',
         message: `${d.legalName} just completed onboarding. The tax ID and account number above are masked for safety — open the link while logged in to see the full record.`
       })
-    });
+    }));
   }catch(e){ console.error('email notify failed:', e); }
 }
 
@@ -1811,13 +1836,13 @@ async function enterOnboardSignMode(id){
       ? 'Not provided — you chose to skip this for now.'
       : (d.bankName ? `${escapeHtml(d.bankName)} · ${d.acctType==='savings'?'Savings':'Checking'} · account ending ${(d.accountNumber||'').slice(-4)||'????'}` : 'Not provided.');
     body.innerHTML = `
-      <h3>Onboarding complete</h3>
-      <div class="signed-banner">✓ Signed by <b>${escapeHtml(d.signedName)}</b> on ${fmtStamp(d.signedAt)}.</div>
+      <h3>✅ You're all set</h3>
+      <div class="signed-banner">✓ Signed by <b>${escapeHtml(d.signedName)}</b> on ${fmtStamp(d.signedAt)}. Your information has been received by Lion of Seattle — you don't need to do anything else.</div>
       <div class="obsection">
         <h3>Tax Info on File</h3>
         <div class="doccard">
           <div class="name">${escapeHtml(d.legalName||'—')}</div>
-          <div class="desc">${d.bizName ? escapeHtml(d.bizName)+' · ' : ''}${taxClassLabel(d.taxClass)}<br>${escapeHtml(d.address||'')}, ${escapeHtml(d.city||'')}, ${escapeHtml(d.state||'')} ${escapeHtml(d.zip||'')}<br>Tax ID on file: ***-**-${taxLast4}</div>
+          <div class="desc">${escapeHtml(d.positionRole||'')}${d.positionRole?' · ':''}${escapeHtml(d.phone||'—')} · ${escapeHtml(d.email||'—')}<br>${d.bizName ? escapeHtml(d.bizName)+' · ' : ''}${taxClassLabel(d.taxClass)}<br>${escapeHtml(d.address||'')}, ${escapeHtml(d.city||'')}, ${escapeHtml(d.state||'')} ${escapeHtml(d.zip||'')}<br>Tax ID on file: ***-**-${taxLast4}</div>
         </div>
       </div>
       <div class="obsection">
@@ -1869,8 +1894,8 @@ async function enterOnboardSignMode(id){
       <div class="example">Example: Jordan A. Sample</div>
 
       <div class="row">
-        <div><label>Phone number</label><input id="onbPhone" placeholder="e.g. (206) 555-0100" inputmode="tel"></div>
-        <div><label>Email address</label><input id="onbEmail" placeholder="e.g. jordan@example.com" inputmode="email"></div>
+        <div><label>Phone number</label><input id="onbPhone" placeholder="e.g. (206) 555-0100" inputmode="tel"><div class="fielderr" id="errPhone"></div></div>
+        <div><label>Email address</label><input id="onbEmail" placeholder="e.g. jordan@example.com" inputmode="email"><div class="fielderr" id="errEmail"></div></div>
       </div>
       <label>Position / role</label>
       <input id="onbRole" placeholder="e.g. Security Guard">
@@ -1903,6 +1928,7 @@ async function enterOnboardSignMode(id){
 
       <label>Social Security Number or EIN</label>
       <input id="onbTaxId" placeholder="e.g. 000-00-0000" inputmode="numeric">
+      <div class="fielderr" id="errTaxId"></div>
       <div class="example">Example: 000-00-0000 (SSN) or 12-3456789 (EIN). Only Lion of Seattle's owners can see this — it's used only for tax reporting.</div>
     </div>
 
@@ -1913,8 +1939,8 @@ async function enterOnboardSignMode(id){
       <div class="example">Example: Chase Bank</div>
 
       <div class="row">
-        <div><label>Routing number</label><input id="onbRouting" placeholder="e.g. 125000105" inputmode="numeric"></div>
-        <div><label>Account number</label><input id="onbAccount" placeholder="e.g. 000123456789" inputmode="numeric"></div>
+        <div><label>Routing number</label><input id="onbRouting" placeholder="e.g. 125000105" inputmode="numeric"><div class="fielderr" id="errRouting"></div></div>
+        <div><label>Account number</label><input id="onbAccount" placeholder="e.g. 000123456789" inputmode="numeric"><div class="fielderr" id="errAccount"></div></div>
       </div>
 
       <label>Account type</label>
@@ -1967,6 +1993,91 @@ async function enterOnboardSignMode(id){
   }
   ddSkipEl.addEventListener('change', ()=>{ updateDDDisabled(); upd(); });
 
+  // ABA routing-number checksum — every valid US routing number satisfies this,
+  // so it catches a mistyped digit that a simple length check would miss.
+  function routingChecksumValid(r){
+    if(!/^\d{9}$/.test(r)) return false;
+    const d = r.split('').map(Number);
+    const sum = 3*(d[0]+d[3]+d[6]) + 7*(d[1]+d[4]+d[7]) + 1*(d[2]+d[5]+d[8]);
+    return sum % 10 === 0;
+  }
+  function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e||''); }
+  function validPhone(p){ return (p||'').replace(/\D/g,'').length >= 10; }
+
+  function fieldErrors(v){
+    const errs = {};
+    const taxDigits = (v.taxId||'').replace(/\D/g,'');
+    if(!v.legalName) errs.legalName = 'Required';
+    if(!v.phone) errs.phone = 'Required';
+    else if(!validPhone(v.phone)) errs.phone = 'Enter a valid 10-digit phone number';
+    if(!v.email) errs.email = 'Required';
+    else if(!validEmail(v.email)) errs.email = 'Enter a valid email address';
+    if(!v.address) errs.address = 'Required';
+    if(!v.city) errs.city = 'Required';
+    if(!v.state) errs.state = 'Required';
+    if(!v.zip) errs.zip = 'Required';
+    if(!v.taxId) errs.taxId = 'Required';
+    else if(taxDigits.length !== 9) errs.taxId = 'Must be exactly 9 digits';
+    if(!v.ddSkipped){
+      if(!v.bankName) errs.bankName = 'Required (or check "skip this section")';
+      const routingDigits = (v.routingNumber||'').replace(/\D/g,'');
+      if(!v.routingNumber) errs.routingNumber = 'Required';
+      else if(routingDigits.length !== 9) errs.routingNumber = 'Must be exactly 9 digits';
+      else if(!routingChecksumValid(routingDigits)) errs.routingNumber = "Doesn't look like a valid routing number — double check it";
+      const acctDigits = (v.accountNumber||'').replace(/\D/g,'');
+      if(!v.accountNumber) errs.accountNumber = 'Required';
+      else if(acctDigits.length < 4 || acctDigits.length > 17) errs.accountNumber = 'Should be 4–17 digits';
+    }
+    return errs;
+  }
+
+  // Only surface inline red text for fields the contractor has actually put a
+  // value into but got wrong — an empty required field just keeps the Sign
+  // button disabled, same as before, rather than greeting them with red text
+  // on a form they haven't touched yet.
+  const FORMAT_ERR_IDS = { phone:'errPhone', email:'errEmail', taxId:'errTaxId', routingNumber:'errRouting', accountNumber:'errAccount' };
+  function showFieldErrors(v, errs){
+    Object.entries(FORMAT_ERR_IDS).forEach(([key, elId])=>{
+      const el = $(elId); if(!el) return;
+      const hasValue = !!(v[key]||'').toString().trim();
+      if(hasValue && errs[key]){ el.textContent = errs[key]; el.classList.add('on'); }
+      else { el.textContent=''; el.classList.remove('on'); }
+    });
+  }
+
+  // Draft autosave — protects against losing everything if the tab closes,
+  // the phone locks, or Safari gets backgrounded mid-form. Cleared on
+  // successful submission so a finished record never gets confused with a
+  // stale draft on a later visit.
+  const DRAFT_KEY = 'lionOnboardDraft:' + id;
+  function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(gather())); }catch(e){} }
+  function restoreDraft(){
+    let v;
+    try{ const raw = localStorage.getItem(DRAFT_KEY); if(!raw) return; v = JSON.parse(raw); }catch(e){ return; }
+    try{
+      nameEl.value=v.legalName||''; phoneEl.value=v.phone||''; emailEl.value=v.email||'';
+      roleEl.value=v.positionRole||''; bizEl.value=v.bizName||'';
+      if(v.taxClass){ const r=document.querySelector(`input[name=taxclass][value="${v.taxClass}"]`); if(r) r.checked=true; }
+      addrEl.value=v.address||''; cityEl.value=v.city||''; stateEl.value=v.state||''; zipEl.value=v.zip||'';
+      taxIdEl.value=v.taxId||'';
+      ddSkipEl.checked=!!v.ddSkipped; updateDDDisabled();
+      if(!v.ddSkipped){
+        bankEl.value=v.bankName||''; routingEl.value=v.routingNumber||''; accountEl.value=v.accountNumber||'';
+        if(v.acctType){ const r=document.querySelector(`input[name=acctType][value="${v.acctType}"]`); if(r) r.checked=true; }
+      }
+      if(v.legalName || v.email) toast('Restored what you\'d already filled in.');
+    }catch(e){}
+  }
+  function clearDraft(){ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} }
+
+  function upd(){
+    const v = gather();
+    const errs = fieldErrors(v);
+    showFieldErrors(v, errs);
+    const ok = Object.keys(errs).length===0 && agreeEl.checked && handbookEl.checked && sigEl.value.trim().length>1;
+    btn.disabled = !ok; btn.style.opacity = ok?'1':'.5';
+    saveDraft();
+  }
   function gather(){
     const taxClass = (document.querySelector('input[name=taxclass]:checked')||{}).value || 'individual';
     const acctType = (document.querySelector('input[name=acctType]:checked')||{}).value || 'checking';
@@ -1991,19 +2102,13 @@ async function enterOnboardSignMode(id){
       handbookAgreed: handbookEl.checked,
     };
   }
-  function missing(v){
-    const digits = (v.taxId||'').replace(/\D/g,'');
-    return !v.legalName || !v.phone || !v.email || !v.address || !v.city || !v.state || !v.zip || digits.length<9;
-  }
-  function upd(){
-    const ok = !missing(gather()) && agreeEl.checked && handbookEl.checked && sigEl.value.trim().length>1;
-    btn.disabled = !ok; btn.style.opacity = ok?'1':'.5';
-  }
   [nameEl,phoneEl,emailEl,roleEl,bizEl,addrEl,cityEl,stateEl,zipEl,taxIdEl,bankEl,routingEl,accountEl,sigEl].forEach(el=>el.addEventListener('input',upd));
   agreeEl.addEventListener('change',upd);
   handbookEl.addEventListener('change',upd);
   document.querySelectorAll('input[name=taxclass]').forEach(el=>el.addEventListener('change',upd));
   document.querySelectorAll('input[name=acctType]').forEach(el=>el.addEventListener('change',upd));
+  restoreDraft();
+  upd();
 
   btn.addEventListener('click', async ()=>{
     if(btn.disabled) return;
@@ -2013,16 +2118,16 @@ async function enterOnboardSignMode(id){
     d.signedAt = new Date().toISOString();
     const ok = await updateShareLink(id, d);
     if(!ok){
-      toast('Could not save — check your connection and try again.');
+      toast('Could not save — check your connection and try again. Your answers are still here, nothing was lost.');
       btn.disabled=false; btn.textContent='Sign & submit'; btn.style.opacity='1';
       return;
     }
-    notifyKarimByEmail(d, id);
-    emailContractorConfirmation(d, id);
+    clearDraft();
+    enterOnboardSignMode(id);
+    emailContractorConfirmation(d, id).then(status => notifyKarimByEmail(d, id, status));
     generateOnboardingPdfs(d)
       .then(({ filledW9, filledDD }) => archiveOnboardingPdfs(id, filledW9, filledDD))
       .catch(e => console.error('PDF generation for archive failed (non-blocking):', e));
-    enterOnboardSignMode(id);
   });
 }
 
