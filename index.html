@@ -654,9 +654,10 @@ const CONTRACTOR_DOCS_BUCKET = 'contractor-docs';
 /* =====================================================================
    PDF FILL — W-9 (AcroForm) + Direct Deposit Authorization (coordinates)
    =====================================================================
-   fw9.pdf must be the genuinely blank IRS template (uploaded to the repo
-   as "fw9.pdf") — NOT the old "Blank-W9-for-Contractor.pdf", whose form
-   fields already had real personal data filled in.
+   Blank-W9-for-Contractor.pdf must be a genuinely blank IRS template.
+   Make sure whatever is currently at that path in the repo has been
+   overwritten with a clean copy — an earlier version had real personal
+   data (name, address, SSN) already filled into its form fields.
    ===================================================================== */
 const W9_FIELDS = {
   line1Name:        'topmostSubform[0].Page1[0].f1_01[0]',
@@ -696,7 +697,7 @@ const TAX_CLASS_TO_W9_BOX = {
 const SSN_TAX_CLASSES = new Set(['individual', 'smllc']);
 
 // Signature/Date aren't real form fields on the IRS PDF — coordinates
-// (PDF points, bottom-left origin) measured directly off fw9.pdf.
+// (PDF points, bottom-left origin) measured directly off the blank W-9 template.
 const W9_SIGNATURE_POS = { x: 80,  y: 219, size: 13 };
 const W9_DATE_POS      = { x: 390, y: 219, size: 11 };
 
@@ -812,7 +813,7 @@ function downloadBlob(bytes, filename, mime){
 // Nothing sensitive is ever fetched back from Storage for this; it's rebuilt from `d`.
 async function generateOnboardingPdfs(d){
   const [w9Bytes, ddBytes] = await Promise.all([
-    fetch('fw9.pdf').then(r => r.arrayBuffer()),
+    fetch('Blank-W9-for-Contractor.pdf').then(r => r.arrayBuffer()),
     fetch('DirectDepositAuthoriztion.pdf').then(r => r.arrayBuffer()),
   ]);
   const [filledW9, filledDD] = await Promise.all([
