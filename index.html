@@ -649,6 +649,31 @@ const EMAILJS_TEMPLATE_ID = 'template_n6ta9r9';
 const EMAILJS_PUBLIC_KEY = 'hF1r9AflJq5A0MSR6';
 if (EMAILJS_PUBLIC_KEY && window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
+// Second template — internal admin alerts (cash receipts, onboarding, etc.)
+// sent to Karim directly via EmailJS, run in parallel with the Formspree
+// notification as a more reliable channel (Formspree's free-tier spam
+// classifier can silently swallow notifications with no way to override it).
+const EMAILJS_ADMIN_TEMPLATE_ID = 'template_n369iwa';
+const KARIM_ADMIN_EMAIL = 'lionofseattle@gmail.com';
+
+async function sendAdminAlert(eventType, summary, link){
+  if(!EMAILJS_SERVICE_ID || !EMAILJS_ADMIN_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) return 'skipped: EmailJS not configured';
+  if(!window.emailjs) return 'failed: emailjs library did not load';
+  try{
+    await withRetry(()=> emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ADMIN_TEMPLATE_ID, {
+      to_email: KARIM_ADMIN_EMAIL,
+      event_type: eventType,
+      summary: summary,
+      link: link,
+    }));
+    return 'sent';
+  }catch(e){
+    const msg = (e && (e.text || e.message)) || JSON.stringify(e);
+    console.error('admin alert failed:', e);
+    return 'failed: ' + msg;
+  }
+}
+
 // Storage bucket for contractor onboarding PDFs — run storage_setup.sql once in the
 // Supabase SQL editor before this bucket will accept uploads.
 const CONTRACTOR_DOCS_BUCKET = 'contractor-docs';
@@ -1808,7 +1833,10 @@ async function enterReceiptSignMode(id, justSigned){
       b.disabled = false; b.textContent = orig;
     });
     if(justSigned){
-      notifyKarimCashReceipt(d, id).then(status => {
+      const viewLink = location.href.split('#')[0] + '#cr=' + encodeURIComponent(id);
+      const summary = `${d.crName} confirmed receiving ${money(d.crAmount)} in cash for ${d.crJob||'(no job/client noted)'} on ${fmtDate(d.crDate)}.`;
+      notifyKarimCashReceipt(d, id); // Formspree — fire in parallel, belt-and-suspenders
+      sendAdminAlert('Cash Receipt Signed', summary, viewLink).then(status => {
         const el = $('crNotifyStatus');
         if(el) el.textContent = status==='sent' ? 'Office notified ✓' : ('Office notification: '+status);
       });
@@ -1938,7 +1966,7 @@ async function notifyKarimByEmail(d, linkId, contractorEmailStatus){
   }catch(e){ console.error('email notify failed:', e); }
 }
 
-async function enterOnboardSignMode(id){
+async function enterOnboardSignMode(id, justSigned){
   document.body.classList.add('sign-mode');
   $('tabs').style.display='none';
   $('editActions').style.display='none';
@@ -1967,6 +1995,7 @@ async function enterOnboardSignMode(id){
     body.innerHTML = `
       <h3>✅ You're all set</h3>
       <div class="signed-banner">✓ Signed by <b>${escapeHtml(d.signedName)}</b> on ${fmtStamp(d.signedAt)}. Your information has been received by Lion of Seattle — you don't need to do anything else.</div>
+      ${justSigned ? '<div id="onbNotifyStatus" style="font-size:12px;color:var(--muted);margin:-10px 0 12px">Notifying the office…</div>' : ''}
       <div class="obsection">
         <h3>Tax Info on File</h3>
         <div class="doccard">
@@ -2009,6 +2038,14 @@ async function enterOnboardSignMode(id){
       }catch(err){ console.error(err); toast('Could not build the PDF — check your connection and try again.'); }
       b.disabled = false; b.textContent = orig;
     });
+    if(justSigned){
+      const viewLink = location.href.split('#')[0] + '#onboard=' + encodeURIComponent(id);
+      const summary = `${d.legalName} completed contractor onboarding (${taxClassLabel(d.taxClass)}). Tax ID on file ending ${taxLast4}. Direct deposit: ${d.ddSkipped ? 'skipped for now' : (d.bankName || 'not provided')}.`;
+      sendAdminAlert('Contractor Onboarding Signed', summary, viewLink).then(status => {
+        const el = $('onbNotifyStatus');
+        if(el) el.textContent = status==='sent' ? 'Office notified ✓' : ('Office notification: '+status);
+      });
+    }
     return;
   }
 
@@ -2252,7 +2289,7 @@ async function enterOnboardSignMode(id){
       return;
     }
     clearDraft();
-    enterOnboardSignMode(id);
+    enterOnboardSignMode(id, true);
     emailContractorConfirmation(d, id).then(status => notifyKarimByEmail(d, id, status));
     generateOnboardingPdfs(d)
       .then(({ filledW9, filledDD }) => archiveOnboardingPdfs(id, filledW9, filledDD))
