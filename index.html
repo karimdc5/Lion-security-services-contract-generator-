@@ -1180,6 +1180,20 @@ async function updateShareLink(id, data){
     return res.ok;
   }catch(e){ console.error('share_links update failed:', e); return false; }
 }
+// Admin-only — goes through delete_share_link (see admin_delete_setup.sql), granted to the
+// authenticated role only. Unlike get/update above, this deliberately does NOT work with the
+// plain anon key, so a contractor's own link can never be used to delete anything.
+async function deleteShareLink(id){
+  try{
+    const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/delete_share_link', {
+      method:'POST',
+      headers:{ ...(await authedHeaders()), 'Content-Type':'application/json' },
+      body: JSON.stringify({ link_id: id })
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return true;
+  }catch(e){ console.error('share_links delete failed:', e); return false; }
+}
 
 /* ---------- pure helpers ---------- */
 const money = n => (n||n===0) ? '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
@@ -1752,6 +1766,30 @@ function receiptText(d){
   return `I, ${d.crName||'[name]'}, confirm I received ${money(d.crAmount)} in cash from Lion of Seattle Security Services on ${fmtDate(d.crDate)} for ${d.crJob||'[job/client]'}.`;
 }
 
+// Wires up every .btnDeleteRow inside `container`: first tap arms it (turns solid red,
+// asks for a second tap within 3s), second tap actually deletes. Tapping anywhere else,
+// or letting 3s pass, disarms it — so a stray tap can never delete a real record.
+function wireDeleteButtons(container, reload){
+  container.querySelectorAll('.btnDeleteRow').forEach(btn=>{
+    let armed = false, timer = null;
+    btn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      if(!armed){
+        armed = true;
+        btn.textContent = 'Tap again to confirm';
+        btn.style.background = '#B4232C'; btn.style.color = '#fff'; btn.style.borderColor = '#B4232C';
+        timer = setTimeout(()=>{ armed=false; btn.textContent='Delete'; btn.style.background='#FDECEA'; btn.style.color='#B4232C'; btn.style.borderColor='#E5B8BC'; }, 3000);
+        return;
+      }
+      clearTimeout(timer);
+      btn.disabled = true; btn.textContent = 'Deleting…';
+      const ok = await deleteShareLink(btn.dataset.id);
+      if(!ok){ toast('Could not delete — check your connection and try again.'); btn.disabled=false; armed=false; btn.textContent='Delete'; btn.style.background='#FDECEA'; btn.style.color='#B4232C'; btn.style.borderColor='#E5B8BC'; return; }
+      reload();
+    });
+  });
+}
+
 async function loadReceiptList(){
   const el = $('crList');
   el.textContent = 'Loading receipts…';
@@ -1766,11 +1804,15 @@ async function loadReceiptList(){
         ? `✓ Signed by ${escapeHtml(d.signedName)} on ${fmtStamp(d.signedAt)}`
         : 'Pending signature';
       return `<div style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
-        <div style="font-weight:700;color:var(--navy);font-size:14px">${escapeHtml(d.crName||'—')} — ${money(d.crAmount)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-weight:700;color:var(--navy);font-size:14px">${escapeHtml(d.crName||'—')} — ${money(d.crAmount)}</div>
+          <button class="btnDeleteRow" data-id="${r.id}" style="flex-shrink:0;border:1px solid #E5B8BC;background:#FDECEA;color:#B4232C;font-size:11px;font-weight:700;border-radius:6px;padding:4px 9px;cursor:pointer">Delete</button>
+        </div>
         <div style="font-size:12px;color:var(--muted)">${escapeHtml(d.crJob||'')}${d.crDate?' · '+fmtDate(d.crDate):''}</div>
         <div style="font-size:12px;margin-top:4px">${status}</div>
       </div>`;
     }).join('');
+    wireDeleteButtons(el, loadReceiptList);
   }catch(e){
     el.textContent = 'Could not load receipts — check your connection and try again.';
   }
@@ -1902,12 +1944,16 @@ async function loadOnboardList(){
         ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">Direct deposit: ${d.ddSkipped ? 'skipped' : (d.bankName ? 'provided' : '—')} · Handbook: ${d.handbookAgreed ? 'agreed' : '—'}</div>`
         : '';
       return `<div style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fff">
-        <div style="font-weight:700;color:var(--navy);font-size:14px">${escapeHtml(d.label || d.legalName || 'Unlabeled link')}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-weight:700;color:var(--navy);font-size:14px">${escapeHtml(d.label || d.legalName || 'Unlabeled link')}</div>
+          <button class="btnDeleteRow" data-id="${r.id}" style="flex-shrink:0;border:1px solid #E5B8BC;background:#FDECEA;color:#B4232C;font-size:11px;font-weight:700;border-radius:6px;padding:4px 9px;cursor:pointer">Delete</button>
+        </div>
         <div style="font-size:12px;color:var(--muted)">${d.uniformCost ? 'Uniform cost: '+money(d.uniformCost) : ''}</div>
         <div style="font-size:12px;margin-top:4px">${status}</div>
         ${parts}
       </div>`;
     }).join('');
+    wireDeleteButtons(el, loadOnboardList);
   }catch(e){
     el.textContent = 'Could not load — check your connection and try again.';
   }
