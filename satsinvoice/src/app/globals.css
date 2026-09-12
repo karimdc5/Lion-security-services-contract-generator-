@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------------------------------------------------------------------------
+   SatsInvoice design tokens.
+   Store-checkout plain: one accent, generous whitespace, no charts, no neon.
+   --------------------------------------------------------------------------- */
+@theme {
+  --color-ink: #0b1220;
+  --color-muted: #5b6577;
+  --color-faint: #8b95a7;
+  --color-line: #e3e8ef;
+  --color-surface: #ffffff;
+  --color-canvas: #f7f8fa;
+  --color-accent: #1b64f2;
+  --color-accent-soft: #eaf1fe;
+  --color-good: #0f7b44;
+  --color-good-soft: #e6f5ec;
+  --color-warn: #9a5b00;
+  --color-warn-soft: #fdf2e0;
+  --color-bad: #b4232b;
+  --color-bad-soft: #fdeced;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--color-accent-soft);
+  }
+  /* Tabular figures everywhere money is shown. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Tailwind v4 only lets @apply reference utilities, not other component
+   classes — so the shared button base is declared with @utility. */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold
+         transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-surface;
+  }
+  .label {
+    @apply block text-sm font-medium text-ink;
+  }
+  .hint {
+    @apply mt-1 text-sm text-muted;
+  }
+  .input {
+    @apply mt-1.5 block w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink
+           shadow-xs outline-none transition
+           placeholder:text-faint
+           focus:border-accent focus:ring-4 focus:ring-accent/15;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent/90 focus-visible:ring-4 focus-visible:ring-accent/25;
+  }
+  .btn-secondary {
+    @apply btn border border-line bg-surface text-ink hover:bg-canvas;
+  }
+  .btn-danger {
+    @apply btn border border-bad/30 bg-bad-soft text-bad hover:bg-bad/10;
+  }
+  .btn-ghost {
+    @apply btn text-muted hover:bg-canvas hover:text-ink;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold
+           whitespace-nowrap;
+  }
+  .th {
+    @apply px-4 py-2.5 text-left text-xs font-semibold tracking-wide text-muted uppercase;
+  }
+  .td {
+    @apply px-4 py-3.5 align-middle text-sm;
+  }
 }

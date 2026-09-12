@@ -13,6 +13,16 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // A leading underscore marks a parameter kept on purpose: the OpenNode
+      // stub holds the real signatures while its body is still a TODO.
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;
