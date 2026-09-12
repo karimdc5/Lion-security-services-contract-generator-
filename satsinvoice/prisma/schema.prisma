@@ -1,0 +1,186 @@
+// SatsInvoice data model.
+//
+// Money rules that the schema enforces or encodes:
+//  - USD is the display currency and is always stored as integer cents.
+//  - BTC is a settlement fact only, always stored as integer sats.
+//  - The BTC/USD rate is frozen on the invoice at creation time and stored as
+//    integer cents per BTC, so every conversion is integer math.
+//  - PaymentEvent.providerPaymentId is UNIQUE. That unique index is the
+//    idempotency guard for webhooks: replaying a webhook cannot create a
+//    second event, and therefore cannot move money twice.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InvoiceStatus {
+  draft
+  unpaid
+  pending
+  paid
+  underpaid
+  overpaid
+  expired
+  canceled
+  refunded
+}
+
+enum PaymentEventKind {
+  settled
+  late
+  duplicate
+  unmatched
+  refund
+  pending
+}
+
+enum UnmatchedReason {
+  late_payment
+  duplicate_invoice_payment
+  invoice_not_payable
+  unknown_invoice
+}
+
+enum UnmatchedResolution {
+  open
+  apply_to_invoice
+  refunded
+  ignored
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  payoutNote   String   @default("")
+  // When true, an expired public pay page offers the client a "generate a new
+  // invoice" button instead of a dead end.
+  autoReissue  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  invoices          Invoice[]
+  unmatchedPayments UnmatchedPayment[]
+  auditLogs         AuditLog[]
+}
+
+model Invoice {
+  id       String @id @default(cuid())
+  publicId String @unique
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clientName  String
+  clientEmail String?
+  description String
+
+  // What the client owes, in USD. This is the contract.
+  amountUsdCents Int
+  status         InvoiceStatus @default(draft)
+
+  expiresAt     DateTime?
+  expirySeconds Int       @default(3600)
+  paidAt        DateTime?
+
+  // Settlement facts. btcRateUsdCents is cents per 1 BTC, frozen at creation.
+  btcRateUsdCents    Int @default(0)
+  amountSatsExpected Int @default(0)
+  amountSatsReceived Int @default(0)
+  overpaySats        Int @default(0)
+  overpayUsdCents    Int @default(0)
+
+  provider          String?
+  providerInvoiceId String? @unique
+  paymentRequest    String? // bolt11 or unified BIP21 string from the provider
+  paymentUrl        String?
+
+  // Freelancer accepted a short payment and closed the invoice. Status stays
+  // `underpaid` on purpose: the books should not claim full payment arrived.
+  writtenOff Boolean @default(false)
+  // Money landed in a way that needs a human look (late, duplicate, canceled).
+  reviewFlag Boolean @default(false)
+
+  refundedAt DateTime?
+  refundNote String?
+
+  // Set when this invoice was created to replace an expired one.
+  reissuedFromId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paymentEvents     PaymentEvent[]
+  unmatchedPayments UnmatchedPayment[]
+  auditLogs         AuditLog[]
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+}
+
+model PaymentEvent {
+  id        String   @id @default(cuid())
+  invoiceId String?
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  // The idempotency key. One row per provider payment, forever.
+  providerPaymentId String @unique
+  provider          String
+
+  amountSats     Int
+  amountUsdCents Int
+  kind           PaymentEventKind
+  rawPayload     Json
+  receivedAt     DateTime
+  createdAt      DateTime         @default(now())
+
+  @@index([invoiceId, receivedAt])
+}
+
+model UnmatchedPayment {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  provider          String
+  providerPaymentId String @unique
+
+  amountSats     Int
+  amountUsdCents Int
+  reason         UnmatchedReason
+
+  // The invoice the money arrived for, when known. Not the same as the invoice
+  // it eventually gets applied to.
+  invoiceId String?
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  note               String              @default("")
+  resolution         UnmatchedResolution @default(open)
+  // Set when resolution == apply_to_invoice.
+  appliedToInvoiceId String?
+  resolvedAt         DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, resolution])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String // "user:<id>", "webhook:<provider>", "system"
+  action    String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  invoiceId String?
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  meta      Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId, createdAt])
+  @@index([userId, createdAt])
+}
