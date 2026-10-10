@@ -1499,7 +1499,7 @@ async function saveShareLink(kind, data){
   try{
     const res = await fetch(SUPABASE_URL + '/rest/v1/share_links', {
       method:'POST',
-      headers:{ ...SB_HEADERS, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+      headers:{ ...(await authedHeaders()), 'Content-Type':'application/json', 'Prefer':'return=minimal' },
       body: JSON.stringify({ id, kind, data })
     });
     if(!res.ok){ console.error('share_links insert failed:', res.status, await res.text().catch(()=>'')); return null; }
@@ -1523,9 +1523,10 @@ async function loadShareLink(id){
 }
 async function updateShareLink(id, data){
   try{
+    const headers = { ...(await authedHeaders()), 'Content-Type':'application/json' };
     const res = await withRetry(()=> fetch(SUPABASE_URL + '/rest/v1/rpc/update_share_link', {
       method:'POST',
-      headers:{ ...SB_HEADERS, 'Content-Type':'application/json' },
+      headers,
       body: JSON.stringify({ link_id: id, new_data: data })
     }).then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r; }));
     return res.ok;
@@ -2411,6 +2412,87 @@ async function buildEmployeePacketPdf(pub, sen, photos=[]){
   return pdf.save();
 }
 
+/* ---- Official forms: fill the real IRS W-4 (2026) and USCIS I-9 with the employee's answers ---- */
+const EMPLOYER = { name:'Lion Security Services, LLC', address:'522 W Riverside Ave, Ste N, Spokane, WA 99201', ein:'41-4843490' };
+function mdy(ymdOrIso){
+  if(!ymdOrIso) return '';
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(ymdOrIso) ? (()=>{ const [y,m,dd]=ymdOrIso.split('-').map(Number); return new Date(y,m-1,dd); })() : new Date(ymdOrIso);
+  return isNaN(d) ? '' : `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
+}
+const amt = v => { const n = Number(v||0); return n ? n.toLocaleString('en-US',{maximumFractionDigits:0}) : ''; };
+
+async function fillOfficialW4(pub, sen){
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const src = await PDFDocument.load(await (await fetch('forms/fw4-2026.pdf')).arrayBuffer());
+  const form = src.getForm();   // pdf-lib drops the XFA layer here and keeps the regular form fields
+  const L = sen.legal||{}, A = sen.address||{}, w = sen.w4||{};
+  const T = (n,v) => { try{ form.getTextField('topmostSubform[0].Page1[0].'+n).setText(pdfSafe(v||'')); }catch(e){ console.warn('W-4 field', n, e.message); } };
+  const C = (n,on) => { try{ const cb = form.getCheckBox('topmostSubform[0].Page1[0].'+n); on ? cb.check() : cb.uncheck(); }catch(e){ console.warn('W-4 box', n, e.message); } };
+  T('Step1a[0].f1_01[0]', [L.first, L.middle ? L.middle+'.' : ''].filter(Boolean).join(' '));
+  T('Step1a[0].f1_02[0]', L.last);
+  T('Step1a[0].f1_03[0]', [A.street, A.apt].filter(Boolean).join(', '));
+  T('Step1a[0].f1_04[0]', `${A.city||''}, ${A.state||''} ${A.zip||''}`);
+  T('f1_05[0]', fmtSsn(sen.ssn));
+  C('c1_1[0]', w.filingStatus==='single'); C('c1_1[1]', w.filingStatus==='mfj'); C('c1_1[2]', w.filingStatus==='hoh');
+  if(w.exempt){ C('c1_3[0]', true); }
+  else{
+    C('c1_2[0]', !!w.multipleJobs);
+    const kids = (parseInt(w.kidsUnder17||0,10)||0)*W4_CHILD_AMOUNT, oth = (parseInt(w.otherDeps||0,10)||0)*W4_OTHER_DEP_AMOUNT;
+    T('Step3_ReadOrder[0].f1_06[0]', amt(kids)); T('Step3_ReadOrder[0].f1_07[0]', amt(oth));
+    T('f1_08[0]', amt(step3Total(w)));
+    T('f1_09[0]', amt(w.otherIncome)); T('f1_10[0]', amt(w.deductions)); T('f1_11[0]', amt(w.extraWithholding));
+  }
+  T('f1_12[0]', `${EMPLOYER.name}, ${EMPLOYER.address}`);
+  T('f1_13[0]', mdy(pub.startDate));
+  T('f1_14[0]', EMPLOYER.ein);
+  const helv = await src.embedFont(StandardFonts.Helvetica);
+  form.updateFieldAppearances(helv);
+  form.flatten();
+  const out = await PDFDocument.create();
+  const [p1] = await out.copyPages(src, [0]);
+  out.addPage(p1);
+  const ital = await out.embedFont(StandardFonts.HelveticaOblique), reg = await out.embedFont(StandardFonts.Helvetica);
+  const sig = pdfSafe((sen.attest && sen.attest.signedName) || pub.signedName || '');
+  p1.drawText(sig, { x:104, y:89, size:13, font:ital, color:rgb(.05,.1,.25) });
+  p1.drawText(mdy((sen.attest && sen.attest.signedAt) || pub.signedAt), { x:464, y:89, size:10, font:reg, color:rgb(.05,.1,.25) });
+  p1.drawText('Signed electronically through Lion Security onboarding', { x:200, y:100, size:6, font:ital, color:rgb(.4,.45,.5) });
+  return out.save();
+}
+
+async function fillOfficialI9(pub, sen){
+  const { PDFDocument, StandardFonts } = PDFLib;
+  const src = await PDFDocument.load(await (await fetch('forms/i-9.pdf')).arrayBuffer());
+  const form = src.getForm();
+  const L = sen.legal||{}, A = sen.address||{}, i9 = sen.i9||{};
+  const T = (n,v) => { try{ form.getTextField(n).setText(pdfSafe(v||'')); }catch(e){ console.warn('I-9 field', n, e.message); } };
+  const C = (n,on) => { try{ const cb = form.getCheckBox(n); on ? cb.check() : cb.uncheck(); }catch(e){ console.warn('I-9 box', n, e.message); } };
+  T('Last Name (Family Name)', L.last); T('First Name Given Name', L.first);
+  T('Employee Middle Initial (if any)', (L.middle||'').slice(0,1)); T('Employee Other Last Names Used (if any)', L.otherLast || 'N/A');
+  T('Address Street Number and Name', A.street); T('Apt Number (if any)', A.apt || 'N/A'); T('City or Town', A.city);
+  try{ const dd = form.getDropdown('State'); const st = (A.state||'').toUpperCase(); if(dd.getOptions().includes(st)) dd.select(st); }catch(e){}
+  T('ZIP Code', (A.zip||'').slice(0,5));
+  T('Date of Birth mmddyyyy', mdy(L.dob));
+  T('US Social Security Number', String(sen.ssn||'').replace(/\D/g,''));
+  T('Employees E-mail Address', pub.email); T('Telephone Number', pub.phone);
+  C('CB_1', i9.status==='citizen'); C('CB_2', i9.status==='national'); C('CB_3', i9.status==='lpr'); C('CB_4', i9.status==='alien');
+  if(i9.status==='lpr') T('3 A lawful permanent resident Enter USCIS or ANumber', i9.aNumber);
+  if(i9.status==='alien'){
+    T('Exp Date mmddyyyy', i9.expNA ? 'N/A' : mdy(i9.workAuthExp));
+    if(i9.idType==='a') T('USCIS ANumber', String(i9.aNumber||'').replace(/^A-?/i,'').slice(0,10));
+    if(i9.idType==='i94') T('Form I94 Admission Number', String(i9.i94||'').slice(0,11));
+    if(i9.idType==='pp') T('Foreign Passport Number and Country of IssuanceRow1', `${i9.passportNo||''} ${i9.passportCountry||''}`.trim());
+  }
+  T('Signature of Employee', ((sen.attest && sen.attest.signedName) || pub.signedName || '') + ' (e-signed)');
+  T("Today's Date mmddyyy", mdy((sen.attest && sen.attest.signedAt) || pub.signedAt));
+  // Section 2 stays blank for the employer to complete after seeing the originals — except who the employer is.
+  T('Employers Business or Org Name', EMPLOYER.name);
+  T('Employers Business or Org Address', EMPLOYER.address);
+  const helv = await src.embedFont(StandardFonts.Helvetica);
+  form.updateFieldAppearances(helv);
+  // All four pages stay (form, document lists, Supplements A and B) and Section 2 stays fillable.
+  return src.save();
+}
+
 
 /* ================= TEAM (owner side) ================= */
 let teamCache = null, legacyCache = null;
@@ -2629,7 +2711,7 @@ async function renderEmployeeFile(r, api){
       <div class="kv"><span class="k">Documents</span><span class="v">${esc(I9_DOCS[i9.docs]?.label||'—')}${i9.docOther?`<br>${esc(i9.docOther)}`:''}</span></div>
       ${thumbs(['idA_front','idA_back','idB_front','idB_back','idC_front','idX_1','idX_2','idX_3'])}
     </div>
-    <div class="gnote">Check the originals in person, then complete Section 2 on the official <a href="https://www.uscis.gov/i-9" target="_blank" rel="noopener">Form I-9</a> within 3 business days of their first day.</div>` : ''}
+    <div class="gnote">Check the originals in person, then complete Section 2 of their Form I-9 (button below) within 3 business days of their first day.</div>` : ''}
 
     <div class="gtitle">Signed</div>
     <div class="group">
@@ -2640,9 +2722,13 @@ async function renderEmployeeFile(r, api){
 
     <div class="stack" style="margin-top:16px">
       <button class="btn btn-primary btn-block" data-act="pdf" ${sen?'':'disabled'}>${icon('dl')}Download employee file (PDF)</button>
+      <div class="btnrow">
+        <button class="btn btn-secondary" data-act="w4" ${sen?'':'disabled'}>${icon('tax')}Form W-4</button>
+        <button class="btn btn-secondary" data-act="i9" ${sen?'':'disabled'}>${icon('id')}Form I-9</button>
+      </div>
       <button class="btn btn-danger btn-block" data-act="del">${icon('trash')}Delete employee and files</button>
     </div>
-    <div class="gnote">The PDF has their W-4 and I-9 answers, direct deposit, signed statements and every document photo. Store it somewhere private.</div>`);
+    <div class="gnote">The employee file has every answer, the signed statements and all document photos. Form W-4 and Form I-9 are the official government forms, already filled in and signed — give the W-4 to payroll, and finish Section 2 of the I-9 after you see their original documents. Store these privately.</div>`);
 
   api.body.querySelectorAll('.reveal').forEach(b=>b.addEventListener('click',()=>{
     const s = b.previousElementSibling; const showing = s.textContent === s.dataset.full;
@@ -2682,6 +2768,17 @@ async function renderEmployeeFile(r, api){
     }catch(e){ console.error(e); toast('Couldn\'t build the PDF.'); }
     pdfBtn.disabled = false; pdfBtn.innerHTML = orig;
   });
+  const official = (sel, fn, name) => {
+    const btn = api.body.querySelector(sel); if(!btn) return;
+    btn.addEventListener('click', async ()=>{
+      btn.disabled = true; const orig = btn.innerHTML; btn.textContent = 'Filling…';
+      try{ downloadBlob(await fn(d, sen), `${name}-${hireName(d).replace(/[^A-Za-z0-9]+/g,'-')}.pdf`, 'application/pdf'); }
+      catch(e){ console.error(e); toast('Couldn\'t fill the form.'); }
+      btn.disabled = false; btn.innerHTML = orig;
+    });
+  };
+  official('[data-act=w4]', fillOfficialW4, 'Form-W4');
+  official('[data-act=i9]', fillOfficialI9, 'Form-I9');
   armButton(api.body.querySelector('[data-act=del]'), 'Tap again — this deletes everything', ()=>deleteEmployee(r, api));
 }
 
