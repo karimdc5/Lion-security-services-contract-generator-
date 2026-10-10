@@ -1,0 +1,12 @@
+{
+  "name": "Lion Security",
+  "short_name": "Lion Security",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0E1F2E",
+  "theme_color": "#0E1F2E",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}
