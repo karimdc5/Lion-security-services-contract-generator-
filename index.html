@@ -842,7 +842,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
     <a class="item" href="https://dol.wa.gov/professional-licenses/security-guard-company/associate-new-security-guard-your-company" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-badge"/></svg></span><span class="main"><span class="t">Add a guard to our license</span><span class="s">WA DOL — do this for every new guard</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
     <a class="item" href="https://www.irs.gov/forms-pubs/about-form-w-4" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-tax"/></svg></span><span class="main"><span class="t">IRS Form W-4</span><span class="s">Official form and instructions</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
     <a class="item" href="https://www.uscis.gov/i-9" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-id"/></svg></span><span class="main"><span class="t">USCIS Form I-9</span><span class="s">You fill in Section 2 after seeing original IDs</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
-    <a class="item" href="https://secure.dshs.wa.gov/newhire/" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-user"/></svg></span><span class="main"><span class="t">Report a new hire (WA)</span><span class="s">Within 20 days of the start date</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
+    <a class="item" href="https://www.newhire.wa.gov" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-user"/></svg></span><span class="main"><span class="t">Report a new hire (WA)</span><span class="s">Within 20 days of hire · DCS Online through SecureAccess Washington</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
   </div>
 </section>
 
@@ -2117,8 +2117,17 @@ function openAgreementRecord(r){
     <div class="stack" style="margin-top:14px">
       ${r.link ? `<a class="btn btn-primary btn-block" href="${esc(r.link)}" target="_blank" rel="noopener">${icon('doc')}Open signed agreement</a>
       <button class="btn btn-secondary btn-block" data-act="copy">${icon('copy')}Copy link</button>` : ''}
-    </div>`, onMount(api){
+      ${r.id!=null ? `<button class="btn btn-danger btn-block" data-act="del">${icon('trash')}Delete this record</button>` : ''}
+    </div>
+    ${r.id!=null ? `<div class="gnote">Only for test or mistaken records. Deleting removes it from Records for both of you.</div>` : ''}`, onMount(api){
       const c = api.q('[data-act=copy]'); if(c) c.addEventListener('click', ()=>copyText(r.link, 'Link copied.'));
+      const del = api.q('[data-act=del]');
+      if(del) armButton(del, 'Tap again to delete', async ()=>{
+        try{ await rest(`signed_agreements?id=eq.${encodeURIComponent(r.id)}`, { method:'DELETE', headers:{ 'Prefer':'return=representation' } }).then(rows=>{ if(Array.isArray(rows) && !rows.length) throw new Error('not allowed'); }); }
+        catch(e){ toast('Couldn\'t delete. The database may need the latest update.'); return false; }
+        api.close(); toast('Record deleted.');
+        recCache.agr = recCache.agr.filter(x=>x!==r); $('cntAgr').textContent = `(${recCache.agr.length})`; renderRecords(); return true;
+      });
     }});
 }
 
@@ -2220,7 +2229,7 @@ const SLOT_LABELS = {
 const CHECKLIST = [
   { key:'i9',      title:'Saw their original ID documents in person', note:'Then fill out Section 2 of Form I-9. Due within 3 business days of their first day.' },
   { key:'dol',     title:'Added to our license with WA DOL', note:'SecureAccess Washington → Manage employees. Needs their guard license number.', noLicTitle:'Guard license application sent to WA DOL', noLicNote:'They need a license before they can work a post.' },
-  { key:'newhire', title:'Reported to Washington as a new hire', note:'Due within 20 days of their start date.' },
+  { key:'newhire', title:'Reported to Washington as a new hire', note:'Due within 20 days of hire. newhire.wa.gov → DCS Online.' },
   { key:'payroll', title:'Set up in payroll', note:'Enter their W-4 and direct deposit details.' },
   { key:'uniform', title:'Uniform shirt handed over', note:'' },
 ];
@@ -2459,7 +2468,7 @@ async function fillOfficialW4(pub, sen){
   return out.save();
 }
 
-async function fillOfficialI9(pub, sen){
+async function fillOfficialI9(pub, sen, s2){
   const { PDFDocument, StandardFonts } = PDFLib;
   const src = await PDFDocument.load(await (await fetch('forms/i-9.pdf')).arrayBuffer());
   const form = src.getForm();
@@ -2484,11 +2493,31 @@ async function fillOfficialI9(pub, sen){
   }
   T('Signature of Employee', ((sen.attest && sen.attest.signedName) || pub.signedName || '') + ' (e-signed)');
   T("Today's Date mmddyyy", mdy((sen.attest && sen.attest.signedAt) || pub.signedAt));
-  // Section 2 stays blank for the employer to complete after seeing the originals — except who the employer is.
   T('Employers Business or Org Name', EMPLOYER.name);
   T('Employers Business or Org Address', EMPLOYER.address);
+  // Section 2 — filled only after an owner has examined the original documents in person
+  let listATitle = '';
+  if(s2){
+    if(s2.list==='A'){
+      listATitle = s2.a.title;
+      T('Issuing Authority 1', s2.a.auth); T('Document Number 0 (if any)', s2.a.num); T('Expiration Date if any', s2.a.exp ? mdy(s2.a.exp) : 'N/A');
+    } else {
+      T('List B Document 1 Title', s2.b.title); T('List B Issuing Authority 1', s2.b.auth); T('List B Document Number 1', s2.b.num); T('List B Expiration Date 1', s2.b.exp ? mdy(s2.b.exp) : 'N/A');
+      T('List C Document Title 1', s2.c.title); T('List C Issuing Authority 1', s2.c.auth); T('List C Document Number 1', s2.c.num); T('List C Expiration Date 1', s2.c.exp ? mdy(s2.c.exp) : 'N/A');
+    }
+    T('Additional Information', s2.additional || '');
+    T('FirstDayEmployed mmddyyyy', mdy(s2.firstDay));
+    T('Last Name First Name and Title of Employer or Authorized Representative', `${s2.repLast||''}, ${s2.repFirst||''} — ${s2.repTitle||''}`);
+    T('Signature of Employer or AR', (s2.signature||'') + ' (e-signed)');
+    T('S2 Todays Date mmddyyyy', mdy(s2.completedAt));
+  }
   const helv = await src.embedFont(StandardFonts.Helvetica);
   form.updateFieldAppearances(helv);
+  // "Document Title 1" is shared with Supplement B on page 4, so List A's title is drawn instead of typed into that field
+  if(listATitle){
+    const t = pdfSafe(listATitle), size = Math.max(5.5, Math.min(9, 9 * 128 / helv.widthOfTextAtSize(t, 9)));
+    src.getPage(0).drawText(t, { x:130, y:347, size, font:helv });
+  }
   // All four pages stay (form, document lists, Supplements A and B) and Section 2 stays fillable.
   return src.save();
 }
@@ -2638,6 +2667,8 @@ async function renderEmployeeFile(r, api){
   try{ sen = await fetchSensitive(r.id); }catch(e){ senErr = e; }
   const files = d.files || {};
   try{ urls = await signedUrls(Object.values(files).map(f=>f.path)); }catch(e){ console.warn('signed urls', e); }
+  let s2 = null;
+  try{ const rows = await rest(`app_settings?key=eq.${encodeURIComponent('i9s2:'+r.id)}&select=value`); s2 = rows && rows[0] ? rows[0].value : null; }catch(e){}
   const L = sen?.legal||{}, A = sen?.address||{}, E = sen?.emergency||{}, w = sen?.w4||{}, i9 = sen?.i9||{}, lic = sen?.license||{}, bank = sen?.bank||{};
   const list = d.checklist || {};
   const hasLic = d.licenseHas === 'yes';
@@ -2711,7 +2742,14 @@ async function renderEmployeeFile(r, api){
       <div class="kv"><span class="k">Documents</span><span class="v">${esc(I9_DOCS[i9.docs]?.label||'—')}${i9.docOther?`<br>${esc(i9.docOther)}`:''}</span></div>
       ${thumbs(['idA_front','idA_back','idB_front','idB_back','idC_front','idX_1','idX_2','idX_3'])}
     </div>
-    <div class="gnote">Check the originals in person, then complete Section 2 of their Form I-9 (button below) within 3 business days of their first day.</div>` : ''}
+    <div class="gtitle">Form I-9, Section 2 <small>Your part</small></div>
+    <div class="group">
+      ${s2 ? `<div class="kv"><span class="k">Completed</span><span class="v"><span class="chip ok">${esc(fmtWhen(s2.completedAt))}</span></span></div>
+        <div class="kv"><span class="k">Documents</span><span class="v">${esc(s2.list==='A' ? s2.a.title : `${s2.b.title} + ${s2.c.title}`)}</span></div>
+        <div class="kv"><span class="k">Signed by</span><span class="v">${esc(s2.signature)}</span></div>`
+      : `<div class="gpad" style="font-size:14.5px;color:var(--t2)">Look at their original documents in person, then fill this in. Due within 3 business days of their first day.</div>`}
+    </div>
+    <button class="btn ${s2?'btn-secondary':'btn-gold'} btn-block" data-act="s2" style="margin-top:10px">${icon('id')}${s2 ? 'Edit Section 2' : 'Fill in Section 2'}</button>` : ''}
 
     <div class="gtitle">Signed</div>
     <div class="group">
@@ -2778,7 +2816,9 @@ async function renderEmployeeFile(r, api){
     });
   };
   official('[data-act=w4]', fillOfficialW4, 'Form-W4');
-  official('[data-act=i9]', fillOfficialI9, 'Form-I9');
+  official('[data-act=i9]', (dd, ss)=>fillOfficialI9(dd, ss, s2), 'Form-I9');
+  const s2Btn = api.body.querySelector('[data-act=s2]');
+  if(s2Btn) s2Btn.addEventListener('click', ()=>openSection2(r, sen, s2, ()=>renderEmployeeFile(r, api)));
   armButton(api.body.querySelector('[data-act=del]'), 'Tap again — this deletes everything', ()=>deleteEmployee(r, api));
 }
 
@@ -2794,6 +2834,86 @@ async function deleteEmployee(r, api){
   api.close(); toast('Deleted.');
   teamCache = (teamCache||[]).filter(x=>x.id!==r.id); renderTeam();
   return true;
+}
+
+
+// ---- Form I-9 Section 2, filled in by an owner after seeing the original documents ----
+const S2_DEFAULTS = {
+  passport:  { list:'A', a:{ title:'U.S. Passport', auth:'U.S. Department of State' } },
+  greencard: { list:'A', a:{ title:'Permanent Resident Card (Form I-551)', auth:'USCIS' } },
+  ead:       { list:'A', a:{ title:'Employment Authorization Document (Form I-766)', auth:'USCIS' } },
+  dl_ss:     { list:'BC', b:{ title:"Driver's License" }, c:{ title:'Social Security Card', auth:'Social Security Administration' } },
+  dl_birth:  { list:'BC', b:{ title:"Driver's License" }, c:{ title:'Birth Certificate' } },
+  other:     { list:'BC' },
+};
+function openSection2(r, sen, existing, onSaved){
+  const d = r.data || {}, i9 = sen?.i9 || {}, st = (sen?.address?.state || 'WA').toUpperCase();
+  const def = S2_DEFAULTS[i9.docs] || { list:'BC' };
+  const v = existing ? JSON.parse(JSON.stringify(existing)) : {
+    list: def.list, a: Object.assign({title:'',auth:'',num:'',exp:''}, def.a||{}),
+    b: Object.assign({title:'',auth: st==='WA' ? 'Washington State DOL' : `${st} DMV`, num:'',exp:''}, def.b||{}),
+    c: Object.assign({title:'',auth:'',num:'',exp:''}, def.c||{}),
+    firstDay: d.startDate || '', additional:'',
+    repFirst: ($('coSigner').value||'').trim().split(/\s+/)[0] || '', repLast: ($('coSigner').value||'').trim().split(/\s+/).slice(1).join(' '),
+    repTitle: $('coTitle').value || '', signature:'' };
+  const docFields = (k, label) => `
+    <div class="gtitle">${label}</div>
+    <div class="group">
+      <div class="field"><label>Document title</label><input data-s="${k}.title" value="${esc(v[k].title)}"></div>
+      <div class="field"><label>Issuing authority</label><input data-s="${k}.auth" value="${esc(v[k].auth)}"></div>
+      <div class="cols2">
+        <div class="field"><label>Document number</label><input data-s="${k}.num" value="${esc(v[k].num)}" autocapitalize="characters" autocorrect="off" spellcheck="false"></div>
+        <div class="field"><label>Expires <span class="opt">(blank = none)</span></label><input type="date" data-s="${k}.exp" value="${esc(v[k].exp)}"></div>
+      </div>
+    </div>`;
+  const draw = (api) => {
+    api.setBody(`
+      <div class="notice warn" style="margin-top:4px">${icon('id')}<div>Have the <b>original</b> documents in your hand. Copies and photos don't count for Section 2.</div></div>
+      <div class="gtitle">They're showing</div>
+      <div class="seg" id="s2List">
+        <button type="button" data-l="A" aria-selected="${v.list==='A'}">One List A document</button>
+        <button type="button" data-l="BC" aria-selected="${v.list!=='A'}">List B + List C</button>
+      </div>
+      ${v.list==='A' ? docFields('a','List A document') : docFields('b','List B document (identity)') + docFields('c','List C document (work authorization)')}
+      <div class="gtitle">Employer certification</div>
+      <div class="group">
+        <div class="field"><label>Their first day of work</label><input type="date" data-s="firstDay" value="${esc(v.firstDay)}"></div>
+        <div class="cols2">
+          <div class="field"><label>Your first name</label><input data-s="repFirst" value="${esc(v.repFirst)}"></div>
+          <div class="field"><label>Your last name</label><input data-s="repLast" value="${esc(v.repLast)}"></div>
+        </div>
+        <div class="field"><label>Your title</label><input data-s="repTitle" value="${esc(v.repTitle)}" placeholder="e.g. COO"></div>
+        <div class="field"><label>Additional information <span class="opt">(optional)</span></label><input data-s="additional" value="${esc(v.additional)}"></div>
+        <label class="check"><input type="checkbox" id="s2Exam"><span>I examined the original documents in person. They appear genuine and relate to this employee, and to the best of my knowledge the employee is authorized to work in the United States.<small>This is the Section 2 certification, signed under penalty of perjury.</small></span></label>
+        <div class="field"><label>Type your full name to sign</label><input class="sigfield" data-s="signature" value="${esc(v.signature)}" placeholder="Full name"></div>
+      </div>
+      <button class="btn btn-gold btn-block" id="s2Save" style="margin-top:14px">${icon('pen')}Sign and download Form I-9</button>
+      <div class="gnote">Saves to their file, checks off “Saw their original ID documents” on the hiring checklist, and downloads the completed official form.</div>`);
+    api.body.querySelectorAll('[data-s]').forEach(el=>el.addEventListener('input', ()=>setK(v, el.dataset.s, el.value)));
+    api.body.querySelectorAll('#s2List button').forEach(b=>b.addEventListener('click', ()=>{ v.list = b.dataset.l; draw(api); }));
+    api.q('#s2Save').addEventListener('click', async ()=>{
+      const doc = v.list==='A' ? [v.a] : [v.b, v.c];
+      if(doc.some(x=>!x.title || !x.auth || !x.num)){ toast('Fill in the title, issuing authority and number for each document.'); return; }
+      if(!v.firstDay || !v.repFirst || !v.repLast || !v.repTitle){ toast('Add the first day of work and your name and title.'); return; }
+      if(!api.q('#s2Exam').checked){ toast('Confirm you examined the originals in person.'); return; }
+      if(String(v.signature).trim().length < 3){ toast('Type your name to sign.'); return; }
+      const btn = api.q('#s2Save'); btn.disabled = true; btn.textContent = 'Saving…';
+      v.completedAt = new Date().toISOString(); v.by = currentSession?.user?.email || '';
+      try{
+        await rest('app_settings?on_conflict=key', { method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify({ key:'i9s2:'+r.id, value:v, updated_at:v.completedAt }) });
+        const fresh = await loadShareLink(r.id).catch(()=>null);
+        const data = (fresh && fresh.data) ? fresh.data : r.data;
+        data.checklist = data.checklist || {};
+        if(!(data.checklist.i9 && data.checklist.i9.done)) data.checklist.i9 = { done:true, at:v.completedAt, by:v.by };
+        await updateShareLink(r.id, data); r.data = data;
+        downloadBlob(await fillOfficialI9(data, sen, v), `Form-I9-${hireName(data).replace(/[^A-Za-z0-9]+/g,'-')}.pdf`, 'application/pdf');
+        toast('Section 2 saved. Form I-9 downloaded.');
+        api.close(); renderTeam(); onSaved && onSaved();
+      }catch(e){ console.error(e); toast('Couldn\'t save. Check your connection.'); btn.disabled=false; btn.textContent='Sign and download Form I-9'; }
+    });
+  };
+  openSheet({ title:'Form I-9, Section 2', sub: esc(hireName(d)) + ' · employer review', onMount: draw });
 }
 
 
