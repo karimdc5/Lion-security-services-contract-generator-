@@ -842,7 +842,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
     <a class="item" href="https://dol.wa.gov/professional-licenses/security-guard-company/associate-new-security-guard-your-company" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-badge"/></svg></span><span class="main"><span class="t">Add a guard to our license</span><span class="s">WA DOL — do this for every new guard</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
     <a class="item" href="https://www.irs.gov/forms-pubs/about-form-w-4" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-tax"/></svg></span><span class="main"><span class="t">IRS Form W-4</span><span class="s">Official form and instructions</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
     <a class="item" href="https://www.uscis.gov/i-9" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-id"/></svg></span><span class="main"><span class="t">USCIS Form I-9</span><span class="s">You fill in Section 2 after seeing original IDs</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
-    <a class="item" href="https://www.newhire.wa.gov" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-user"/></svg></span><span class="main"><span class="t">Report a new hire (WA)</span><span class="s">Within 20 days of hire · DCS Online through SecureAccess Washington</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
+    <a class="item" href="https://www.dshs.wa.gov/family-food-and-housing-services/child-support/employer-resources/new-hire-reporting" target="_blank" rel="noopener"><span class="lead"><svg><use href="#i-user"/></svg></span><span class="main"><span class="t">Report a new hire (WA)</span><span class="s">Within 20 days of hire · DCS Online through SecureAccess Washington</span></span><svg class="chev ext"><use href="#i-ext"/></svg></a>
   </div>
 </section>
 
@@ -2105,7 +2105,15 @@ function renderRecords(){
   }
 }
 
+// Older records saved links to wherever the app was hosted at the time (e.g. an old Netlify site).
+// The agreement itself lives in the link's #hash, so point it at this app instead.
+function liveLink(link){
+  if(!link) return '';
+  const i = link.indexOf('#');
+  return i >= 0 ? baseUrl() + link.slice(i) : link;
+}
 function openAgreementRecord(r){
+  r = Object.assign({}, r, { link: liveLink(r.link) });
   openSheet({ title: r.org || 'Agreement', sub: esc(r.agreement_no||''), html: `
     <div class="group" style="margin-top:8px">
       <div class="kv"><span class="k">Signed by</span><span class="v">${esc(r.signer_name||'—')}</span></div>
@@ -2126,7 +2134,7 @@ function openAgreementRecord(r){
         try{ await rest(`signed_agreements?id=eq.${encodeURIComponent(r.id)}`, { method:'DELETE', headers:{ 'Prefer':'return=representation' } }).then(rows=>{ if(Array.isArray(rows) && !rows.length) throw new Error('not allowed'); }); }
         catch(e){ toast('Couldn\'t delete. The database may need the latest update.'); return false; }
         api.close(); toast('Record deleted.');
-        recCache.agr = recCache.agr.filter(x=>x!==r); $('cntAgr').textContent = `(${recCache.agr.length})`; renderRecords(); return true;
+        recCache.agr = recCache.agr.filter(x=>x.id!==r.id); $('cntAgr').textContent = `(${recCache.agr.length})`; renderRecords(); return true;
       });
     }});
 }
@@ -2229,7 +2237,7 @@ const SLOT_LABELS = {
 const CHECKLIST = [
   { key:'i9',      title:'Saw their original ID documents in person', note:'Then fill out Section 2 of Form I-9. Due within 3 business days of their first day.' },
   { key:'dol',     title:'Added to our license with WA DOL', note:'SecureAccess Washington → Manage employees. Needs their guard license number.', noLicTitle:'Guard license application sent to WA DOL', noLicNote:'They need a license before they can work a post.' },
-  { key:'newhire', title:'Reported to Washington as a new hire', note:'Due within 20 days of hire. newhire.wa.gov → DCS Online.' },
+  { key:'newhire', title:'Reported to Washington as a new hire', note:'Due within 20 days of hire. Team tab → Report a new hire.' },
   { key:'payroll', title:'Set up in payroll', note:'Enter their W-4 and direct deposit details.' },
   { key:'uniform', title:'Uniform shirt handed over', note:'' },
 ];
