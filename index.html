@@ -829,7 +829,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   </div>
   <div id="dbNotice"></div>
   <button class="btn btn-primary btn-block" id="btnNewHire" style="margin-top:6px"><svg><use href="#i-plus"/></svg>Onboard a new hire</button>
-  <div class="gnote" style="margin-top:9px">Makes a private link you text to the new hire. They fill in their W-4, I-9, guard license, ID photos and direct deposit on their phone.</div>
+  <div class="gnote" style="margin-top:9px">Makes a private link you text to the new hire. They fill in their I-9, guard license and ID photos on their phone. Their W-4 and direct deposit go into your payroll service, not this app.</div>
   <div class="gtitle"><span>W-2 employees</span><small id="cntEmp"></small></div>
   <div class="group list" id="empList"></div>
   <div id="legacyWrap" hidden>
@@ -2238,8 +2238,8 @@ const SLOT_LABELS = {
 const CHECKLIST = [
   { key:'i9',      title:'Saw their original ID documents in person', note:'Then fill out Section 2 of Form I-9. Due within 3 business days of their first day.' },
   { key:'dol',     title:'Added to our license with WA DOL', note:'SecureAccess Washington → Manage employees. Needs their guard license number.', noLicTitle:'Guard license application sent to WA DOL', noLicNote:'They need a license before they can work a post.' },
-  { key:'newhire', title:'Reported to Washington as a new hire', note:'Due within 20 days of hire. Team tab → Report a new hire.' },
-  { key:'payroll', title:'Set up in payroll', note:'Enter their W-4 and direct deposit details.' },
+  { key:'payroll', title:'Added in payroll', note:'Invite them in your payroll service. They enter their own W-4 and direct deposit there.' },
+  { key:'newhire', title:'Reported to Washington as a new hire', note:'Due within 20 days of hire. Your payroll service usually files this once they are added; check it is on.' },
   { key:'uniform', title:'Uniform shirt handed over', note:'' },
 ];
 
@@ -2357,6 +2357,7 @@ async function buildEmployeePacketPdf(pub, sen, photos=[]){
   row('Home address', [A.street, A.apt].filter(Boolean).join(', ') + `, ${A.city||''}, ${A.state||''} ${A.zip||''}`);
   row('Emergency contact', [E.name, E.relation ? `(${E.relation})` : '', fmtPhone(E.phone)].filter(Boolean).join(' '));
 
+  if(sen.w4 || sen.ssn){
   section('Form W-4 — federal withholding');
   row('Social Security number', fmtSsn(sen.ssn));
   if(w4.exempt){ row('Withholding', 'Claims exemption from withholding (writes "Exempt" on Form W-4)'); }
@@ -2367,6 +2368,7 @@ async function buildEmployeePacketPdf(pub, sen, photos=[]){
     row('Step 4(a) other income', dollars(w4.otherIncome));
     row('Step 4(b) deductions', dollars(w4.deductions));
     row('Step 4(c) extra withholding', dollars(w4.extraWithholding) + ' per pay period');
+  }
   }
 
   section('Form I-9 — Section 1 (employee)');
@@ -2386,7 +2388,8 @@ async function buildEmployeePacketPdf(pub, sen, photos=[]){
   else row('Status', 'No license yet — company to help them apply before they work a post');
 
   section('Pay');
-  if(pub.ddMethod==='direct'){
+  if(!pub.ddMethod) row('W-4 and direct deposit', 'Entered by the employee in the company payroll service');
+  else if(pub.ddMethod==='direct'){
     row('Method', 'Direct deposit');
     row('Bank', bank.name); row('Routing number', bank.routing); row('Account number', bank.account);
     row('Account type', bank.type==='savings' ? 'Savings' : 'Checking');
@@ -2394,7 +2397,7 @@ async function buildEmployeePacketPdf(pub, sen, photos=[]){
 
   section('Signed statements');
   const st = [];
-  st.push('Form W-4: "Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete."');
+  if(sen.w4 || sen.ssn) st.push('Form W-4: "Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete."');
   st.push('Form I-9: "I am aware that federal law provides for imprisonment and/or fines for false statements, or the use of false documents, in connection with the completion of this form. I attest, under penalty of perjury, that this information, including my selection of the box attesting to my citizenship/immigration status, is true and correct."');
   if(pub.ddMethod==='direct') st.push(`Direct deposit: I authorize ${COMPANY} to deposit my pay into the account above and, if a deposit is made in error, to correct it. This stays in effect until I tell the company in writing to change or stop it.`);
   st.push(`Uniform: I received one ${COMPANY} uniform shirt. It belongs to the company and I will return it when I leave. If it is lost or damaged beyond normal wear, I agree to pay the replacement cost of ${money(pub.uniformCost)}. Any payroll deduction for this will only be made with my separate written OK at that time and will never take my pay below minimum wage.`);
@@ -2622,8 +2625,8 @@ $('btnNewHire').addEventListener('click', ()=>{
         const id = await saveShareLink(HIRE_KIND, data);
         if(!id){ b.disabled=false; b.textContent='Make onboarding link'; toast('Couldn\'t save. Check your connection.'); return; }
         api.close();
-        showLinkSheet({ title:'Send to ' + label.split(' ')[0], sub:'W-4, I-9, guard license, ID photos and direct deposit', url: baseUrl() + '#hire=' + id,
-          smsText:`Hi ${label.split(' ')[0]}, welcome to ${COMPANY}. Please fill out your new-hire paperwork here (about 10 minutes):` });
+        showLinkSheet({ title:'Send to ' + label.split(' ')[0], sub:'I-9, guard license and ID photos', url: baseUrl() + '#hire=' + id,
+          smsText:`Hi ${label.split(' ')[0]}, welcome to ${COMPANY}. Please fill out your new-hire paperwork here (about 5 minutes):` });
         loadTeam(true);
       });
     }});
@@ -2722,7 +2725,8 @@ async function renderEmployeeFile(r, api){
 
     <div class="gtitle">Pay</div>
     <div class="group">
-      <div class="kv"><span class="k">Method</span><span class="v">${d.ddMethod==='direct'?'Direct deposit':'Paper check'}</span></div>
+      ${!d.ddMethod ? `<div class="kv"><span class="k">W-4 and direct deposit</span><span class="v">In your payroll service</span></div>` : ''}
+      ${d.ddMethod ? `<div class="kv"><span class="k">Method</span><span class="v">${d.ddMethod==='direct'?'Direct deposit':'Paper check'}</span></div>` : ''}
       ${d.ddMethod==='direct' ? `
         <div class="kv"><span class="k">Bank</span><span class="v">${esc(d.bankName||bank.name||'—')}</span></div>
         <div class="kv"><span class="k">Routing</span><span class="v mono">${sen ? reveal(bank.routing, '•••••' + String(bank.routing||'').slice(-4)) : '—'}</span></div>
@@ -2732,7 +2736,7 @@ async function renderEmployeeFile(r, api){
     </div>
 
     ${sen ? `
-    <div class="gtitle">Form W-4</div>
+    ${(sen.w4 || sen.ssn) ? `<div class="gtitle">Form W-4 <small>Collected before payroll moved to a payroll service</small></div>
     <div class="group">
       <div class="kv"><span class="k">SSN</span><span class="v mono">${reveal(fmtSsn(sen.ssn), maskSsn(sen.ssn))}</span></div>
       ${w.exempt ? `<div class="kv"><span class="k">Withholding</span><span class="v">Exempt</span></div>` : `
@@ -2740,7 +2744,7 @@ async function renderEmployeeFile(r, api){
       <div class="kv"><span class="k">Step 2(c) two jobs</span><span class="v">${w.multipleJobs?'Checked':'No'}</span></div>
       <div class="kv"><span class="k">Step 3 dependents</span><span class="v">${dollars(step3Total(w))}</span></div>
       <div class="kv"><span class="k">Step 4 (a) / (b) / (c)</span><span class="v">${dollars(w.otherIncome)} / ${dollars(w.deductions)} / ${dollars(w.extraWithholding)}</span></div>`}
-    </div>
+    </div>` : ''}
     <div class="gtitle">Form I-9, Section 1</div>
     <div class="group">
       <div class="kv"><span class="k">Attests they are</span><span class="v">${esc(I9_STATUS[i9.status]||'—')}</span></div>
@@ -2769,13 +2773,13 @@ async function renderEmployeeFile(r, api){
 
     <div class="stack" style="margin-top:16px">
       <button class="btn btn-primary btn-block" data-act="pdf" ${sen?'':'disabled'}>${icon('dl')}Download employee file (PDF)</button>
-      <div class="btnrow">
-        <button class="btn btn-secondary" data-act="w4" ${sen?'':'disabled'}>${icon('tax')}Form W-4</button>
-        <button class="btn btn-secondary" data-act="i9" ${sen?'':'disabled'}>${icon('id')}Form I-9</button>
-      </div>
+      ${(sen && (sen.w4 || sen.ssn)) ? `<div class="btnrow">
+        <button class="btn btn-secondary" data-act="w4">${icon('tax')}Form W-4</button>
+        <button class="btn btn-secondary" data-act="i9">${icon('id')}Form I-9</button>
+      </div>` : `<button class="btn btn-secondary btn-block" data-act="i9" ${sen?'':'disabled'}>${icon('id')}Form I-9</button>`}
       <button class="btn btn-danger btn-block" data-act="del">${icon('trash')}Delete employee and files</button>
     </div>
-    <div class="gnote">The employee file has every answer, the signed statements and all document photos. Form W-4 and Form I-9 are the official government forms, already filled in and signed — give the W-4 to payroll, and finish Section 2 of the I-9 after you see their original documents. Store these privately.</div>`);
+    <div class="gnote">The employee file has every answer, the signed statements and all document photos. Form I-9 is the official government form, already filled in and signed. Finish Section 2 after you see their original documents, and store it privately. Their W-4 and direct deposit live in your payroll service.</div>`);
 
   api.body.querySelectorAll('.reveal').forEach(b=>b.addEventListener('click',()=>{
     const s = b.previousElementSibling; const showing = s.textContent === s.dataset.full;
@@ -2931,10 +2935,8 @@ const HIRE = { id:null, pub:null, f:{}, files:{}, previews:{}, step:0, busy:0 };
 const HIRE_STEPS = [
   { key:'welcome', title:'Welcome' },
   { key:'about',   title:'About you' },
-  { key:'w4',      title:'Tax withholding' },
   { key:'i9',      title:'Work eligibility' },
   { key:'license', title:'Guard license' },
-  { key:'pay',     title:'Getting paid' },
   { key:'agree',   title:'Uniform and handbook' },
   { key:'review',  title:'Review and sign' },
 ];
@@ -2950,7 +2952,7 @@ function hireDraftKey(){ return 'lionHire:' + HIRE.id; }
 function saveHireDraft(){
   const f = JSON.parse(JSON.stringify(HIRE.f));
   NO_DRAFT_KEYS.forEach(k=>delK(f,k));
-  localSet(hireDraftKey(), { f, files: HIRE.files, step: HIRE.step, at: Date.now() });
+  localSet(hireDraftKey(), { f, files: HIRE.files, step: HIRE.step, at: Date.now(), v: 3 });
 }
 
 // ---- small template helpers ----
@@ -2995,13 +2997,12 @@ function hireStepHtml(key){
       ${HIRE.pub.startDate?`<div class="kv"><span class="k">Start date</span><span class="v">${esc(fmtLongDate(HIRE.pub.startDate))}</span></div>`:''}
       ${HIRE.pub.payRate?`<div class="kv"><span class="k">Pay</span><span class="v">$${esc(HIRE.pub.payRate)}/hour, paid every two weeks</span></div>`:''}
     </div>
-    <div class="gtitle">Have these ready <small>About 10 minutes</small></div>
+    <div class="gtitle">Have these ready <small>About 5 minutes</small></div>
     <div class="group"><ul class="need">
-      <li>${icon('tax')}<span>Your Social Security number</span></li>
       <li>${icon('id')}<span>Your ID documents for Form I-9, for example a driver's license plus a Social Security card, or a U.S. passport</span></li>
       <li>${icon('badge')}<span>Your Washington security guard license, if you have one</span></li>
-      <li>${icon('bank')}<span>Your bank's direct deposit form. In most bank apps it's under Account → Direct deposit</span></li>
     </ul></div>
+    <div class="notice info">${icon('bank')}<div>Your tax withholding (Form W-4) and direct deposit are set up separately in our payroll service. You'll get an email invite from them to enter those yourself.</div></div>
     <div class="notice info">${icon('lock')}<div>Everything you enter is sent over an encrypted connection and only the company owners can see it. Your progress saves on this phone, so you can stop and come back.</div></div>`;
 
   case 'about': return `
@@ -3027,36 +3028,6 @@ function hireStepHtml(key){
       ${hField('emergency.name','Name')}
       <div class="cols2">${hField('emergency.relation','Relationship',{ph:'e.g. Brother'})}${hField('emergency.phone','Phone',{type:'tel',inputmode:'tel'})}</div>
     </div>`;
-
-  case 'w4': {
-    const ex = !!hv('w4.exempt');
-    return `
-    <div class="pagehead"><div><h1>Form W-4</h1><p>This tells us how much federal income tax to hold from each paycheck. Washington has no state income tax.</p></div></div>
-    <div class="group">${hField('ssn','Social Security number',{inputmode:'numeric',ph:'123-45-6789',ac:'off',max:11})}</div>
-    <div class="gtitle">Step 1(c) — filing status</div>
-    <div class="group">${hChoices('w4.filingStatus',[
-      {v:'single',label:FILING_STATUS.single},
-      {v:'mfj',label:FILING_STATUS.mfj},
-      {v:'hoh',label:FILING_STATUS.hoh,small:'Only if you are unmarried and pay more than half the cost of keeping up a home for yourself and a qualifying person.'}],false)}</div>
-    <div class="gtitle">Exemption</div>
-    <div class="group">${hSwitch('w4.exempt','Claim exemption from withholding','Only if you owed no federal income tax last year and expect to owe none this year. You must file a new W-4 by February 15 next year to keep it.', true)}</div>
-    ${ex ? `<div class="notice warn">${icon('info')}<div>With exemption on, no federal income tax is withheld. Social Security and Medicare are still withheld.</div></div>` : `
-    <div class="gtitle">Step 2 — multiple jobs</div>
-    <div class="group">${hSwitch('w4.multipleJobs','Two jobs total','Turn on if you have exactly two jobs at the same time, or you are married filing jointly and your spouse also works. Do the same on the other job\'s W-4.')}</div>
-    <div class="gtitle">Step 3 — dependents <small>If your income is $200,000 or less ($400,000 married filing jointly)</small></div>
-    <div class="group">
-      <div class="cols2">${hField('w4.kidsUnder17','Children under 17',{type:'number',inputmode:'numeric',ph:'0'})}${hField('w4.otherDeps','Other dependents',{type:'number',inputmode:'numeric',ph:'0'})}</div>
-      ${hField('w4.otherCredits','Other tax credits',{type:'number',inputmode:'decimal',ph:'$0',optional:1,hint:'For example education credits. Most people leave this blank.'})}
-      <div class="kv"><span class="k">Step 3 total</span><span class="v" id="step3Total">${dollars(step3Total(HIRE.f.w4||{}))}</span></div>
-    </div>
-    <div class="gtitle">Step 4 — other adjustments <small>Optional</small></div>
-    <div class="group">
-      ${hField('w4.otherIncome','Other income for the year, not from jobs',{type:'number',inputmode:'decimal',ph:'$0',optional:1})}
-      ${hField('w4.deductions','Deductions beyond the standard deduction',{type:'number',inputmode:'decimal',ph:'$0',optional:1})}
-      ${hField('w4.extraWithholding','Extra tax to withhold each paycheck',{type:'number',inputmode:'decimal',ph:'$0',optional:1})}
-    </div>
-    <div class="gnote">Not sure? Leave Step 4 blank. The <a href="https://apps.irs.gov/app/tax-withholding-estimator" target="_blank" rel="noopener">IRS withholding estimator</a> gives the most accurate answer.</div>`}`;
-  }
 
   case 'i9': {
     const st = hv('i9.status'), docs = hv('i9.docs');
@@ -3101,25 +3072,6 @@ function hireStepHtml(key){
     ${has==='no' ? `<div class="notice info">${icon('badge')}<div>No problem. ${COMPANY} will walk you through applying. You'll need the license before you can work a post.</div></div>` : ''}`;
   }
 
-  case 'pay': {
-    const m = hv('ddMethod');
-    return `
-    <div class="pagehead"><div><h1>Getting paid</h1><p>You're paid every two weeks${HIRE.pub.payRate?` at $${esc(HIRE.pub.payRate)} an hour`:''}. Taxes are taken out and you get a pay stub each time.</p></div></div>
-    <div class="group">${hChoices('ddMethod',[{v:'direct',label:'Direct deposit',small:'Recommended. Money lands in your account on payday.'},{v:'check',label:'Paper check for now',small:'You can switch to direct deposit any time.'}])}</div>
-    ${m==='direct' ? `
-      <div class="gtitle">Bank account</div>
-      <div class="group">
-        ${hField('bank.name','Bank name',{ph:'e.g. BECU'})}
-        ${hField('bank.routing','Routing number',{inputmode:'numeric',max:9,ph:'9 digits',nocorrect:1})}
-        <div class="cols2">${hField('bank.account','Account number',{inputmode:'numeric',nocorrect:1})}${hField('bank.account2','Account number again',{inputmode:'numeric',nocorrect:1})}</div>
-        <div class="field"><label>Account type</label>
-          <div class="seg">${[['checking','Checking'],['savings','Savings']].map(([v,l])=>`<label><input type="radio" name="bank.type" value="${v}" data-k="bank.type">${l}</label>`).join('')}</div></div>
-      </div>
-      <div class="gtitle">Proof of account</div>
-      <div class="group">${hSlots([['bank_doc','Direct deposit form or screenshot',true,'image/*,application/pdf']])}</div>
-      <div class="gnote">In your bank app, look for <b>Direct deposit</b> or <b>Account details</b> and download the form, or screenshot the screen that shows your name, routing number and account number together. You can cover your balance.</div>` : ''}`;
-  }
-
   case 'agree': return `
     <div class="pagehead"><div><h1>Uniform and handbook</h1><p>Two quick acknowledgments.</p></div></div>
     <div class="gtitle">Uniform</div>
@@ -3139,7 +3091,7 @@ function hireStepHtml(key){
 }
 
 function hireReviewHtml(){
-  const f = HIRE.f, L=f.legal||{}, A=f.address||{}, E=f.emergency||{}, w=f.w4||{}, i9=f.i9||{}, lic=f.license||{}, b=f.bank||{};
+  const f = HIRE.f, L=f.legal||{}, A=f.address||{}, E=f.emergency||{}, i9=f.i9||{}, lic=f.license||{};
   const sec = (title, step, rows) => `<div class="gtitle"><span>${title}</span><button class="textbtn" type="button" data-goto="${step}" style="font-size:14px;padding:0">Edit</button></div>
     <div class="group">${rows.map(([k,v])=>`<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}</div>`;
   const fileCount = Object.keys(HIRE.files).length;
@@ -3147,17 +3099,11 @@ function hireReviewHtml(){
     <div class="pagehead"><div><h1>Review and sign</h1><p>Check everything once. Tap Edit to fix anything.</p></div></div>
     ${sec('About you', 1, [['Name', esc([L.first,L.middle,L.last].filter(Boolean).join(' '))],['Date of birth', esc(fmtLongDate(L.dob))],['Phone', esc(fmtPhone(f.phone))],['Email', esc(f.email)],
       ['Address', esc(`${A.street||''}${A.apt?', '+A.apt:''}, ${A.city||''}, ${A.state||''} ${A.zip||''}`)],['Emergency contact', esc(`${E.name||''} (${E.relation||''}) ${fmtPhone(E.phone)}`)]])}
-    ${sec('Form W-4', 2, w.exempt ? [['SSN', maskSsn(f.ssn)],['Withholding','Exempt']] :
-      [['SSN', maskSsn(f.ssn)],['Filing status', esc(FILING_STATUS[w.filingStatus]||'')],['Two jobs', w.multipleJobs?'Yes':'No'],['Step 3 dependents', dollars(step3Total(w))],
-       ['Step 4(a) / (b) / (c)', `${dollars(w.otherIncome)} / ${dollars(w.deductions)} / ${dollars(w.extraWithholding)}`]])}
-    ${sec('Form I-9', 3, [['I am', esc(I9_STATUS[i9.status]||'')],['Documents', esc(I9_DOCS[i9.docs]?.label||'')],['Photos added', String(Object.keys(HIRE.files).filter(k=>k.startsWith('id')).length)]])}
-    ${sec('Guard license', 4, lic.has==='yes' ? [['Number', esc(lic.number)],['Expires', esc(fmtLongDate(lic.exp))]] : [['Status','Not yet — company will help']])}
-    ${sec('Pay', 5, f.ddMethod==='direct' ? [['Method','Direct deposit'],['Bank', esc(b.name)],['Account', `${b.type==='savings'?'Savings':'Checking'} ${maskAcct(b.account)}`]] : [['Method','Paper check']])}
+    ${sec('Form I-9', 2, [['I am', esc(I9_STATUS[i9.status]||'')],['Documents', esc(I9_DOCS[i9.docs]?.label||'')],['Photos added', String(Object.keys(HIRE.files).filter(k=>k.startsWith('id')).length)]])}
+    ${sec('Guard license', 3, lic.has==='yes' ? [['Number', esc(lic.number)],['Expires', esc(fmtLongDate(lic.exp))]] : [['Status','Not yet — company will help']])}
     <div class="gtitle">Sign</div>
     <div class="group">
-      ${hCheck('cert.w4','My Form W-4 is true, correct and complete', 'Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.')}
       ${hCheck('cert.i9','My Form I-9 answers are true', 'I am aware that federal law provides for imprisonment and/or fines for false statements, or the use of false documents, in connection with the completion of this form. I attest, under penalty of perjury, that this information, including my selection of the box attesting to my citizenship/immigration status, is true and correct.')}
-      ${f.ddMethod==='direct' ? hCheck('cert.dd','I authorize direct deposit', `${COMPANY} may deposit my pay into the account above and correct any deposit made in error. This stays in effect until I tell the company in writing to change or stop it.`) : ''}
       ${hCheck('cert.esign','I agree to sign electronically','My typed name below is my legal signature on these forms.')}
       ${hField('sigName','Type your full legal name',{ac:'name'})}
     </div>
@@ -3178,12 +3124,6 @@ function hireErrors(key){
     if(hv('emergency.phone') && !validPhone(hv('emergency.phone'))) e['emergency.phone'] = 'Enter a 10-digit phone number';
     if(hv('address.state') && !/^[A-Za-z]{2}$/.test(hv('address.state'))) e['address.state'] = '2 letters';
     if(hv('address.zip') && !/^\d{5}(-?\d{4})?$/.test(hv('address.zip'))) e['address.zip'] = '5 digits';
-  }
-  if(key==='w4'){
-    need('ssn'); if(hv('ssn') && !validSsn(hv('ssn'))) e.ssn = 'That doesn\'t look like a valid Social Security number';
-    need('w4.filingStatus','Pick one');
-    ['w4.kidsUnder17','w4.otherDeps'].forEach(k=>{ const v=hv(k); if(v && !(Number.isInteger(+v) && +v>=0 && +v<20)) e[k]='Whole number'; });
-    ['w4.otherCredits','w4.otherIncome','w4.deductions','w4.extraWithholding'].forEach(k=>{ const v=hv(k); if(v && !(+v>=0)) e[k]='Enter a dollar amount'; });
   }
   if(key==='i9'){
     need('i9.status','Pick one');
@@ -3209,25 +3149,12 @@ function hireErrors(key){
       needFile('lic_front');
     }
   }
-  if(key==='pay'){
-    need('ddMethod','Pick one');
-    if(hv('ddMethod')==='direct'){
-      need('bank.name'); need('bank.routing'); need('bank.account'); need('bank.account2');
-      const r = String(hv('bank.routing')||'').replace(/\D/g,'');
-      if(r && !routingChecksumValid(r)) e['bank.routing'] = 'That routing number isn\'t valid. Check it against your bank form.';
-      const a = String(hv('bank.account')||'').replace(/\D/g,'');
-      if(a && (a.length<4 || a.length>17)) e['bank.account'] = '4 to 17 digits';
-      if(hv('bank.account2') && String(hv('bank.account2')).replace(/\D/g,'') !== a) e['bank.account2'] = 'Doesn\'t match';
-      needFile('bank_doc','Add your bank form or a screenshot');
-    }
-  }
   if(key==='agree'){
     if(!hv('ack.uniform')) e['ack.uniform'] = 'Required';
     if(!hv('ack.handbook')) e['ack.handbook'] = 'Required';
   }
   if(key==='review'){
-    ['cert.w4','cert.i9','cert.esign'].forEach(k=>{ if(!hv(k)) e[k]='Required'; });
-    if(hv('ddMethod')==='direct' && !hv('cert.dd')) e['cert.dd']='Required';
+    ['cert.i9','cert.esign'].forEach(k=>{ if(!hv(k)) e[k]='Required'; });
     need('sigName');
     const sig = String(hv('sigName')||'').toLowerCase();
     const last = String(hv('legal.last')||'').toLowerCase().trim();
@@ -3323,7 +3250,11 @@ async function hireNext(){
   if(HIRE.busy){ toast('Wait for the upload to finish.'); return; }
   const errs = hireErrors(s.key);
   if(Object.keys(errs).length){ showHireErrors(errs); toast('Fix the highlighted items.'); return; }
-  if(s.key==='review') return submitHire();
+  if(s.key==='review'){
+    const bad = HIRE_STEPS.findIndex(st => st.key!=='review' && Object.keys(hireErrors(st.key)).length);
+    if(bad>=0){ HIRE.step = bad; saveHireDraft(); renderHire(); window.scrollTo(0,0); showHireErrors(hireErrors(HIRE_STEPS[bad].key)); toast('Finish this step first.'); return; }
+    return submitHire();
+  }
   HIRE.step++; saveHireDraft(); renderHire(); window.scrollTo(0,0);
 }
 
@@ -3334,16 +3265,13 @@ async function submitHire(){
     submitted: true, signedName: String(f.sigName).trim(), signedAt: now,
     firstName: f.legal.first.trim(), lastName: f.legal.last.trim(),
     email: f.email.trim(), phone: fmtPhone(f.phone),
-    ddMethod: f.ddMethod, bankName: f.ddMethod==='direct' ? f.bank.name : '', acctLast4: f.ddMethod==='direct' ? last4(f.bank.account) : '',
-    acctType: f.ddMethod==='direct' ? (f.bank.type||'checking') : '',
+    payrollViaProvider: true,
     licenseHas: f.license.has, licenseExp: f.license.has==='yes' ? f.license.exp : '',
-    i9Docs: f.i9.docs, files: HIRE.files, formVersion: 2,
+    i9Docs: f.i9.docs, files: HIRE.files, formVersion: 3,
   };
   const sen = {
-    legal: f.legal, address: f.address, emergency: f.emergency, ssn: f.ssn,
-    w4: Object.assign({}, f.w4, { step3Total: step3Total(f.w4||{}) }),
+    legal: f.legal, address: f.address, emergency: f.emergency,
     i9: f.i9, license: f.license,
-    bank: f.ddMethod==='direct' ? { name:f.bank.name, routing:String(f.bank.routing).replace(/\D/g,''), account:String(f.bank.account).replace(/\D/g,''), type:f.bank.type||'checking' } : null,
     ack: f.ack, cert: f.cert,
     attest: { signedName: pub.signedName, signedAt: now, userAgent: navigator.userAgent.slice(0,200) },
   };
@@ -3372,7 +3300,7 @@ function renderHireDone(pub, sen){
       <li>${icon('id')}<span><b>Bring your original ID documents on your first day</b> so a manager can finish your Form I-9.</span></li>
       <li>${icon('badge')}<span>${pub.licenseHas==='yes' ? 'We add you to our company license with the Washington Department of Licensing.' : 'We help you apply for your Washington guard license. You need it before working a post.'}</span></li>
       <li>${icon('shirt')}<span>You get your uniform shirt before your first shift.</span></li>
-      <li>${icon('bank')}<span>${pub.ddMethod==='direct' ? 'Your pay goes to your bank every two weeks.' : 'You get a paper check every two weeks.'}</span></li>
+      <li>${icon('bank')}<span>${pub.ddMethod ? (pub.ddMethod==='direct' ? 'Your pay goes to your bank every two weeks.' : 'You get a paper check every two weeks.') : 'Watch for an email from our payroll service. You set up your W-4 and direct deposit there.'}</span></li>
     </ul></div>
     ${sen ? `<button class="btn btn-primary btn-block" id="btnMyCopy" style="margin-top:16px">${icon('dl')}Download my copy (PDF)</button>
       <div class="gnote" style="text-align:center">Save it now. For your privacy, this page won't show your numbers again.</div>` : ''}
@@ -3399,12 +3327,12 @@ async function enterHireMode(id){
   HIRE.pub = row.data || {};
   if(HIRE.pub.signedAt){ renderHireDone(HIRE.pub, null); return; }
   const draft = localGet(hireDraftKey());
-  if(draft && draft.f){ HIRE.f = draft.f; HIRE.files = draft.files || {}; HIRE.step = Math.min(draft.step||0, HIRE_STEPS.length-1); }
+  if(draft && draft.f){ HIRE.f = draft.f; HIRE.files = draft.files || {}; HIRE.step = draft.v===3 ? Math.min(draft.step||0, HIRE_STEPS.length-1) : Math.min(draft.step||0, 1);
+    ['ssn','w4','bank','ddMethod','cert.w4','cert.dd'].forEach(k=>delK(HIRE.f,k)); delete HIRE.files.bank_doc; }
   if(!HIRE.f.legal && HIRE.pub.label){
     const parts = HIRE.pub.label.trim().split(/\s+/);
     HIRE.f.legal = { first: parts[0]||'', last: parts.length>1 ? parts[parts.length-1] : '' };
   }
-  if(!getK(HIRE.f,'bank.type')) setK(HIRE.f,'bank.type','checking');
   if(!HIRE.f.address) HIRE.f.address = { state:'WA' };
   renderHire();
   if(draft && draft.f && HIRE.step>0) toast('Picked up where you left off.');
