@@ -1066,6 +1066,7 @@ function openSheet({ title, sub='', html='', onMount, wide=false, onClose }){
   sheetStack.push(api);
   document.body.style.overflow = 'hidden';
   requestAnimationFrame(()=> requestAnimationFrame(()=> scrim.classList.add('on')));
+  setTimeout(()=> scrim.classList.add('on'), 60);   // fallback when animation frames are paused
   if(onMount) onMount(api);
   return api;
 }
