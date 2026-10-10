@@ -829,7 +829,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   </div>
   <div id="dbNotice"></div>
   <button class="btn btn-primary btn-block" id="btnNewHire" style="margin-top:6px"><svg><use href="#i-plus"/></svg>Onboard a new hire</button>
-  <div class="gnote" style="margin-top:9px">Makes a private link you text to the new hire. They fill in their I-9, guard license and ID photos on their phone. Their W-4 and direct deposit go into your payroll service, not this app.</div>
+  <div class="gnote" style="margin-top:9px">Makes a private link you text to the new hire. They fill in their I-9 and guard license on their phone. Their W-4 and direct deposit go into your payroll service, not this app.</div>
   <div class="gtitle"><span>W-2 employees</span><small id="cntEmp"></small></div>
   <div class="group list" id="empList"></div>
   <div id="legacyWrap" hidden>
@@ -2625,7 +2625,7 @@ $('btnNewHire').addEventListener('click', ()=>{
         const id = await saveShareLink(HIRE_KIND, data);
         if(!id){ b.disabled=false; b.textContent='Make onboarding link'; toast('Couldn\'t save. Check your connection.'); return; }
         api.close();
-        showLinkSheet({ title:'Send to ' + label.split(' ')[0], sub:'I-9, guard license and ID photos', url: baseUrl() + '#hire=' + id,
+        showLinkSheet({ title:'Send to ' + label.split(' ')[0], sub:'I-9 and guard license', url: baseUrl() + '#hire=' + id,
           smsText:`Hi ${label.split(' ')[0]}, welcome to ${COMPANY}. Please fill out your new-hire paperwork here (about 5 minutes):` });
         loadTeam(true);
       });
@@ -2999,7 +2999,7 @@ function hireStepHtml(key){
     </div>
     <div class="gtitle">Have these ready <small>About 5 minutes</small></div>
     <div class="group"><ul class="need">
-      <li>${icon('id')}<span>Your ID documents for Form I-9, for example a driver's license plus a Social Security card, or a U.S. passport</span></li>
+      <li>${icon('id')}<span>Know which ID you'll bring on your first day for Form I-9, for example a driver's license plus a Social Security card, or a U.S. passport. No photos needed.</span></li>
       <li>${icon('badge')}<span>Your Washington security guard license, if you have one</span></li>
     </ul></div>
     <div class="notice info">${icon('bank')}<div>Your tax withholding (Form W-4) and direct deposit are set up separately in our payroll service. You'll get an email invite from them to enter those yourself.</div></div>
@@ -3052,8 +3052,6 @@ function hireStepHtml(key){
       ${docs==='other' ? hField('i9.docOther','Which documents?',{ph:'e.g. School ID + Social Security card'}) : ''}
     </div>
     <div class="gnote">You choose which documents to use from the <a href="https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents" target="_blank" rel="noopener">official list</a>. They must be unexpired originals, not copies.</div>
-    ${docs ? `<div class="gtitle">Photos of those documents</div><div class="group">${hSlots(I9_DOCS[docs].slots)}</div>
-    <div class="gnote">Lay the card flat, fill the frame, no glare.</div>` : ''}
     <div class="notice warn">${icon('id')}<div><b>Bring the originals on your first day.</b> A manager has to see them in person to finish Form I-9. Photos alone don't count.</div></div>`;
   }
 
@@ -3099,7 +3097,7 @@ function hireReviewHtml(){
     <div class="pagehead"><div><h1>Review and sign</h1><p>Check everything once. Tap Edit to fix anything.</p></div></div>
     ${sec('About you', 1, [['Name', esc([L.first,L.middle,L.last].filter(Boolean).join(' '))],['Date of birth', esc(fmtLongDate(L.dob))],['Phone', esc(fmtPhone(f.phone))],['Email', esc(f.email)],
       ['Address', esc(`${A.street||''}${A.apt?', '+A.apt:''}, ${A.city||''}, ${A.state||''} ${A.zip||''}`)],['Emergency contact', esc(`${E.name||''} (${E.relation||''}) ${fmtPhone(E.phone)}`)]])}
-    ${sec('Form I-9', 2, [['I am', esc(I9_STATUS[i9.status]||'')],['Documents', esc(I9_DOCS[i9.docs]?.label||'')],['Photos added', String(Object.keys(HIRE.files).filter(k=>k.startsWith('id')).length)]])}
+    ${sec('Form I-9', 2, [['I am', esc(I9_STATUS[i9.status]||'')],['Documents', esc(I9_DOCS[i9.docs]?.label||'')]])}
     ${sec('Guard license', 3, lic.has==='yes' ? [['Number', esc(lic.number)],['Expires', esc(fmtLongDate(lic.exp))]] : [['Status','Not yet — company will help']])}
     <div class="gtitle">Sign</div>
     <div class="group">
@@ -3107,7 +3105,7 @@ function hireReviewHtml(){
       ${hCheck('cert.esign','I agree to sign electronically','My typed name below is my legal signature on these forms.')}
       ${hField('sigName','Type your full legal name',{ac:'name'})}
     </div>
-    <div class="gnote">${fileCount} document photo${fileCount===1?'':'s'} attached. Signed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.</div>`;
+    <div class="gnote">${fileCount ? `${fileCount} photo${fileCount===1?'':'s'} attached. ` : ''}Signed ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.</div>`;
 }
 
 // ---- validation ----
@@ -3138,7 +3136,7 @@ function hireErrors(key){
     }
     need('i9.docs','Pick the documents you\'ll bring');
     const d = I9_DOCS[hv('i9.docs')];
-    if(d){ d.slots.filter(s=>s[2]).forEach(s=>needFile(s[0])); if(hv('i9.docs')==='other') need('i9.docOther'); }
+    if(d && hv('i9.docs')==='other') need('i9.docOther');
   }
   if(key==='license'){
     need('license.has','Pick one');
