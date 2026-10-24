@@ -490,6 +490,58 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   .mast,.sheet .stat,.sheet .callout{page-break-inside:avoid;break-inside:avoid}
   @page{size:letter;margin:0.12in}
 }
+/* ============================================================
+   PROPOSAL — black & gold sales proposal (own pp- classes so the
+   agreement sheet styles above are untouched)
+   ============================================================ */
+#propForm .choice input[type=checkbox]{border-radius:7px}
+#propTypeSeg label{font-size:13px;line-height:1.25}
+.pp-sheet{background:#fff;color:#151515;margin:0 auto;max-width:816px;padding:28px 34px 22px;box-shadow:0 4px 22px rgba(0,0,0,.12);
+  font:13px/1.45 'Inter','Helvetica Neue',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pp-hdr{background:#0b0b0b;color:#fff;display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:4px solid #D4A017;border-radius:4px}
+.pp-hdr img{height:62px;width:auto;flex:0 0 auto}
+.pp-hdr .co{font-weight:700;letter-spacing:2px;color:#E8B923;font-size:19px;text-transform:uppercase;line-height:1.15}
+.pp-hdr .sub{font-size:11.5px;color:#ddd;margin-top:2px}
+.pp-hdr .right{margin-left:auto;text-align:right;font-size:11px;color:#ccc;line-height:1.45;white-space:nowrap}
+.pp-hdr .right b{color:#E8B923}
+.pp-sheet h1{font-size:21px;margin:16px 0 6px;letter-spacing:.5px;line-height:1.2}
+.pp-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin:8px 0 2px;font-size:12.5px}
+.pp-meta div{display:flex;gap:8px}.pp-meta div b{flex:0 0 96px;color:#555;font-weight:600}
+.pp-intro{margin:10px 0;white-space:pre-line}
+.pp-sheet h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:#fff;background:#1a1a1a;border-left:5px solid #D4A017;padding:5px 9px;margin:14px 0 7px;line-height:1.3}
+.pp-sheet ul,.pp-sheet ol{margin:4px 0 4px 20px;padding:0}
+.pp-sheet li{margin:3px 0}
+.pp-sheet table{width:100%;border-collapse:collapse;margin:4px 0}
+.pp-sheet td,.pp-sheet th{border:1px solid #bbb;padding:6px 9px;text-align:left;vertical-align:top;font-size:12.5px}
+.pp-sheet th{background:#f2e6c2;width:34%;font-weight:600}
+.pp-sheet .rate{font-size:14px;font-weight:700}
+.pp-sheet .tbc{color:#8a6418;font-style:italic}
+.pp-sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:22px}
+.pp-sig div{border-top:1px solid #333;padding-top:4px;font-size:11.5px;color:#444}
+.pp-foot{margin-top:16px;border-top:2px solid #D4A017;padding-top:6px;font-size:10.5px;color:#555;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pp-foot b{color:#111}
+@media (max-width:560px){
+  .pp-sheet{padding:16px 14px;font-size:12px}
+  .pp-hdr{padding:10px 12px;gap:10px;flex-wrap:wrap}
+  .pp-hdr img{height:46px}
+  .pp-hdr .co{font-size:15px;letter-spacing:1.2px}
+  .pp-hdr .right{margin-left:0;text-align:left;width:100%;font-size:10.5px}
+  .pp-meta{grid-template-columns:1fr}
+  .pp-sig{grid-template-columns:1fr;gap:18px}
+}
+@media print{
+  .pp-sheet{box-shadow:none;max-width:none;width:100%;padding:.35in .4in;font-size:10pt;display:block!important}
+  .pp-hdr{display:flex!important;flex-wrap:nowrap}
+  .pp-hdr .right{margin-left:auto;text-align:right;width:auto}
+  .pp-hdr .co{font-size:15pt}
+  .pp-meta{grid-template-columns:1fr 1fr;font-size:9.5pt}
+  .pp-sig{grid-template-columns:1fr 1fr}
+  .pp-sheet h1{font-size:16pt}
+  .pp-sheet h2{font-size:10pt;break-after:avoid;page-break-after:avoid}
+  .pp-sheet td,.pp-sheet th{font-size:9.5pt}
+  .pp-sheet table,.pp-sig{break-inside:avoid;page-break-inside:avoid}
+  .pp-foot{font-size:8pt}
+}
 </style>
 </head>
 <body class="app">
@@ -804,6 +856,86 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   <div id="signPanel" class="signcard" hidden></div>
 </section>
 
+<!-- ======================= PROPOSAL ======================= -->
+<section class="page" id="pg-proposal">
+  <div class="pagehead no-print">
+    <div><h1>New proposal</h1><p>Fill it in after the walkthrough, check the preview, share the PDF.</p></div>
+    <button class="textbtn danger" id="btnPropClear" type="button">Clear</button>
+  </div>
+  <div class="seg big no-print" id="propSeg" role="tablist">
+    <button type="button" role="tab" aria-selected="true" data-view="form">Details</button>
+    <button type="button" role="tab" aria-selected="false" data-view="doc">Preview</button>
+  </div>
+
+  <div id="propForm">
+    <div class="gtitle">Client</div>
+    <div class="group">
+      <div class="field"><label for="propClient">Client business name</label><input id="propClient" placeholder="e.g. Valley Cycle &amp; Ski" autocomplete="organization"></div>
+      <div class="field"><label for="propContact">Contact name</label><input id="propContact" placeholder="First and last name"></div>
+      <div class="field"><label for="propSite">Site address</label><textarea id="propSite" placeholder="Street, city, ZIP" rows="2" style="min-height:64px"></textarea></div>
+      <div class="field">
+        <label>Property type</label>
+        <div class="seg" id="propTypeSeg">
+          <label><input type="radio" name="propType" value="retail" checked>Retail store (after hours)</label>
+          <label><input type="radio" name="propType" value="apartment">Private apartment complex</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="gtitle">What we heard</div>
+    <div class="group">
+      <div class="field"><textarea id="propHeard" rows="4" placeholder="The problem in their words: break-ins, alarm calls at 2 a.m., people in the lot… This becomes the opening paragraph."></textarea></div>
+    </div>
+
+    <div class="gtitle">Services</div>
+    <div class="group choices" id="propServices">
+      <label class="choice"><input type="checkbox" id="propSvcPatrol" value="patrol"><span>After-hours patrol checks</span></label>
+      <label class="choice"><input type="checkbox" id="propSvcLockup" value="lockup"><span>Lock-up checks at close</span></label>
+      <label class="choice"><input type="checkbox" id="propSvcAlarm" value="alarm"><span>Alarm response checks</span></label>
+      <label class="choice"><input type="checkbox" id="propSvcApt" value="apt"><span>Apartment lot / lobby patrols</span></label>
+      <label class="choice"><input type="checkbox" id="propSvcPost" value="post"><span>Standing overnight post</span></label>
+    </div>
+
+    <div class="gtitle">Schedule</div>
+    <div class="group">
+      <div class="cols2">
+        <div class="field"><label for="propDays">Days per week</label>
+          <select id="propDays"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
+        <div class="field"><label for="propStart">Start date</label><input id="propStart" type="date"></div>
+      </div>
+      <div class="field"><label for="propHours">Hours</label><input id="propHours" placeholder="e.g. 9:00 p.m. – 6:00 a.m."></div>
+      <div class="field"><label for="propFreq">Patrol frequency</label><input id="propFreq" placeholder="e.g. 3 checks per night at varied times"></div>
+    </div>
+
+    <div class="gtitle">Rate &amp; term</div>
+    <div class="group">
+      <div class="cols2">
+        <div class="field"><label for="propRate">Hourly rate</label><input id="propRate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ per hour"></div>
+        <div class="field"><label for="propMonthlyHours">Est. monthly hours</label><input id="propMonthlyHours" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Hours"></div>
+      </div>
+      <div class="tiles"><div class="tile hero" style="grid-column:1 / -1"><div class="k">Estimated monthly total</div><input id="propMonthlyTotal" type="text" readonly tabindex="-1" placeholder="Enter rate and hours"></div></div>
+      <div class="field" style="border-top:1px solid var(--hair)"><label for="propTerm">Term</label><input id="propTerm"></div>
+      <div class="field"><label for="propBilling">Billing</label><input id="propBilling"></div>
+    </div>
+
+    <div class="gtitle">Dates</div>
+    <div class="group">
+      <div class="cols2">
+        <div class="field"><label for="propDate">Proposal date</label><input id="propDate" type="date"></div>
+        <div class="field"><label for="propValid">Valid until</label><input id="propValid" type="date"></div>
+      </div>
+    </div>
+    <div class="gnote">Saved on this phone as you type. Blank fields show as “To be confirmed” on the proposal.</div>
+
+    <button class="btn btn-secondary btn-block" id="btnPropToAgr" type="button" style="margin-top:18px"><svg><use href="#i-doc"/></svg>Turn into agreement</button>
+    <div class="gnote">Copies client, contact, address, start date and rate into a new ongoing agreement.</div>
+  </div>
+
+  <div id="propDoc" class="docwrap" hidden>
+    <div class="pp-sheet" id="propSheet"></div>
+  </div>
+</section>
+
 <!-- ======================= RECORDS ======================= -->
 <section class="page" id="pg-records">
   <div class="pagehead">
@@ -903,9 +1035,17 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   </div>
 </div>
 
+<div class="actionbar" id="propActions" hidden>
+  <div class="inner">
+    <button class="btn btn-secondary narrow" id="btnPropPrint"><svg><use href="#i-dl"/></svg>Print</button>
+    <button class="btn btn-primary" id="btnPropShare"><svg><use href="#i-share"/></svg>Share PDF</button>
+  </div>
+</div>
+
 <nav class="tabbar" id="tabbar" hidden>
   <div class="inner" role="tablist">
     <button type="button" role="tab" data-page="pg-agreement" aria-selected="true"><svg><use href="#i-doc"/></svg>Agreement</button>
+    <button type="button" role="tab" data-page="pg-proposal" aria-selected="false" id="tabProposal"><svg><use href="#i-pen"/></svg>Proposal</button>
     <button type="button" role="tab" data-page="pg-records" aria-selected="false"><svg><use href="#i-records"/></svg>Records</button>
     <button type="button" role="tab" data-page="pg-team" aria-selected="false"><svg><use href="#i-team"/></svg>Team<span class="badge" id="teamBadge" hidden></span></button>
     <button type="button" role="tab" data-page="pg-settings" aria-selected="false"><svg><use href="#i-gear"/></svg>Settings</button>
@@ -3930,12 +4070,404 @@ async function enterOnboardSignMode(id, justSigned){
   });
 }
 
+/* ================= PROPOSAL ================= */
+// Sales proposal: client-facing name is always "Lion Security Services". No preset prices —
+// the rate stays blank until it's typed in.
+const PROP_KEY = 'lionProposalDraft';
+const PROP_TEXT = ['propClient','propContact','propSite','propHeard','propDays','propStart','propHours','propFreq',
+  'propRate','propMonthlyHours','propTerm','propBilling','propDate','propValid'];
+const PROP_SVCS = ['propSvcPatrol','propSvcLockup','propSvcAlarm','propSvcApt','propSvcPost'];
+const PROP_DEFAULT_TERM = "Month-to-month, 30 days' written notice";
+const PROP_DEFAULT_BILLING = 'Invoiced monthly, net 15';
+const PROP_TYPE_LABEL = { retail:'Retail store (after hours)', apartment:'Private apartment complex' };
+const PROP_SVC_TEXT = {
+  propSvcPatrol: { retail:  ['After-hours patrol checks', 'a uniformed officer checks the storefront, doors, and lot on varied rounds between close and open.'],
+                   apartment:['After-hours patrol checks', 'a uniformed officer checks building exteriors, entrances, and grounds on varied rounds overnight.'] },
+  propSvcLockup: { retail:  ['Lock-up checks', 'doors, gates, and lights checked at close, and the alarm confirmed set.'],
+                   apartment:['Lock-up checks', 'entry doors, gates, and amenity rooms checked and secured at closing time.'] },
+  propSvcAlarm:  { retail:  ['Alarm response', 'an officer goes to the site when your alarm company calls, checks the building, and reports back to you.'],
+                   apartment:['Alarm response', 'an officer goes to the property when an alarm trips, checks the area, and reports back to management.'] },
+  propSvcApt:    { retail:  ['Lot & lobby patrols', 'rounds through parking areas, entrances, and common areas; trespass issues reported to you.'],
+                   apartment:['Apartment lot & lobby patrols', 'rounds through parking areas, lobbies, mail rooms, and common areas; trespass issues reported to management.'] },
+  propSvcPost:   { retail:  ['Standing overnight post', 'a uniformed officer stays on site through the overnight hours, watching entrances and the lot and responding as issues come up.'],
+                   apartment:['Standing overnight post', 'a uniformed officer stays on site through the overnight hours, watching entrances and common areas and responding as issues come up.'] },
+};
+const PROP_INCLUDED = [
+  'Written incident reports emailed to you after anything happens on site, with photos when useful.',
+  'Every officer holds a current Washington security guard license (guard card).',
+  'Licensed & insured: general liability coverage, certificate of insurance on request.',
+  'A direct line to the owners, not a call center: (253) 251-4551.',
+  'Post orders written with you before day one, and updated whenever you need.',
+];
+let propValidManual = false;   // valid-until follows proposal date + 30 days until edited by hand
+
+function localYmd(d=new Date()){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function addDaysYmd(ymd, n){ const [y,m,d] = (ymd||'').split('-').map(Number); if(!y) return ''; return localYmd(new Date(y, m-1, d+n)); }
+function propMoney(n){ return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function propRateText(r){ return '$' + (Number.isInteger(r) ? String(r) : r.toFixed(2)) + '/hr'; }
+
+function propData(){
+  const v = {}; PROP_TEXT.forEach(id => v[id] = $(id).value);
+  v.propType = document.querySelector('input[name=propType]:checked')?.value || 'retail';
+  v.svcs = PROP_SVCS.filter(id => $(id).checked);
+  v.validManual = propValidManual;
+  return v;
+}
+// Everything the documents print, already worded (plain text, not escaped)
+function propContent(v){
+  const TBC = 'To be confirmed';
+  const rate = parseFloat(v.propRate), hrs = parseFloat(v.propMonthlyHours);
+  const hasRate = isFinite(rate) && rate > 0, hasHrs = isFinite(hrs) && hrs > 0;
+  const days = parseInt(v.propDays, 10);
+  const client = v.propClient.trim(), contact = v.propContact.trim();
+  const site = v.propSite.trim().replace(/\s*\n\s*/g, ', ');
+  const heard = v.propHeard.trim();
+  return {
+    client, contact, site,
+    preparedFor: [contact, client].filter(Boolean).join(', ') || TBC,
+    date: fmtLongDate(v.propDate) || TBC,
+    valid: fmtLongDate(v.propValid) || TBC,
+    type: PROP_TYPE_LABEL[v.propType],
+    intro: heard || `Thank you for the chance to propose security services${client ? ' for ' + client : ''}. Below is the coverage we recommend, the schedule, and the rate.`,
+    scope: v.svcs.map(id => PROP_SVC_TEXT[id][v.propType]),
+    schedule: [
+      ['Days', days ? `${days} day${days===1?'':'s'} a week` : TBC],
+      ['Hours', v.propHours.trim() || TBC],
+      ['Patrol frequency', v.propFreq.trim() || TBC],
+      ['Start date', fmtLongDate(v.propStart) || TBC],
+    ],
+    rateRows: [
+      ['Rate', hasRate ? propRateText(rate) : TBC],
+      ['Estimated monthly hours', hasHrs ? String(hrs) : TBC],
+      ['Estimated monthly total', hasRate && hasHrs ? propMoney(rate*hrs) : TBC],
+      ['Term', v.propTerm.trim() || TBC],
+      ['Billing', v.propBilling.trim() || TBC],
+    ],
+    start: fmtLongDate(v.propStart) || 'the agreed start date',
+    hasRate,
+  };
+}
+
+function propPreviewHtml(c){
+  const val = s => s === 'To be confirmed' ? `<span class="tbc">${s}</span>` : esc(s);
+  const rows = (list, rateRow) => list.map(([k,x]) => `<tr><th>${esc(k)}</th><td${rateRow && k==='Rate' ? ' class="rate"' : ''}>${val(x)}</td></tr>`).join('');
+  return `
+  <div class="pp-hdr"><img src="${LOGO}" alt=""><div><div class="co">Lion Security Services</div><div class="sub">Unarmed Security · South King County, WA</div></div>
+    <div class="right">(253) 251-4551<br>contact@lionofseattle.com<br><b>Licensed &amp; Insured</b></div></div>
+  <h1>Security Service Proposal</h1>
+  <div class="pp-meta">
+    <div><b>Prepared for</b><span>${val(c.preparedFor)}</span></div>
+    <div><b>Date</b><span>${val(c.date)}</span></div>
+    <div><b>Site</b><span>${val(c.site || 'To be confirmed')}</span></div>
+    <div><b>Valid until</b><span>${val(c.valid)}</span></div>
+    <div><b>Property type</b><span>${esc(c.type)}</span></div>
+    <div><b>Prepared by</b><span>Karim Harakat, COO</span></div>
+  </div>
+  <p class="pp-intro">${esc(c.intro)}</p>
+  <h2>Scope of services</h2>
+  ${c.scope.length ? `<ul>${c.scope.map(([b,t]) => `<li><b>${esc(b)}:</b> ${esc(t)}</li>`).join('')}</ul>` : `<p class="tbc">Pick at least one service.</p>`}
+  <h2>Schedule</h2>
+  <table>${rows(c.schedule)}</table>
+  <h2>Rate &amp; term</h2>
+  <table>${rows(c.rateRows, true)}</table>
+  <h2>What's included</h2>
+  <ul>${PROP_INCLUDED.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+  <h2>Next steps</h2>
+  <ol>
+    <li>Review this proposal and send us any changes.</li>
+    <li>Sign the service agreement.</li>
+    <li>Confirm the start date, keys/access, and your incident contact.</li>
+    <li>We start service on <b>${esc(c.start)}</b>.</li>
+  </ol>
+  <div class="pp-sig">
+    <div>Client signature / date<br><br>${esc(c.client || '')}</div>
+    <div>Karim Harakat, COO / date<br><br>Lion Security Services, LLC</div>
+  </div>
+  <div class="pp-foot"><span><b>Lion Security Services, LLC</b> · Unarmed security · Licensed &amp; Insured</span><span>(253) 251-4551 · contact@lionofseattle.com</span></div>`;
+}
+
+let propPdfCache = { key:'', bytes:null };
+function propRender(){
+  const v = propData();
+  const rate = parseFloat(v.propRate), hrs = parseFloat(v.propMonthlyHours);
+  $('propMonthlyTotal').value = (rate > 0 && hrs > 0) ? propMoney(rate*hrs) : '';
+  $('propSheet').innerHTML = propPreviewHtml(propContent(v));
+  localSet(PROP_KEY, v);
+}
+
+function propReset(){
+  PROP_TEXT.forEach(id => $(id).value = '');
+  PROP_SVCS.forEach(id => $(id).checked = false);
+  document.querySelector('input[name=propType][value=retail]').checked = true;
+  $('propTerm').value = PROP_DEFAULT_TERM;
+  $('propBilling').value = PROP_DEFAULT_BILLING;
+  $('propDate').value = localYmd();
+  $('propValid').value = addDaysYmd($('propDate').value, 30);
+  propValidManual = false;
+}
+function propLoad(){
+  const v = localGet(PROP_KEY);
+  propReset();
+  if(v){
+    PROP_TEXT.forEach(id => { if(typeof v[id] === 'string') $(id).value = v[id]; });
+    PROP_SVCS.forEach(id => $(id).checked = (v.svcs||[]).includes(id));
+    const t = document.querySelector(`input[name=propType][value="${v.propType==='apartment'?'apartment':'retail'}"]`); if(t) t.checked = true;
+    propValidManual = !!v.validManual;
+  }
+  propRender();
+}
+
+function setPropView(view){
+  document.querySelectorAll('#propSeg button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.view===view)));
+  $('propForm').hidden = view !== 'form';
+  $('propDoc').hidden = view !== 'doc';
+  if(view==='doc'){ window.scrollTo({top:0}); propWarmPdf(); }
+}
+document.querySelectorAll('#propSeg button').forEach(b=>b.addEventListener('click',()=>setPropView(b.dataset.view)));
+document.querySelectorAll('#propForm input,#propForm select,#propForm textarea').forEach(el=>{
+  el.addEventListener('input',propRender); el.addEventListener('change',propRender);
+});
+$('propDate').addEventListener('input', ()=>{ if(!propValidManual){ $('propValid').value = addDaysYmd($('propDate').value, 30); propRender(); } });
+$('propValid').addEventListener('input', ()=>{ propValidManual = $('propValid').value !== ''; propRender(); });
+
+armButton($('btnPropClear'), 'Tap again to clear', async ()=>{
+  propReset(); localDel(PROP_KEY); setPropView('form'); propRender(); toast('Cleared.');
+  const b = $('btnPropClear'); b.disabled=false; b.classList.remove('armed'); b.textContent='Clear';
+  return true;
+});
+
+// ---- PDF (pdf-lib, same look as the preview) ----
+async function buildProposalPdf(c){
+  const { PDFDocument, rgb, StandardFonts } = PDFLib;
+  const pdf = await PDFDocument.create();
+  pdf.setTitle('Security Service Proposal' + (c.client ? ' - ' + pdfSafe(c.client) : ''));
+  pdf.setAuthor('Lion Security Services'); pdf.setCreator('Lion Security Services');
+  const reg = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const ital = await pdf.embedFont(StandardFonts.HelveticaOblique);
+  const logo = await pdf.embedPng(Uint8Array.from(atob(LION_LOGO_PNG_BASE64), ch=>ch.charCodeAt(0)));
+  const W = 612, H = 792, L = 40, R = W - 40, CW = R - L, TOP = H - 36, BOTTOM = 62;
+  const BLACK = rgb(11/255,11/255,11/255), BAR = rgb(26/255,26/255,26/255), GOLD = rgb(212/255,160/255,23/255),
+        GOLDLT = rgb(232/255,185/255,35/255), INK = rgb(21/255,21/255,21/255), GREY = rgb(85/255,85/255,85/255),
+        LIGHT = rgb(204/255,204/255,204/255), TAN = rgb(242/255,230/255,194/255), RULE = rgb(187/255,187/255,187/255),
+        TBCC = rgb(138/255,100/255,24/255), WHITE = rgb(1,1,1);
+  let page, y;
+  const pages = [];
+  function newPage(){ page = pdf.addPage([W, H]); pages.push(page); y = TOP; }
+  function need(h){ if(y - h < BOTTOM) newPage(); }
+  const S = t => pdfSafe(String(t ?? '').replace(/[\t\r]/g,' '));
+  function spaced(t, x, yy, size, font, color, sp){ for(const ch of t){ page.drawText(ch, { x, y:yy, size, font, color }); x += font.widthOfTextAtSize(ch, size) + sp; } }
+  function spacedW(t, size, font, sp){ let w = 0; for(const ch of t) w += font.widthOfTextAtSize(ch, size) + sp; return w - sp; }
+  // Wrap runs of [text, font] into lines of runs; honours \n
+  function wrapRuns(runs, size, maxW){
+    const lines = [[]]; let w = 0;
+    for(const [text, font] of runs){
+      const parts = String(text).split('\n');
+      parts.forEach((part, pi) => {
+        if(pi > 0){ lines.push([]); w = 0; }
+        for(const tok of S(part).split(/(\s+)/)){
+          if(!tok) continue;
+          const isSpace = /^\s+$/.test(tok);
+          const tw = font.widthOfTextAtSize(isSpace ? ' ' : tok, size);
+          const line = lines[lines.length-1];
+          if(isSpace){ if(line.length) { line.push([' ', font]); w += tw; } continue; }
+          if(w + tw > maxW && line.length){
+            while(line.length && line[line.length-1][0] === ' '){ w -= line[line.length-1][1].widthOfTextAtSize(' ', size); line.pop(); }
+            lines.push([[tok, font]]); w = tw;
+          } else { line.push([tok, font]); w += tw; }
+        }
+      });
+    }
+    return lines;
+  }
+  function drawLine(runs, x, yy, size, color){ for(const [t, f] of runs){ page.drawText(t, { x, y:yy, size, font:f, color }); x += f.widthOfTextAtSize(t, size); } }
+  function para(runs, x, maxW, size, color, lh){
+    const lines = wrapRuns(runs, size, maxW);
+    lines.forEach(ln => { need(lh); y -= lh; drawLine(ln, x, y + (lh - size)*0.35, size, color); });
+  }
+  function section(title){
+    need(22 + 34); y -= 12;
+    page.drawRectangle({ x:L, y:y-18, width:CW, height:18, color:BAR });
+    page.drawRectangle({ x:L, y:y-18, width:4, height:18, color:GOLD });
+    spaced(title.toUpperCase(), L+11, y-12.6, 9.5, bold, WHITE, 1.1);
+    y -= 18 + 5;
+  }
+  function table(rows){
+    const thW = Math.round(CW*0.32), pad = 7, size = 9.5, lh = 12.5;
+    rows.forEach(([k, v, strong]) => {
+      const tbc = v === 'To be confirmed';
+      const vf = tbc ? ital : (strong ? bold : reg), vs = strong && !tbc ? 11 : size;
+      const kl = wrapRuns([[k, bold]], size, thW - pad*2), vl = wrapRuns([[v, vf]], vs, CW - thW - pad*2);
+      const h = Math.max(kl.length, vl.length) * lh + 9;
+      need(h);
+      page.drawRectangle({ x:L, y:y-h, width:thW, height:h, color:TAN, borderColor:RULE, borderWidth:0.75 });
+      page.drawRectangle({ x:L+thW, y:y-h, width:CW-thW, height:h, borderColor:RULE, borderWidth:0.75 });
+      kl.forEach((ln,i) => drawLine(ln, L+pad, y - 5 - lh*(i+1) + 3.5, size, INK));
+      vl.forEach((ln,i) => drawLine(ln, L+thW+pad, y - 5 - lh*(i+1) + 3.5, vs, tbc ? TBCC : INK));
+      y -= h;
+    });
+  }
+  function bullets(items, numbered){
+    items.forEach((runs, i) => {
+      const lines = wrapRuns(runs, 9.5, CW - 18), lh = 13.2;
+      need(lines.length*lh + 2);
+      const mark = numbered ? `${i+1}.` : '•';
+      lines.forEach((ln, li) => {
+        y -= lh;
+        if(li === 0) page.drawText(mark, { x: L + (numbered ? 3 : 5), y: y+3, size:9.5, font:reg, color:INK });
+        drawLine(ln, L+16, y+3, 9.5, INK);
+      });
+      y -= 2;
+    });
+  }
+
+  newPage();
+  // Header band
+  const hh = 74;
+  page.drawRectangle({ x:L, y:y-hh, width:CW, height:hh, color:BLACK });
+  page.drawRectangle({ x:L, y:y-hh, width:CW, height:3.5, color:GOLD });
+  page.drawImage(logo, { x:L+10, y:y-hh+9, width:58, height:58 });
+  spaced('LION SECURITY SERVICES', L+76, y-34, 15, bold, GOLDLT, 1.8);
+  page.drawText('Unarmed Security · South King County, WA', { x:L+76, y:y-49, size:9, font:reg, color:rgb(221/255,221/255,221/255) });
+  [['(253) 251-4551', reg, LIGHT], ['contact@lionofseattle.com', reg, LIGHT], ['Licensed & Insured', bold, GOLDLT]].forEach(([t,f,col], i) => {
+    page.drawText(t, { x: R - 14 - f.widthOfTextAtSize(t, 8.5), y: y-25-i*12, size:8.5, font:f, color:col });
+  });
+  y -= hh + 26;
+  page.drawText('Security Service Proposal', { x:L, y, size:17, font:bold, color:INK });
+  y -= 8;
+
+  // Meta grid
+  const colW = (CW - 24) / 2, labW = 72;
+  const meta = [[['Prepared for', c.preparedFor], ['Date', c.date]], [['Site', c.site || 'To be confirmed'], ['Valid until', c.valid]],
+                [['Property type', c.type], ['Prepared by', 'Karim Harakat, COO']]];
+  meta.forEach(pair => {
+    const cells = pair.map(([k, v]) => ({ k, lines: wrapRuns([[v, v==='To be confirmed' ? ital : reg]], 9.5, colW - labW) }));
+    const rh = Math.max(...cells.map(c2 => c2.lines.length)) * 12.5 + 3;
+    cells.forEach((cell, ci) => {
+      const x = L + ci*(colW + 24);
+      page.drawText(cell.k, { x, y: y-10.5, size:9.5, font:bold, color:GREY });
+      cell.lines.forEach((ln, li) => drawLine(ln, x + labW, y - 10.5 - li*12.5, 9.5, INK));
+    });
+    y -= rh;
+  });
+  y -= 6;
+  para([[c.intro, reg]], L, CW, 10, INK, 14);
+
+  section('Scope of services');
+  if(c.scope.length) bullets(c.scope.map(([b, t]) => [[b + ':', bold], [' ' + t, reg]]));
+  else { y -= 13; page.drawText('To be confirmed', { x:L, y:y+3, size:9.5, font:ital, color:TBCC }); }
+  section('Schedule');
+  table(c.schedule);
+  section('Rate & term');
+  table(c.rateRows.map(([k, v]) => [k, v, k === 'Rate']));
+  section("What's included");
+  bullets(PROP_INCLUDED.map(t => [[t, reg]]));
+  section('Next steps');
+  bullets([
+    [['Review this proposal and send us any changes.', reg]],
+    [['Sign the service agreement.', reg]],
+    [['Confirm the start date, keys/access, and your incident contact.', reg]],
+    [['We start service on ', reg], [c.start, bold], ['.', reg]],
+  ], true);
+
+  // Signatures
+  need(56); y -= 30;
+  const sw = (CW - 28) / 2;
+  [['Client signature / date', c.client], ['Karim Harakat, COO / date', 'Lion Security Services, LLC']].forEach(([a, b], i) => {
+    const x = L + i*(sw + 28);
+    page.drawLine({ start:{x, y}, end:{x:x+sw, y}, thickness:0.75, color:rgb(0.2,0.2,0.2) });
+    page.drawText(a, { x, y:y-11, size:8.5, font:reg, color:GREY });
+    if(b) page.drawText(S(b).slice(0, 70), { x, y:y-34, size:8.5, font:reg, color:GREY });
+  });
+
+  // Footer on every page
+  const fl = [['Lion Security Services, LLC', bold, INK], [' · Unarmed security · Licensed & Insured', reg, GREY]];
+  const fr = '(253) 251-4551 · contact@lionofseattle.com';
+  pages.forEach((p, i) => {
+    p.drawLine({ start:{x:L, y:44}, end:{x:R, y:44}, thickness:1.5, color:GOLD });
+    let x = L; fl.forEach(([t, f, col]) => { p.drawText(t, { x, y:32, size:8, font:f, color:col }); x += f.widthOfTextAtSize(t, 8); });
+    const right = pages.length > 1 ? `${fr}  ·  Page ${i+1} of ${pages.length}` : fr;
+    p.drawText(right, { x: R - reg.widthOfTextAtSize(right, 8), y:32, size:8, font:reg, color:GREY });
+  });
+  return pdf.save();
+}
+
+function propFileName(c){
+  const slug = (c.client || 'Client').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) || 'Client';
+  return `Lion-Security-Proposal-${slug}-${$('propDate').value || localYmd()}.pdf`;
+}
+async function propPdfBytes(){
+  const c = propContent(propData());
+  const key = JSON.stringify(c);
+  if(propPdfCache.key !== key) propPdfCache = { key, bytes: await buildProposalPdf(c) };
+  return { bytes: propPdfCache.bytes, c };
+}
+// Build ahead of time so the Share tap can call navigator.share right away (iOS needs the tap to be fresh)
+let propWarmTimer;
+function propWarmPdf(){ clearTimeout(propWarmTimer); propWarmTimer = setTimeout(()=>{ propPdfBytes().catch(()=>{}); }, 250); }
+
+$('btnPropShare').addEventListener('click', async ()=>{
+  const btn = $('btnPropShare');
+  if(btn.disabled) return;
+  const v = propData();
+  if(!v.propClient.trim()){ toast('Add the client business name first.'); setPropView('form'); $('propClient').focus(); return; }
+  if(!v.svcs.length){ toast('Pick at least one service.'); setPropView('form'); return; }
+  const original = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'Making PDF…';
+  try{
+    const { bytes, c } = await propPdfBytes();
+    const name = propFileName(c);
+    const file = typeof File === 'function' ? new File([bytes], name, { type:'application/pdf' }) : null;
+    if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+      try{ await navigator.share({ files:[file], title:'Security Service Proposal' }); }
+      catch(e){
+        if(e && e.name === 'AbortError') {}
+        else if(e && e.name === 'NotAllowedError') toast('PDF is ready. Tap Share PDF again.');
+        else { downloadBlob(bytes, name, 'application/pdf'); toast('Downloaded the PDF.'); }
+      }
+    } else {
+      downloadBlob(bytes, name, 'application/pdf');
+      toast('Downloaded the PDF.');
+    }
+    if(!c.hasRate) toast('Heads up: the rate is blank, so it shows as “To be confirmed”.', 4200);
+  }catch(err){ toast('Couldn\'t make the PDF: ' + err.message); }
+  finally{ btn.innerHTML = original; btn.disabled = false; }
+});
+
+$('btnPropPrint').addEventListener('click', ()=>{
+  propRender(); setPropView('doc');
+  const pg = $('pg-proposal');
+  pg.classList.add('print-me');
+  setTimeout(()=>{ window.print(); setTimeout(()=>pg.classList.remove('print-me'), 1000); }, 150);
+});
+
+// ---- Turn into agreement: copies the basics into the agreement form ----
+$('btnPropToAgr').addEventListener('click', ()=>{
+  const v = propData();
+  const has = ['org','clientName','addr'].some(f => $(f).value.trim());
+  if(has && !confirm('Replace the client, contact, address, start date and rate on the agreement you\'re working on?')) return;
+  $('org').value = v.propClient.trim();
+  $('clientName').value = v.propContact.trim();
+  $('addr').value = v.propSite.trim();
+  if(v.propStart) $('start').value = v.propStart;
+  const ongoing = document.querySelector('input[name=etype][value=ongoing]'); if(ongoing) ongoing.checked = true;
+  const rate = parseFloat(v.propRate);
+  if(rate > 0){ $('rate').value = String(rate); rateManual = true; }
+  render();
+  setAgrView('form');
+  showPage('pg-agreement');
+  toast('Agreement started. Add guards, hours and an end date.', 4200);
+});
+
+propLoad();
+
 /* ================= APP SHELL: navigation, sign-in, boot ================= */
-const PAGE_TITLES = { 'pg-agreement':'Agreements', 'pg-records':'Records', 'pg-team':'Team', 'pg-settings':'Settings' };
+const PAGE_TITLES = { 'pg-agreement':'Agreements', 'pg-proposal':'Proposals', 'pg-records':'Records', 'pg-team':'Team', 'pg-settings':'Settings' };
 function showPage(id, push=true){
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on', p.id===id));
   document.querySelectorAll('#tabbar button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.page===id)));
   $('agrActions').hidden = id !== 'pg-agreement';
+  $('propActions').hidden = id !== 'pg-proposal';
   $('barSub').textContent = PAGE_TITLES[id] || 'Operations';
   window.scrollTo(0,0);
   if(id==='pg-records') loadRecords(false);
@@ -4038,7 +4570,7 @@ function startApp(){
   renderDbNotice();
   if(!$('start').value) $('start').value = new Date().toISOString().slice(0,10);
   loadCompany().then(render);
-  const want = { '#records':'pg-records', '#team':'pg-team', '#settings':'pg-settings', '#agreement':'pg-agreement' }[location.hash] || 'pg-agreement';
+  const want = { '#records':'pg-records', '#team':'pg-team', '#settings':'pg-settings', '#agreement':'pg-agreement', '#proposal':'pg-proposal' }[location.hash] || 'pg-agreement';
   showPage(want, false);
   // warm the lists in the background so the tabs open instantly
   setTimeout(()=>{ loadRecords(false); loadTeam(false); }, 400);
