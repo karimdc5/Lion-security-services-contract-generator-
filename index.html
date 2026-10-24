@@ -36,6 +36,10 @@
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --tabbar-h:64px;
+  /* Proposal accent (teal), owner app only; Agreement keeps navy + gold */
+  --teal:#0F766E; --teal2:#14B8A6; --teal-ink:#0B5A54;
+  /* Active-mode tokens, overridden by body[data-mode] (set in showPage) */
+  --mode-ink:var(--navy); --mode-bar:var(--gold);
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
@@ -195,11 +199,38 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 .tabbar button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   font-size:11.5px;font-weight:600;color:#8392A1;cursor:pointer;position:relative}
 .tabbar button svg{width:25px;height:25px}
-.tabbar button[aria-selected="true"]{color:var(--navy)}
+.tabbar button[aria-selected="true"]{color:var(--mode-ink)}
 .tabbar button[aria-selected="true"]:before{content:"";position:absolute;top:0;left:50%;width:26px;height:3px;margin-left:-13px;
-  border-radius:0 0 3px 3px;background:var(--gold)}
+  border-radius:0 0 3px 3px;background:var(--mode-bar)}
 .tabbar .badge{position:absolute;top:8px;left:calc(50% + 7px);min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;
   font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+
+/* ============================================================
+   MODE: Agreement (navy/gold) vs Proposal (teal), owner app tabs only
+   ============================================================ */
+body[data-mode="proposal"]{--mode-ink:var(--teal); --mode-bar:var(--teal2)}
+.modebanner{display:flex;align-items:center;gap:12px;margin:14px 0 0;padding:12px 14px;border-radius:var(--r-l);
+  background:var(--navy);color:#fff;border-left:6px solid var(--gold);box-shadow:0 2px 10px rgba(14,31,46,.16)}
+.modebanner .mb-ic{width:40px;height:40px;flex:0 0 40px;border-radius:11px;display:grid;place-items:center;
+  background:rgba(201,153,43,.18);color:var(--goldlt)}
+.modebanner .mb-ic svg{width:24px;height:24px}
+.modebanner .mb-tx{line-height:1.25;min-width:0}
+.modebanner b{display:block;font-size:17px;font-weight:800;letter-spacing:.08em}
+.modebanner .mb-tx span{display:block;font-size:14px;color:#D5DEE7;margin-top:2px}
+.modebanner.proposal{background:var(--teal);border-left-color:var(--teal2)}
+.modebanner.proposal .mb-ic{background:rgba(255,255,255,.16);color:#fff}
+.modebanner.proposal .mb-tx span{color:#D7F3EF}
+body.public .modebanner{display:none!important}
+#pg-proposal .gtitle{color:var(--teal-ink);font-weight:700;justify-content:flex-start}
+#pg-proposal .gtitle:before{content:"";width:4px;height:13px;border-radius:2px;background:var(--teal2);margin-right:7px;align-self:center}
+#pg-proposal .gtitle > small,#pg-proposal .gtitle > .textbtn{margin-left:auto}
+#pg-proposal .gtitle .textbtn{color:var(--teal)}
+#pg-proposal input:where(:not([type=checkbox]):not([type=radio])):focus,#pg-proposal select:focus,#pg-proposal textarea:focus{
+  border-color:var(--teal2);box-shadow:0 0 0 3px rgba(20,184,166,.28)}
+#btnPropSave,#propActions .btn-primary{background:var(--teal);color:#fff}
+#agrActions{border-top:3px solid var(--gold)}
+#propActions{border-top:3px solid var(--teal2)}
+#btnLink{box-shadow:inset 0 -3px 0 var(--gold)}
 
 /* list rows */
 .list .item{display:flex;align-items:center;gap:12px;padding:13px 14px 13px 16px;border-top:1px solid var(--hair);cursor:pointer;
@@ -447,7 +478,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 @media print{
-  .topbar,.tabbar,.actionbar,.toast,.scrim,.viewer,.no-print,.pagehead,#gate,.seg,.stepnav,.progress,.signcard,.gtitle,.group,.notice{display:none!important}
+  .topbar,.tabbar,.actionbar,.toast,.scrim,.viewer,.no-print,.modebanner,.pagehead,#gate,.seg,.stepnav,.progress,.signcard,.gtitle,.group,.notice{display:none!important}
   html,body{background:#fff;height:auto}
   main{padding:0;max-width:none;margin:0}
   .page{display:none!important}
@@ -648,6 +679,10 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 
 <!-- ======================= AGREEMENT ======================= -->
 <section class="page" id="pg-agreement">
+  <div class="modebanner agreement no-print" id="agrBanner" role="note">
+    <span class="mb-ic"><svg><use href="#i-doc"/></svg></span>
+    <div class="mb-tx"><b>AGREEMENT</b><span>— the binding contract the client signs</span></div>
+  </div>
   <div class="pagehead no-print" id="agrHead">
     <div><h1>New agreement</h1><p>Fill it in, check the preview, send it to the client to sign.</p></div>
     <button class="textbtn danger" id="btnNew" type="button">Clear</button>
@@ -872,6 +907,10 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 
 <!-- ======================= PROPOSAL ======================= -->
 <section class="page" id="pg-proposal">
+  <div class="modebanner proposal no-print" id="propBanner" role="note">
+    <span class="mb-ic"><svg><use href="#i-pen"/></svg></span>
+    <div class="mb-tx"><b>PROPOSAL</b><span>— the pitch / quote (not binding)</span></div>
+  </div>
   <div class="pagehead no-print">
     <div><h1 id="propTitle">New proposal</h1><p>Fill it in after the walkthrough, check the preview, share the PDF.</p></div>
     <button class="textbtn danger" id="btnPropClear" type="button">Clear</button>
@@ -3591,6 +3630,7 @@ async function enterHireMode(id){
 /* ================= PUBLIC LINK PAGES (no login) ================= */
 function enterPublicShell(subtitle){
   document.body.classList.add('public','sign-mode');
+  document.body.removeAttribute('data-mode');
   $('tabbar').hidden = true; $('agrActions').hidden = true; $('gate').hidden = true;
   $('barTitle').textContent = 'Lion Security';
   $('barSub').textContent = subtitle;
@@ -4713,6 +4753,7 @@ function showPage(id, push=true){
   $('agrActions').hidden = id !== 'pg-agreement';
   $('propActions').hidden = id !== 'pg-proposal';
   $('barSub').textContent = PAGE_TITLES[id] || 'Operations';
+  document.body.dataset.mode = id==='pg-proposal' ? 'proposal' : id==='pg-agreement' ? 'agreement' : 'other';
   window.scrollTo(0,0);
   if(id==='pg-records') loadRecords(false);
   if(id==='pg-team') loadTeam(false);
