@@ -875,6 +875,7 @@ body.public .modebanner{display:none!important}
         <p><b>Insurance.</b> Company maintains commercial general liability insurance — Carrier: <span id="d_carrier">____________</span> · Policy No.: <span id="d_policy">____________</span> · Coverage: <span id="d_cov">____________</span> per occurrence. A certificate of insurance is available on request. Upon written request and subject to insurer approval, Client may be added as an additional insured.</p>
         <p><b>Indemnification.</b> Company shall indemnify and hold Client harmless from claims arising from the negligent acts or omissions of Company personnel in the performance of duties under this Agreement. Client shall indemnify and hold Company harmless from claims arising from undisclosed site hazards, Client's own negligence, or conditions outside Company's reasonable control. Company's total liability to Client under this Agreement, whether arising in contract, tort, or otherwise, shall not exceed the coverage limit of Company's commercial general liability insurance policy stated above.</p>
         <p><b>Scope of authority.</b> Officers are unarmed and serve to observe, deter and report. They do not make arrests except a citizen's arrest where Washington law allows it, use no force beyond what Washington law permits, do not pursue or chase anyone, and do not handle cash, valuables or weapons. In an emergency they call 911 and then notify Client. Company is an independent contractor, not an employee or agent of Client.</p>
+        <p><b>Patrol records.</b> Officers use a guard-tour (checkpoint) app. Lion Security Services may place small QR checkpoint tags on the property and take photos for patrol and incident reports. These records are shared only with Client and kept confidential.</p>
       </div>
 
       <div class="cols colsgap">
@@ -2620,6 +2621,7 @@ const FILING_STATUS = {
   mfj: 'Married filing jointly or qualifying surviving spouse',
   hoh: 'Head of household',
 };
+const GPS_NOTICE = 'GPS notice. While you are clocked in on a shift, the patrol app tracks your location. It never tracks you off-shift, and it does not record audio.';
 const I9_STATUS = {
   citizen: 'A citizen of the United States',
   national: 'A noncitizen national of the United States',
@@ -2808,6 +2810,7 @@ async function buildEmployeePacketPdf(pub, sen, photos=[]){
   if(pub.ddMethod==='direct') st.push(`Direct deposit: I authorize ${COMPANY} to deposit my pay into the account above and, if a deposit is made in error, to correct it. This stays in effect until I tell the company in writing to change or stop it.`);
   st.push(`Uniform: I received one ${COMPANY} uniform shirt. It belongs to the company and I will return it when I leave. If it is lost or damaged beyond normal wear, I agree to pay the replacement cost of ${money(pub.uniformCost)}. Any payroll deduction for this will only be made with my separate written OK at that time and will never take my pay below minimum wage.`);
   st.push('Handbook: I have read and agree to follow the Lion Security employee handbook.');
+  if(at.gpsNotice) st.push((at.gpsNoticeText || GPS_NOTICE) + ' I\'ve read and understand the GPS notice.');
   st.push('Electronic signature: I agree to sign these forms electronically. My typed name is my signature.');
   st.forEach(s => para('•  ' + s, reg, 9));
   need(50);
@@ -3508,6 +3511,7 @@ function hireReviewHtml(){
     <div class="gtitle">Sign</div>
     <div class="group">
       ${hCheck('cert.i9','My Form I-9 answers are true', 'I am aware that federal law provides for imprisonment and/or fines for false statements, or the use of false documents, in connection with the completion of this form. I attest, under penalty of perjury, that this information, including my selection of the box attesting to my citizenship/immigration status, is true and correct.')}
+      ${hCheck('cert.gps','I\'ve read and understand the GPS notice.', GPS_NOTICE)}
       ${hCheck('cert.esign','I agree to sign electronically','My typed name below is my legal signature on these forms.')}
       ${hField('sigName','Type your full legal name',{ac:'name'})}
     </div>
@@ -3558,7 +3562,7 @@ function hireErrors(key){
     if(!hv('ack.handbook')) e['ack.handbook'] = 'Required';
   }
   if(key==='review'){
-    ['cert.i9','cert.esign'].forEach(k=>{ if(!hv(k)) e[k]='Required'; });
+    ['cert.i9','cert.gps','cert.esign'].forEach(k=>{ if(!hv(k)) e[k]='Required'; });
     need('sigName');
     const sig = String(hv('sigName')||'').toLowerCase();
     const last = String(hv('legal.last')||'').toLowerCase().trim();
@@ -3677,7 +3681,7 @@ async function submitHire(){
     legal: f.legal, address: f.address, emergency: f.emergency,
     i9: f.i9, license: f.license,
     ack: f.ack, cert: f.cert,
-    attest: { signedName: pub.signedName, signedAt: now, userAgent: navigator.userAgent.slice(0,200) },
+    attest: { signedName: pub.signedName, signedAt: now, userAgent: navigator.userAgent.slice(0,200), gpsNotice: true, gpsNoticeText: GPS_NOTICE },
   };
   try{
     await withRetry(()=> rpc('submit_employee_onboarding', { p_link_id: HIRE.id, p_public: pub, p_sensitive: sen }, false));
