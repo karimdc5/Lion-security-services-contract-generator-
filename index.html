@@ -2422,7 +2422,7 @@ function renderRecords(){
       return `<button class="item rec-prop-row" type="button" data-id="${esc(r.id)}">
         <span class="lead ${r.status === 'converted' ? 'ok' : ''}">${icon('doc')}</span>
         <span class="main"><span class="t">${esc(r.client || 'Untitled')}</span>
-          <span class="s">${esc([site, fmtWhen(r.updated_at || r.created_at)].filter(Boolean).join(' · '))}</span></span>
+          <span class="s">${esc([fmtWhen(r.updated_at || r.created_at), site].filter(Boolean).join(' · '))}</span></span>
         <span class="end"><span class="chip ${cls}">${esc(label)}</span>${chev()}</span></button>`;
     }).join('') : (q ? `<div class="empty">Nothing matches “${esc(q)}”.</div>`
                     : `<div class="empty"><b>No saved proposals yet</b>Fill in a proposal on the Proposal tab and tap Save.</div>`);
