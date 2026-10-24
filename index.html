@@ -656,9 +656,9 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 
     <div class="gtitle">Money</div>
     <div class="group">
-      <div class="field"><label for="rate">Rate per guard, per hour</label><input id="rate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ e.g. 35"></div>
+      <div class="field"><label for="rate">Rate per guard, per hour</label><input id="rate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ e.g. 35"><div class="hint" id="rateHint"></div></div>
       <div class="tiles">
-        <div class="tile"><div class="k" id="ghLbl">Guard-hours</div><input id="ghours" type="text" readonly tabindex="-1" placeholder="—"></div>
+        <div class="tile"><div class="k" id="ghLbl">Billable guard-hours</div><input id="ghours" type="text" readonly tabindex="-1" placeholder="—"></div>
         <div class="tile"><div class="k" id="depositLbl">Deposit due at signing</div><input id="deposit" type="text" readonly tabindex="-1" placeholder="—"></div>
         <div class="tile hero" style="grid-column:1 / -1"><div class="k" id="totLbl">Estimated total</div><input id="total" type="text" readonly tabindex="-1" placeholder="Enter a rate"></div>
       </div>
@@ -666,7 +666,8 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
       <div id="shortBillingWrap" style="display:none">
         <label class="switchrow" for="firstMonthBilling"><span class="txt">Bill the first month upfront<small>Instead of a percentage deposit — for a month or longer</small></span><span class="switch"><input type="checkbox" id="firstMonthBilling"><i></i></span></label>
       </div>
-      <div class="field"><label for="netTerms">Invoice terms</label><select id="netTerms"><option>NET 30</option><option>NET 15</option><option>Due on completion</option><option>50% deposit, balance on completion</option></select></div>
+      <label class="switchrow" for="rush"><span class="txt">Rush booking (under 48 hours' notice) +15%<small>Turn on if the job was booked less than 48 hours before it starts</small></span><span class="switch"><input type="checkbox" id="rush"><i></i></span></label>
+      <div class="field"><label for="netTerms">Invoice terms</label><select id="netTerms"><option>NET 15</option><option>NET 30</option><option>Due on completion</option><option>50% deposit, balance on completion</option></select></div>
     </div>
 
     <div class="gtitle">Notes for your file <small>Never printed or sent</small></div>
@@ -719,25 +720,29 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
       <h2 class="sec">Investment &amp; Payment</h2>
       <div class="stats">
         <div class="stat"><div class="k">RATE / GUARD / HOUR</div><div class="v" id="d_rate">—</div></div>
-        <div class="stat"><div class="k" id="d_ghk">TOTAL GUARD-HOURS</div><div class="v" id="d_gh">—</div></div>
-        <div class="stat"><div class="k" id="d_depk">DEPOSIT (25% OF TOTAL)</div><div class="v" id="d_dep">—</div></div>
+        <div class="stat"><div class="k" id="d_ghk">BILLABLE GUARD-HOURS</div><div class="v" id="d_gh">—</div></div>
+        <div class="stat"><div class="k" id="d_depk">DEPOSIT (50% OF TOTAL)</div><div class="v" id="d_dep">—</div></div>
         <div class="stat hero"><div class="k" id="d_totk">ESTIMATED TOTAL</div><div class="v" id="d_total">—</div></div>
       </div>
       <div class="cols">
         <div>
           <h3 class="sub">Payment terms</h3>
           <ul class="cl">
-            <li id="d_net">Balance due NET 30 from date of invoice, less deposit paid at signing</li>
-            <li id="d_discount">3% discount for payment received within 10 days of invoice</li>
-            <li id="d_latefee">5% late fee after 45 days · 15% late fee after 90 days</li>
-            <li>Any hours worked beyond the scheduled coverage require Client's prior written approval and are billed at 1.5× the hourly rate</li>
+            <li id="d_net">Balance due NET 15 from date of invoice, less deposit paid at signing</li>
+            <li id="d_ach">ACH preferred</li>
+            <li id="d_discount">3% discount for payment received within 7 days of invoice</li>
+            <li id="d_latefee">5% late fee if not received within 30 days past due · additional 1.5% per month after 60 days</li>
+            <li id="d_min">4-hour minimum per guard, per shift</li>
+            <li id="d_extra">Hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client's prior written approval</li>
+            <li id="d_holiday">Shifts on New Year's Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year's Eve are billed at 1.5× on all hours (not combined with overtime)</li>
+            <li id="d_rush" style="display:none">Rush booking (under 48 hours' notice): 15% surcharge included in the total</li>
           </ul>
         </div>
         <div>
           <h3 class="sub">Cancellation &amp; refunds</h3>
           <p class="cxnote">Cancellation does not entitle Client to a full refund.</p>
           <ul class="cl">
-            <li id="d_cx1">A deposit of 25% of the Estimated Total is due at signing to reserve this date, and is non-refundable once paid</li>
+            <li id="d_cx1">A deposit of 50% of the Estimated Total is due at signing to reserve this date, and is non-refundable once paid</li>
             <li id="d_cx2">Cancellation within 72 hours of start: full balance remains due — no refund</li>
             <li>Cancellation beyond that window: deposit is retained; remaining balance is waived</li>
             <li>Changes to guard count, hours, or posts require written approval and may change the total</li>
@@ -1597,6 +1602,7 @@ function collectData(){
     pattern:$('pattern').value, posts:$('posts').value, orders:$('orders').value, hazards:$('hazards').value,
     rate:$('rate').value, netTerms:$('netTerms').value,
     firstMonthBilling: $('firstMonthBilling')?.checked || false,
+    rush: $('rush')?.checked || false,
     coLic:$('coLic').value, coCarrier:$('coCarrier').value, coPolicy:$('coPolicy').value, coCoverage:$('coCoverage').value,
     coSigner:$('coSigner').value, coTitle:$('coTitle').value,
   };
@@ -1610,7 +1616,8 @@ function deriveTerm(days){
 
 // Count actual calendar days between start/end (inclusive) that fall on a checked weekday —
 // e.g. a 1-month range with only Mon-Fri checked correctly returns ~22, not 30.
-function matchingDaysCount(startStr, endStr, daysSet){
+// onlyIf (optional) narrows the count further, e.g. isBillingHoliday to count holiday shifts only.
+function matchingDaysCount(startStr, endStr, daysSet, onlyIf){
   if(!startStr || !endStr) return 0;
   const set = daysSet ? daysSet : [1,1,1,1,1,1,1]; // field missing entirely (old saved link) → assume every day; an explicit all-unchecked selection is honored as 0
   const [sy,sm,sd] = startStr.split('-').map(Number);
@@ -1620,11 +1627,49 @@ function matchingDaysCount(startStr, endStr, daysSet){
   if(cur > end) return 0;
   let count = 0;
   while(cur <= end){
-    if(set[cur.getDay()]) count++;
+    if(set[cur.getDay()] && (!onlyIf || onlyIf(cur))) count++;
     cur.setDate(cur.getDate()+1);
   }
   return count;
 }
+
+// Holidays billed at 1.5×: New Year's Day, Memorial Day (last Mon of May), July 4th,
+// Labor Day (first Mon of Sep), Thanksgiving (4th Thu of Nov), Christmas, New Year's Eve.
+function isBillingHoliday(dt){
+  const m=dt.getMonth(), d=dt.getDate(), w=dt.getDay();
+  if((m===0&&d===1) || (m===6&&d===4) || (m===11&&(d===25||d===31))) return true;
+  if(m===4 && w===1 && d>24) return true;
+  if(m===8 && w===1 && d<=7) return true;
+  if(m===10 && w===4 && d>=22 && d<=28) return true;
+  return false;
+}
+function isHolidayStr(s){
+  if(!s) return false;
+  const [y,m,d] = s.split('-').map(Number);
+  return isBillingHoliday(new Date(y, m-1, d));
+}
+
+// Whole calendar months covered by start..end inclusive (e.g. Jan 1 – Dec 31 = 12).
+function monthsCovered(startStr, endStr){
+  if(!startStr || !endStr) return 0;
+  const [sy,sm,sd] = startStr.split('-').map(Number);
+  const [ey,em,ed] = endStr.split('-').map(Number);
+  const end = new Date(ey, em-1, ed);
+  let m = 0;
+  while(m < 1200 && new Date(sy, sm-1+m+1, sd-1) <= end) m++;
+  return m;
+}
+
+// Standard rate tier: events $45; contracts by term length (from start/end dates).
+function autoRateInfo(raw){
+  if(raw.etype==='single') return { rate:45, label:'one-time event' };
+  const months = monthsCovered(raw.start, raw.end);
+  if(months>=24) return { rate:45, label:'24+ month contract' };
+  if(months>=12) return { rate:47, label:'12+ month contract' };
+  if(months>=2)  return { rate:49, label:'2+ month contract' };
+  return { rate:53, label:'contract under 2 months' };
+}
+function autoRate(raw){ return autoRateInfo(raw).rate; }
 
 function dowLabel(daysSet){
   if(!daysSet) return 'every day';
@@ -1638,16 +1683,22 @@ function dowLabel(daysSet){
 }
 
 function computeAll(raw){
-  const g=+raw.guards||0, h=+raw.hours||0, r=+raw.rate||0;
-  const perShiftHours = g*h;
-  const perShiftTotal = perShiftHours*r;
+  const g=+raw.guards||0, h=+raw.hours||0, r=(+raw.rate>0) ? +raw.rate : autoRate(raw);
+  const bh = h>0 ? Math.max(h,4) : 0; // 4-hour minimum per guard, per shift
+  const perShiftHours = g*bh;
+  // events only: hours past 8 per guard per shift at 1.5×; holiday shifts are 1.5× on all hours (no stacking)
+  const otHours = raw.etype==='single' ? Math.max(bh-8,0) : 0;
+  const perShiftTotal = g*((bh-otHours)*r + otHours*r*1.5);
+  const holidayShiftTotal = perShiftHours*r*1.5;
+  const rushMult = raw.rush ? 1.15 : 1;
   const useFMU = raw.etype==='ongoing' || (raw.etype==='short' && raw.firstMonthBilling);
 
   if(useFMU){
     const termDays = daysBetween(raw.start, raw.end);
     const { termLen, termUnit } = deriveTerm(termDays);
     const totalShifts = matchingDaysCount(raw.start, raw.end, raw.daysSet);
-    const total = perShiftTotal*totalShifts;
+    const holidayShifts = matchingDaysCount(raw.start, raw.end, raw.daysSet, isBillingHoliday);
+    const total = (perShiftTotal*(totalShifts-holidayShifts) + holidayShiftTotal*holidayShifts)*rushMult;
     // first month upfront = actual matching days from the start date through one calendar month later (or the end date, if sooner)
     let firstMonthEnd = raw.end;
     if(raw.start){
@@ -1657,16 +1708,21 @@ function computeAll(raw){
       if(!raw.end || fmStr < raw.end) firstMonthEnd = fmStr;
     }
     const firstMonthShifts = matchingDaysCount(raw.start, firstMonthEnd, raw.daysSet);
-    const deposit = perShiftTotal*firstMonthShifts; // first month, paid upfront — not a % of the term
-    return {...raw, gh:perShiftHours, perShiftTotal, totalShifts, total, deposit, firstMonthShifts, termLen, termUnit};
+    const firstMonthHolidays = matchingDaysCount(raw.start, firstMonthEnd, raw.daysSet, isBillingHoliday);
+    const deposit = (perShiftTotal*(firstMonthShifts-firstMonthHolidays) + holidayShiftTotal*firstMonthHolidays)*rushMult; // first month, paid upfront — not a % of the term
+    return {...raw, rate:r, gh:perShiftHours, perShiftTotal, totalShifts, holidayShifts, total, deposit, firstMonthShifts, termLen, termUnit};
   }
 
-  let shifts=1;
-  if(raw.etype==='short'){ shifts = matchingDaysCount(raw.start, raw.end, raw.daysSet) || 1; }
-  const gh=perShiftHours*shifts, total=gh*r;
-  const depositPct = raw.netTerms==='50% deposit, balance on completion' ? 0.5 : 0.25;
+  let shifts=1, holidayShifts=0;
+  if(raw.etype==='short'){
+    shifts = matchingDaysCount(raw.start, raw.end, raw.daysSet) || 1;
+    holidayShifts = Math.min(shifts, matchingDaysCount(raw.start, raw.end, raw.daysSet, isBillingHoliday));
+  }else if(isHolidayStr(raw.start)) holidayShifts = 1;
+  const gh=perShiftHours*shifts;
+  const total=(perShiftTotal*(shifts-holidayShifts) + holidayShiftTotal*holidayShifts)*rushMult;
+  const depositPct = 0.5;
   const deposit = total*depositPct;
-  return {...raw, gh, shifts, total, deposit, depositPct};
+  return {...raw, rate:r, gh, shifts, holidayShifts, otHours, total, deposit, depositPct};
 }
 
 /* ---------- paint the document ---------- */
@@ -1695,19 +1751,20 @@ function paint(d){
 
   put('d_rate', d.rate?money(d.rate):'—');
   put('d_gh', d.gh||'—');
-  const pct = Math.round((d.depositPct||0.25)*100);
+  const pct = Math.round((d.depositPct||0.5)*100);
   const isOngoing = d.etype==='ongoing';
   const isFMU = isOngoing || (d.etype==='short' && d.firstMonthBilling);
-  $('d_ghk').textContent = isFMU ? 'GUARD-HOURS / SHIFT' : 'TOTAL GUARD-HOURS';
+  $('d_ghk').textContent = isFMU ? 'BILLABLE GUARD-HOURS / SHIFT' : 'BILLABLE GUARD-HOURS';
   $('d_depk').textContent = isFMU ? 'DUE AT SIGNING (1ST MONTH)' : `DEPOSIT (${pct}% OF TOTAL)`;
   $('d_totk').textContent = isFMU ? 'EST. TOTAL (FULL TERM)' : 'ESTIMATED TOTAL';
   put('d_dep', d.deposit?money(d.deposit):'—');
   put('d_total', d.total?money(d.total):'—');
-  const net=d.netTerms||'NET 30';
+  const net=d.netTerms||'NET 15';
   if(isFMU){
     $('d_net').textContent = `First month (${money(d.deposit)}, ${d.firstMonthShifts||0} shifts) due upfront to begin service. Remaining months billed ${net} per invoice`;
     if(d.perShiftTotal){
-      $('d_net').textContent += ` — billed at ${money(d.perShiftTotal)} per shift, approximately ${d.totalShifts||0} shifts over the ${d.termLen||'__'}-${(d.termUnit||'month').replace(/s$/,'')} term`;
+      $('d_net').textContent += ` — billed at ${money(d.perShiftTotal)} per shift, approximately ${d.totalShifts||0} shifts over the ${d.termLen||'__'}-${(d.termUnit||'month').replace(/s$/,'')} term`
+        + (d.holidayShifts ? ` (${d.holidayShifts} holiday shift${d.holidayShifts>1?'s':''} at 1.5×)` : '');
     }
   }else{
     $('d_net').textContent = net==='Due on completion'
@@ -1722,8 +1779,15 @@ function paint(d){
   const isNetBased = isFMU || net==='NET 15' || net==='NET 30';
   $('d_discount').style.display = isNetBased ? '' : 'none';
   $('d_latefee').textContent = isNetBased
-    ? '5% late fee if not received within 45 days of invoice · 15% if not received within 90 days'
-    : '5% late fee if not received within 45 days of completion · 15% if not received within 90 days';
+    ? '5% late fee if not received within 30 days past due · additional 1.5% per month after 60 days'
+    : '5% late fee if not received within 30 days of completion · additional 1.5% per month after 60 days';
+  $('d_extra').textContent = d.etype==='single'
+    ? 'Hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client’s prior written approval'
+    : 'Additional hours beyond the scheduled coverage require Client’s prior written approval and are billed at the same hourly rate';
+  $('d_min').textContent = '4-hour minimum per guard, per shift';
+  $('d_holiday').textContent = 'Shifts on New Year’s Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year’s Eve are billed at 1.5× on all hours (not combined with overtime)';
+  $('d_rush').textContent = 'Rush booking (under 48 hours’ notice): 15% surcharge included in the total';
+  $('d_rush').style.display = d.rush ? '' : 'none';
 
   if(isFMU){
     $('d_cx1').textContent = `The first month\u2019s payment is due at signing, before service begins, and is non-refundable`;
@@ -1826,16 +1890,18 @@ function updateNetTermsOptions(useFMU){
   if(useFMU){
     if(sel.dataset.mode==='fmu') return; // already set, don't clobber the user's pick
     sel.innerHTML = '<option value="NET 15">First month upfront, then NET 15</option><option value="NET 30">First month upfront, then NET 30</option>';
-    sel.value = current==='NET 15' ? 'NET 15' : 'NET 30';
+    sel.value = current==='NET 30' ? 'NET 30' : 'NET 15';
     sel.dataset.mode = 'fmu';
   }else{
     if(sel.dataset.mode==='standard') return;
-    sel.innerHTML = '<option>NET 30</option><option>NET 15</option><option>Due on completion</option><option>50% deposit, balance on completion</option>';
-    const valid = ['NET 30','NET 15','Due on completion','50% deposit, balance on completion'];
-    sel.value = valid.includes(current) ? current : 'NET 30';
+    sel.innerHTML = '<option>NET 15</option><option>NET 30</option><option>Due on completion</option><option>50% deposit, balance on completion</option>';
+    const valid = ['NET 15','NET 30','Due on completion','50% deposit, balance on completion'];
+    sel.value = valid.includes(current) ? current : 'NET 15';
     sel.dataset.mode = 'standard';
   }
 }
+
+let rateManual = false;     // true once the user types their own rate; clearing the field returns to the standard tier
 
 function render(){
   const t = document.querySelector('input[name=etype]:checked').value;
@@ -1843,6 +1909,11 @@ function render(){
   $('daysWrap').style.display    = t==='single'  ? 'none':'block';
   $('shortBillingWrap').style.display = t==='short' ? 'block':'none';
   $('endWrap').style.display     = t==='single'  ? 'none':'block';
+  const startNow = $('start').value;
+  // Rate follows the standard tier unless the user typed their own (left alone while they're editing it)
+  const tier = autoRateInfo({ etype:t, start:startNow, end:$('end').value });
+  if(!rateManual && document.activeElement !== $('rate')) $('rate').value = tier.rate;
+  $('rateHint').textContent = `Standard rate: $${tier.rate}/hr (${tier.label}). ` + (rateManual ? 'Clear the field to use it.' : 'Type to override.');
   const raw = collectData();
   $('dowWarning').style.display = (t!=='single' && raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
 
@@ -1873,14 +1944,19 @@ function render(){
   $('total').value  = d.total ? money(d.total) : '';
   $('deposit').value = d.deposit ? money(d.deposit) : '';
   $('depositLbl').textContent = useFMU ? 'Due at signing (1st month)' : 'Deposit due at signing';
-  $('ghLbl').textContent = useFMU ? 'Guard-hours per shift' : 'Guard-hours';
+  $('ghLbl').textContent = useFMU ? 'Billable guard-hours per shift' : 'Billable guard-hours';
   $('totLbl').textContent = useFMU ? 'Estimated total (full term)' : 'Estimated total';
-  const pctH = Math.round((d.depositPct||0.25)*100);
+  const pctH = Math.round((d.depositPct||0.5)*100);
+  const extras = (+d.hours>0 && +d.hours<4 ? ' Hours include the 4-hour minimum per guard, per shift.' : '')
+    + (d.otHours ? ` Includes ${d.otHours} overtime hr per guard at 1.5×.` : '')
+    + (d.holidayShifts ? ` Includes ${d.holidayShifts} holiday shift${d.holidayShifts>1?'s':''} at 1.5×.` : '')
+    + (d.rush ? ' Includes the 15% rush surcharge.' : '');
   $('depHint').textContent = useFMU
     ? (d.perShiftTotal ? `Estimated total is the full term: ${money(d.perShiftTotal)}/shift × ${d.totalShifts||0} shifts (${dowLabel(d.daysSet)}) over ${d.termLen||'__'} ${d.termUnit||'months'}. First month (${money(d.deposit)}) is due upfront to begin service — pick NET 15 or NET 30 below for how the rest gets billed.` : 'Fill in start date, end date, and which days are worked to calculate the full-term total.')
     : t==='short'
     ? `Deposit is calculated automatically — ${pctH}% of the estimated total, based on ${d.shifts||0} shift${d.shifts===1?'':'s'} (${dowLabel(d.daysSet)}). Non-refundable once the date is reserved.`
-    : `Deposit is calculated automatically — ${pctH}% of the estimated total (matches the invoice terms below). Non-refundable once the date is reserved.`;
+    : `Deposit is calculated automatically — ${pctH}% of the estimated total. Non-refundable once the date is reserved.`;
+  $('depHint').textContent += extras;
 
   $('agrPreview').textContent = d.agrNo;
   paint(d);
@@ -1947,7 +2023,6 @@ async function loadCompany(){
     }catch(e){ settingsRemote = false; $('coSyncNote').textContent = 'Saved on this phone.'; }
   }
   lastSavedCompany = JSON.stringify(companyValues());
-  if(!$('rate').value && $('coRate').value) $('rate').value = $('coRate').value;
   seqCache = localGet('los:seq') || {};
   renderHistory();
 }
@@ -1958,6 +2033,9 @@ function renderHistory(){
     : 'None issued from this phone yet.';
 }
 
+// registered before the generic listeners below so the flag is set before render() runs
+$('rate').addEventListener('input', ()=>{ rateManual = $('rate').value.trim() !== ''; });
+$('rate').addEventListener('blur', render);
 document.querySelectorAll('#agrForm input,#agrForm select,#agrForm textarea,#pg-settings input').forEach(el=>{
   el.addEventListener('input',render); el.addEventListener('change',render);
 });
@@ -1984,6 +2062,8 @@ armButton($('btnNew'), 'Tap again to clear', async ()=>{
     .forEach(f=>$(f).value='');
   [0,1,2,3,4,5,6].forEach(i=>$('dow'+i).checked = (i>=1 && i<=5));
   $('firstMonthBilling').checked = false;
+  $('rush').checked = false;
+  rateManual = false;
   $('start').value = new Date().toISOString().slice(0,10);
   setAgrView('form');
   render(); toast('Cleared.');
@@ -3534,7 +3614,7 @@ async function enterOnboardSignMode(id, justSigned){
   let row;
   try{ row = await loadShareLink(id); }catch(e){ row = null; }
   if(!row || row.kind!=='contractor_onboarding'){
-    body.innerHTML = '<h3>Link not found</h3><p>This onboarding link is broken or has expired. Ask Lion of Seattle to send a new one.</p>';
+    body.innerHTML = '<h3>Link not found</h3><p>This onboarding link is broken or has expired. Ask Lion Security Services to send a new one.</p>';
     return;
   }
   const d = row.data;
@@ -3548,7 +3628,7 @@ async function enterOnboardSignMode(id, justSigned){
       : (d.bankName ? `${escapeHtml(d.bankName)} · ${d.acctType==='savings'?'Savings':'Checking'} · account ending ${(d.accountNumber||'').slice(-4)||'????'}` : 'Not provided.');
     body.innerHTML = `
       <h3>✅ You're all set</h3>
-      <div class="signed-banner">✓ Signed by <b>${escapeHtml(d.signedName)}</b> on ${fmtStamp(d.signedAt)}. Your information has been received by Lion of Seattle — you don't need to do anything else.</div>
+      <div class="signed-banner">✓ Signed by <b>${escapeHtml(d.signedName)}</b> on ${fmtStamp(d.signedAt)}. Your information has been received by Lion Security Services — you don't need to do anything else.</div>
       ${justSigned ? '<div id="onbNotifyStatus" style="font-size:12px;color:var(--muted);margin:-10px 0 12px">Notifying the office…</div>' : ''}
       <div class="obsection">
         <h3>Tax Info on File</h3>
@@ -3647,7 +3727,7 @@ async function enterOnboardSignMode(id, justSigned){
       <label>Social Security Number or EIN</label>
       <input id="onbTaxId" placeholder="e.g. 000-00-0000" inputmode="numeric">
       <div class="fielderr" id="errTaxId"></div>
-      <div class="example">Example: 000-00-0000 (SSN) or 12-3456789 (EIN). Only Lion of Seattle's owners can see this — it's used only for tax reporting.</div>
+      <div class="example">Example: 000-00-0000 (SSN) or 12-3456789 (EIN). Only Lion Security Services' owners can see this — it's used only for tax reporting.</div>
     </div>
 
     <div class="obsection">
@@ -3668,24 +3748,24 @@ async function enterOnboardSignMode(id, justSigned){
       </div>
 
       <div class="chk"><input type="checkbox" id="onbDDSkip"><label for="onbDDSkip">I'd rather not provide this right now — skip this section.</label></div>
-      <div class="example">You can always give this to Lion of Seattle later — it just means payment needs another arrangement until then.</div>
+      <div class="example">You can always give this to Lion Security Services later — it just means payment needs another arrangement until then.</div>
     </div>
 
     <div class="obsection">
       <h3>Part 3 — Uniform Responsibility</h3>
       <div class="doccard">
-        <div class="desc">I acknowledge receiving one (1) Lion of Seattle Security Services long-sleeve uniform shirt. It remains the property of Lion of Seattle Security Services, LLC. Normal wear and tear is expected and is not my responsibility. If the shirt is lost, or damaged beyond normal wear and tear, I agree that its replacement cost of ${uniformCostStr} will be owed to Lion of Seattle Security Services, and may be netted against my next payment, with notice given beforehand.</div>
+        <div class="desc">I acknowledge receiving one (1) Lion Security Services long-sleeve uniform shirt. It remains the property of Lion Security Services, LLC. Normal wear and tear is expected and is not my responsibility. If the shirt is lost, or damaged beyond normal wear and tear, I agree that its replacement cost of ${uniformCostStr} will be owed to Lion Security Services, and may be netted against my next payment, with notice given beforehand.</div>
       </div>
     </div>
 
     <div class="obsection">
       <h3>Part 4 — Company Handbook</h3>
       <div class="doccard">
-        <div class="name">Lion of Seattle — Company Handbook</div>
+        <div class="name">Lion Security Services — Company Handbook</div>
         <div class="desc">Rules, expectations, and how things work day-to-day. Give it a read before you sign below.</div>
         <a class="doclink" href="ContractorOnboardingGuide.pdf" target="_blank" rel="noopener">Open handbook →</a>
       </div>
-      <div class="chk"><input type="checkbox" id="onbHandbookAgree"><label for="onbHandbookAgree">I have read and agree to follow the Lion of Seattle Company Handbook.</label></div>
+      <div class="chk"><input type="checkbox" id="onbHandbookAgree"><label for="onbHandbookAgree">I have read and agree to follow the Lion Security Services Company Handbook.</label></div>
     </div>
 
     <div class="chk"><input type="checkbox" id="onbAgree"><label for="onbAgree">I certify, under penalties of perjury, that the tax information above is true, correct, and complete, and that I am not subject to backup withholding except as the IRS has notified me. I also acknowledge and agree to the uniform responsibility terms above, and that any direct deposit information provided above is accurate.</label></div>
