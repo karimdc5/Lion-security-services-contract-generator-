@@ -657,6 +657,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
     <div class="gtitle">Money</div>
     <div class="group">
       <div class="field"><label for="rate">Rate per guard, per hour</label><input id="rate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ e.g. 35"><div class="hint" id="rateHint"></div></div>
+      <div class="field"><label for="taxRate">WA sales tax rate (%) where the work happens</label><input id="taxRate" type="number" min="0" max="15" step="0.01" inputmode="decimal" value="10.4"><div class="hint">Security services are taxable in WA since Oct 1, 2025. Oct–Dec 2026: Federal Way, Kent, Des Moines, SeaTac, Burien, Tukwila 10.4% · Tacoma, Renton, Auburn 10.5% · Seattle 10.55% · Bellevue 10.3%. Exact address: <a href="https://webgis.dor.wa.gov/taxratelookup/SalesTax.aspx" target="_blank" rel="noopener">DOR rate lookup</a></div></div>
       <div class="tiles">
         <div class="tile"><div class="k" id="ghLbl">Billable guard-hours</div><input id="ghours" type="text" readonly tabindex="-1" placeholder="—"></div>
         <div class="tile"><div class="k" id="depositLbl">Deposit due at signing</div><input id="deposit" type="text" readonly tabindex="-1" placeholder="—"></div>
@@ -733,9 +734,10 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
             <li id="d_discount">3% discount for payment received within 7 days of invoice</li>
             <li id="d_latefee">5% late fee if not received within 30 days past due · additional 1.5% per month after 60 days</li>
             <li id="d_min">4-hour minimum per guard, per shift</li>
-            <li id="d_extra">Hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client's prior written approval</li>
-            <li id="d_holiday">Shifts on New Year's Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year's Eve are billed at 1.5× on all hours (not combined with overtime)</li>
+            <li id="d_extra">Extended-shift rate: hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client's prior written approval</li>
+            <li id="d_holiday">Shifts on New Year's Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year's Eve are billed at 1.5× on all hours (not combined with the extended-shift rate)</li>
             <li id="d_rush" style="display:none">Rush booking (under 48 hours' notice): 15% surcharge included in the total</li>
+            <li id="d_tax" style="display:none"></li>
           </ul>
         </div>
         <div>
@@ -796,7 +798,8 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
       </div>
     </div>
 
-    <div class="foot">LOCAL SEATTLE TEAM &nbsp;·&nbsp; FULLY LICENSED &amp; INSURED &nbsp;·&nbsp; VETTED, UNIFORMED OFFICERS &nbsp;·&nbsp; NO HIDDEN FEES
+    <!-- Switch back to "LICENSED &amp; INSURED" once the WA DOL company license is issued. -->
+    <div class="foot">LOCAL SEATTLE TEAM &nbsp;·&nbsp; INSURED &nbsp;·&nbsp; VETTED, UNIFORMED OFFICERS &nbsp;·&nbsp; NO HIDDEN FEES
       <span>Lion Security Services, LLC · Greater Seattle Area · 253-251-4551 · www.lionofseattle.com</span>
     </div>
   </div>
@@ -1600,7 +1603,7 @@ function collectData(){
     autoRenew:$('autoRenew')?.checked,
     daysSet: [0,1,2,3,4,5,6].map(i => $('dow'+i) ? $('dow'+i).checked : true),
     pattern:$('pattern').value, posts:$('posts').value, orders:$('orders').value, hazards:$('hazards').value,
-    rate:$('rate').value, netTerms:$('netTerms').value,
+    rate:$('rate').value, taxRate:$('taxRate').value, netTerms:$('netTerms').value,
     firstMonthBilling: $('firstMonthBilling')?.checked || false,
     rush: $('rush')?.checked || false,
     coLic:$('coLic').value, coCarrier:$('coCarrier').value, coPolicy:$('coPolicy').value, coCoverage:$('coCoverage').value,
@@ -1683,11 +1686,11 @@ function dowLabel(daysSet){
   return checked.map(i=>names[i]).join(', ');
 }
 
-function computeAll(raw){
+function computeAllPreTax(raw){
   const g=+raw.guards||0, h=+raw.hours||0, r=(+raw.rate>0) ? +raw.rate : autoRate(raw);
   const bh = h>0 ? Math.max(h,4) : 0; // 4-hour minimum per guard, per shift
   const perShiftHours = g*bh;
-  // events and days/weeks jobs: hours past 8 per guard per shift at 1.5×; holiday shifts are 1.5× on all hours (no stacking)
+  // events and days/weeks jobs: extended-shift rate (a billing premium, not wage overtime) — hours past 8 per guard per shift at 1.5×; holiday shifts are 1.5× on all hours (no stacking)
   const otHours = raw.etype!=='ongoing' ? Math.max(bh-8,0) : 0;
   const perShiftTotal = g*((bh-otHours)*r + otHours*r*1.5);
   const holidayShiftTotal = perShiftHours*r*1.5;
@@ -1724,6 +1727,19 @@ function computeAll(raw){
   const depositPct = 0.5;
   const deposit = total*depositPct;
   return {...raw, rate:r, gh, shifts, holidayShifts, otHours, total, deposit, depositPct};
+}
+
+// WA retail sales tax (ESSB 5814, effective Oct 1, 2025) is added on top of the service price.
+// Agreements saved before this field existed have no taxRate, so they keep showing exactly what was signed.
+function computeAll(raw){
+  const d = computeAllPreTax(raw);
+  const has = raw.taxRate !== undefined && raw.taxRate !== null && String(raw.taxRate).trim() !== '';
+  const tr = has ? Math.min(15, Math.max(0, +raw.taxRate || 0)) : 0;
+  const preTaxTotal = d.total || 0;
+  const taxAmt = Math.round(preTaxTotal * tr) / 100;
+  return {...d, taxRate:tr, preTaxTotal, taxAmt,
+    total: preTaxTotal ? preTaxTotal + taxAmt : d.total,
+    deposit: d.deposit ? d.deposit * (1 + tr/100) : d.deposit};
 }
 
 /* ---------- paint the document ---------- */
@@ -1764,7 +1780,7 @@ function paint(d){
   if(isFMU){
     $('d_net').textContent = `First month (${money(d.deposit)}, ${d.firstMonthShifts||0} shifts) due upfront to begin service. Remaining months billed ${net} per invoice`;
     if(d.perShiftTotal){
-      $('d_net').textContent += ` — billed at ${money(d.perShiftTotal)} per shift, approximately ${d.totalShifts||0} shifts over the ${d.termLen||'__'}-${(d.termUnit||'month').replace(/s$/,'')} term`
+      $('d_net').textContent += ` — billed at ${money(d.perShiftTotal)} per shift${d.taxRate ? ' plus sales tax' : ''}, approximately ${d.totalShifts||0} shifts over the ${d.termLen||'__'}-${(d.termUnit||'month').replace(/s$/,'')} term`
         + (d.holidayShifts ? ` (${d.holidayShifts} holiday shift${d.holidayShifts>1?'s':''} at 1.5×)` : '');
     }
   }else{
@@ -1783,12 +1799,16 @@ function paint(d){
     ? '5% late fee if not received within 30 days past due · additional 1.5% per month after 60 days'
     : '5% late fee if not received within 30 days of completion · additional 1.5% per month after 60 days';
   $('d_extra').textContent = d.etype!=='ongoing'
-    ? 'Hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client’s prior written approval'
+    ? 'Extended-shift rate: hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client’s prior written approval'
     : 'Additional hours beyond the scheduled coverage require Client’s prior written approval and are billed at the same hourly rate';
   $('d_min').textContent = '4-hour minimum per guard, per shift';
-  $('d_holiday').textContent = 'Shifts on New Year’s Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year’s Eve are billed at 1.5× on all hours (not combined with overtime)';
+  $('d_holiday').textContent = 'Shifts on New Year’s Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year’s Eve are billed at 1.5× on all hours (not combined with the extended-shift rate)';
   $('d_rush').textContent = 'Rush booking (under 48 hours’ notice): 15% surcharge included in the total';
   $('d_rush').style.display = d.rush ? '' : 'none';
+  $('d_tax').textContent = d.taxRate
+    ? `Washington retail sales tax of ${d.taxRate}% (rate for the service location) is added to all charges and shown as a separate line on each invoice. Included in the estimated total: ${money(d.taxAmt)} on ${money(d.preTaxTotal)} of services`
+    : '';
+  $('d_tax').style.display = d.taxRate ? '' : 'none';
 
   if(isFMU){
     $('d_cx1').textContent = `The first month\u2019s payment is due at signing, before service begins, and is non-refundable`;
@@ -1949,9 +1969,10 @@ function render(){
   $('totLbl').textContent = useFMU ? 'Estimated total (full term)' : 'Estimated total';
   const pctH = Math.round((d.depositPct||0.5)*100);
   const extras = (+d.hours>0 && +d.hours<4 ? ' Hours include the 4-hour minimum per guard, per shift.' : '')
-    + (d.otHours ? ` Includes ${d.otHours} overtime hr per guard at 1.5×.` : '')
+    + (d.otHours ? ` Includes ${d.otHours} extended-shift hr per guard at 1.5×.` : '')
     + (d.holidayShifts ? ` Includes ${d.holidayShifts} holiday shift${d.holidayShifts>1?'s':''} at 1.5×.` : '')
-    + (d.rush ? ' Includes the 15% rush surcharge.' : '');
+    + (d.rush ? ' Includes the 15% rush surcharge.' : '')
+    + (d.taxRate && d.taxAmt ? ` Total and deposit include ${money(d.taxAmt)} WA sales tax (${d.taxRate}%).` : '');
   $('depHint').textContent = useFMU
     ? (d.perShiftTotal ? `Estimated total is the full term: ${money(d.perShiftTotal)}/shift × ${d.totalShifts||0} shifts (${dowLabel(d.daysSet)}) over ${d.termLen||'__'} ${d.termUnit||'months'}. First month (${money(d.deposit)}) is due upfront to begin service — pick NET 15 or NET 30 below for how the rest gets billed.` : 'Fill in start date, end date, and which days are worked to calculate the full-term total.')
     : t==='short'
