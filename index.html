@@ -545,11 +545,8 @@ body.public .modebanner{display:none!important}
   [data-theme="dark"] :is(.sheet,.pp-sheet){color-scheme:light;--muted:#6B7A88;box-shadow:0 6px 30px rgba(0,0,0,.6)}
 }
 
-/* Draft preview: placeholders + watermark appear only while body.draft-print is set */
-.ph-draft,.draft-wm{display:none}
-body.draft-print .ph-draft{display:inline;color:#8a6418;font-style:italic}
-body.draft-print :is(#d_lic,#d_carrier,#d_policy,#d_cov).empty,body.draft-print #d_agr{display:none}
-body.draft-print #d_agr + .ph-draft{font-style:normal;color:inherit}
+/* Draft placeholders: hidden in the HTML sheet, read by buildAgreementPdf({draft:true}) */
+.ph-draft{display:none}
 
 @media print{
   .topbar,.tabbar,.actionbar,.toast,.scrim,.viewer,.no-print,.modebanner,.pagehead,#gate,.seg,.stepnav,.progress,.signcard,.gtitle,.group,.notice{display:none!important}
@@ -618,12 +615,6 @@ body.draft-print #d_agr + .ph-draft{font-style:normal;color:inherit}
   .sheet .foot{background:none;color:#9a7420;border-top:1pt solid #d9cfb8;margin-top:18pt;padding:8pt 0 0;font-size:7.5pt;
                break-inside:avoid;page-break-inside:avoid}
   .sheet .foot span{display:block;color:#5d6b78;font-size:7.5pt}
-
-  /* Draft preview watermark: fixed => repeats on every printed page */
-  body.draft-print .draft-wm{display:block;position:fixed;inset:0;z-index:5;pointer-events:none;overflow:hidden}
-  body.draft-print .draft-wm>div{position:absolute;left:-30%;top:-10%;width:160%;height:120%;transform:rotate(-32deg);
-       display:flex;flex-direction:column;justify-content:space-around;align-items:center}
-  body.draft-print .draft-wm span{font:700 34pt/1 Arial,Helvetica,sans-serif;letter-spacing:.08em;color:#000;opacity:.07;white-space:nowrap}
 }
 /* ============================================================
    PROPOSAL — black & gold sales proposal (own pp- classes so the
@@ -902,7 +893,6 @@ body.draft-print #d_agr + .ph-draft{font-style:normal;color:inherit}
   </div>
 
   <div id="agrDoc" class="docwrap" hidden>
-  <div class="draft-wm" aria-hidden="true"><div><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span><span>DRAFT — NOT FOR SIGNATURE</span></div></div>
   <div class="sheet" id="sheet">
     <div class="mast">
       <div class="lockup">
@@ -2161,6 +2151,7 @@ function computeAll(raw){
 }
 
 /* ---------- paint the document ---------- */
+let agrWarmTimer, paintOnly = false;   // paintOnly: repaint without saving settings (draft PDF test hook)
 function paint(d){
   put('d_agr', d.agrNo||'—');
   put('d_date', d.genDate||fmtDate(new Date().toISOString().slice(0,10)));
@@ -2278,6 +2269,7 @@ function paint(d){
     $('c_dateline').textContent = '';
     $('d_audit').textContent = ''; $('d_audit').hidden = true;
   }
+  agrWarmPdf();
 }
 
 /* ================= AGREEMENT (owner side) ================= */
@@ -2415,7 +2407,7 @@ function render(){
 
   $('agrPreview').textContent = d.agrNo;
   paint(d);
-  saveCompany();
+  if(!paintOnly) saveCompany();
 }
 
 
@@ -2525,34 +2517,11 @@ function setAgrView(view){
   document.querySelectorAll('#agrSeg button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.view===view)));
   $('agrForm').hidden = view !== 'form';
   $('agrDoc').hidden = view !== 'doc';
-  if(view==='doc') window.scrollTo({top:0});
+  if(view==='doc'){ window.scrollTo({top:0}); agrWarmPdf(); }
 }
 document.querySelectorAll('#agrSeg button').forEach(b=>b.addEventListener('click',()=>setAgrView(b.dataset.view)));
 
-function printAgreement(){
-  document.body.classList.remove('draft-print');
-  setAgrView('doc');
-  const pg = $('pg-agreement');
-  pg.classList.add('print-me');
-  setTimeout(()=>{ window.print(); setTimeout(()=>pg.classList.remove('print-me'), 1000); }, 150);
-}
-$('btnPrint').addEventListener('click', printAgreement);
-
-// Draft preview: prints the agreement as it stands, with a "DRAFT — NOT FOR SIGNATURE" watermark on every
-// page and "[… pending]" in place of blank license / insurance details. Read-only: no validation gate,
-// nothing saved, no agreement number claimed. Saving, sending and signing keep their missingFields() checks.
-function previewAgreementDraft(){
-  setAgrView('doc');
-  const pg = $('pg-agreement'), body = document.body;
-  let done = false;
-  const cleanup = () => { if(done) return; done = true; body.classList.remove('draft-print'); pg.classList.remove('print-me'); };
-  body.classList.add('draft-print');
-  pg.classList.add('print-me');
-  window.addEventListener('afterprint', cleanup, { once:true });
-  setTimeout(()=>{ window.print(); setTimeout(cleanup, 60000); }, 150);  // fallback if afterprint never fires
-}
-window.previewAgreementDraft = previewAgreementDraft;
-$('btnAgrDraft').addEventListener('click', previewAgreementDraft);
+// Agreement PDF / draft PDF buttons are wired up with buildAgreementPdf (further down).
 
 armButton($('btnNew'), 'Tap again to clear', async ()=>{
   ['org','clientName','clientTitle','clientPhone','clientEmail','addr','siteContact','posts','orders','hazards','notes','pattern','start','end']
@@ -3976,7 +3945,6 @@ function publicMessage(title, text){
 // { admin, client } = results of those sends.
 function renderSignedPanel(raw, status){
   const panel = $('signPanel'), pg = $('pg-agreement');
-  const keepCopy = () => { pg.classList.add('print-me'); setTimeout(()=>{ window.print(); setTimeout(()=>pg.classList.remove('print-me'),1000); }, 120); };
   const done = status && typeof status === 'object';
   const warn = done && status.admin !== 'sent';
   const emailed = done && status.client === 'sent' && raw.clientEmail ? ` A signed copy was emailed to ${esc(raw.clientEmail)}.` : '';
@@ -3993,7 +3961,7 @@ function renderSignedPanel(raw, status){
     </div>`;
   const sh = $('btnShareSigned');
   if(sh) sh.addEventListener('click', ()=>shareLink(baseUrl() + '#id=' + raw._linkId, 'Signed: '+(raw.agrNo||'Agreement'), `${raw.sigName} signed ${raw.agrNo||'the agreement'} for ${raw.org||''}.`));
-  $('btnDownloadSigned').addEventListener('click', keepCopy);
+  $('btnDownloadSigned').addEventListener('click', ()=>shareAgreementPdf($('btnDownloadSigned'), false, 'Save a copy'));
 }
 // Runs after a successful sign. Never blocks or undoes the signature.
 async function notifyAgreementSigned(raw){
@@ -5044,30 +5012,411 @@ $('btnPropShare').addEventListener('click', async ()=>{
   btn.disabled = true; btn.textContent = 'Making PDF…';
   try{
     const { bytes, c } = await propPdfBytes();
-    const name = propFileName(c);
-    const file = typeof File === 'function' ? new File([bytes], name, { type:'application/pdf' }) : null;
-    if(file && navigator.canShare && navigator.canShare({ files:[file] })){
-      try{ await navigator.share({ files:[file], title:'Security Service Proposal' }); }
-      catch(e){
-        if(e && e.name === 'AbortError') {}
-        else if(e && e.name === 'NotAllowedError') toast('PDF is ready. Tap Share PDF again.');
-        else { downloadBlob(bytes, name, 'application/pdf'); toast('Downloaded the PDF.'); }
-      }
-    } else {
-      downloadBlob(bytes, name, 'application/pdf');
-      toast('Downloaded the PDF.');
-    }
+    await sharePdfFile(bytes, propFileName(c), 'Security Service Proposal', 'Share PDF');
     if(!c.hasRate) toast('Heads up: the rate is blank, so it shows as “To be confirmed”.', 4200);
   }catch(err){ toast('Couldn\'t make the PDF: ' + err.message); }
   finally{ btn.innerHTML = original; btn.disabled = false; }
 });
 
+// Print keeps the page shown until the print sheet closes: iOS returns from print() right away,
+// so cleanup waits for 'afterprint' (60 s fallback) instead of a short timer.
+function printPage(pg){
+  let done = false;
+  const cleanup = () => { if(done) return; done = true; pg.classList.remove('print-me'); window.removeEventListener('afterprint', cleanup); };
+  pg.classList.add('print-me');
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(()=>{ window.print(); setTimeout(cleanup, 60000); }, 150);
+}
 $('btnPropPrint').addEventListener('click', ()=>{
   propRender(); setPropView('doc');
-  const pg = $('pg-proposal');
-  pg.classList.add('print-me');
-  setTimeout(()=>{ window.print(); setTimeout(()=>pg.classList.remove('print-me'), 1000); }, 150);
+  printPage($('pg-proposal'));
 });
+
+/* =====================================================================
+   AGREEMENT PDF — a real PDF file (pdf-lib), shared through the share sheet
+   like the proposal. iOS print sheets showed blank pages, so no window.print().
+   The content is read from the painted agreement sheet (#sheet), so the PDF has
+   exactly the same wording, values, tax lines and signature details as the screen.
+   ===================================================================== */
+function agrShown(el){
+  for(let n = el; n && n.id !== 'sheet'; n = n.parentElement){ if(n.hidden || (n.style && n.style.display === 'none')) return false; }
+  return true;
+}
+// Text runs [text, style] with style r | b | i | bi. In a draft, blank license / insurance
+// values become their "[… pending]" placeholder and the agreement number becomes DRAFT.
+function agrRuns(el, draft){
+  const runs = [];
+  (function walk(node, b, i){
+    if(node.nodeType === 3){ const t = node.nodeValue.replace(/\s+/g, ' '); if(t) runs.push([t, b, i]); return; }
+    if(node.nodeType !== 1) return;
+    if(node.tagName === 'BR'){ runs.push(['\n', b, i]); return; }
+    if(node.classList.contains('ph-draft') || node.classList.contains('signedtag') || !agrShown(node)) return;
+    if(draft && node.classList.contains('empty') && node.nextElementSibling && node.nextElementSibling.classList.contains('ph-draft')){
+      runs.push([node.nextElementSibling.textContent, b, i, true]); return;
+    }
+    const nb = b || /^(B|STRONG)$/.test(node.tagName), ni = i || /^(I|EM)$/.test(node.tagName);
+    node.childNodes.forEach(c => walk(c, nb, ni));
+  })(el, false, false);
+  const out = runs.map(([t, b, i, ph]) => [t, ph ? 'ph' : ((b ? 'b' : '') + (i ? 'i' : '') || 'r')]);
+  // trim the ends and collapse doubled spaces between runs
+  while(out.length && !out[0][0].trim()) out.shift();
+  while(out.length && !out[out.length-1][0].trim()) out.pop();
+  if(out.length){ out[0][0] = out[0][0].replace(/^\s+/, ''); const l = out[out.length-1]; l[0] = l[0].replace(/\s+$/, ''); }
+  for(let k = 1; k < out.length; k++) if(/\s$/.test(out[k-1][0])) out[k][0] = out[k][0].replace(/^ +/, '');
+  return out;
+}
+function agreementModel(draft){
+  const sheet = $('sheet');
+  const txt = el => el ? el.textContent.replace(/\s+/g, ' ').trim() : '';
+  const runsOf = el => agrRuns(el, draft);
+  const blocks = [];
+  (function flow(el){
+    for(const c of el.children){
+      if(!agrShown(c) || c.classList.contains('ph-draft')) continue;
+      if(c.matches('h2.sec')) blocks.push({ t:'h', text:txt(c) });
+      else if(c.matches('h3.sub')) blocks.push({ t:'sub', text:txt(c) });
+      else if(c.matches('p.cxnote')) blocks.push({ t:'note', text:txt(c) });
+      else if(c.matches('ul')){ const items = [...c.children].filter(li => agrShown(li) && li.textContent.trim()).map(runsOf); if(items.length) blocks.push({ t:'ul', items }); }
+      else if(c.matches('.cols')){
+        if(c.querySelector('.f')) blocks.push({ t:'fields', cols:[...c.children].map(col => [...col.children].filter(agrShown)
+          .map(x => x.matches('h3.sub') ? { sub:txt(x) } : { runs:runsOf(x) })) });
+        else [...c.children].forEach(flow);
+      }
+      else if(c.matches('.stats')) blocks.push({ t:'stats', items:[...c.children].filter(agrShown).map(s => ({ k:txt(s.querySelector('.k')), v:txt(s.querySelector('.v')), hero:s.classList.contains('hero') })) });
+      else if(c.matches('.taxline')) blocks.push({ t:'right', runs:runsOf(c) });
+      else if(c.matches('.callout')) blocks.push({ t:'callout', paras:[...c.children].filter(agrShown).map(runsOf) });
+      else if(c.matches('.accept')){
+        const sigs = [...c.querySelectorAll('.sigs > div')].map(col => {
+          const rows = [];
+          col.querySelectorAll('.sigline,.printline').forEach(ln => {
+            const lab = ln.nextElementSibling && ln.nextElementSibling.classList.contains('siglab') ? ln.nextElementSibling : null;
+            const tag = lab && lab.querySelector('.signedtag');
+            rows.push({ sig:ln.classList.contains('sigline'), value:txt(ln), label:lab ? txt(lab).replace(txt(tag), '').trim() : '', signed:tag ? txt(tag).replace(/^[^A-Za-z]+/, '') : '' });
+          });
+          return { who:txt(col.querySelector('.who')), rows };
+        });
+        const audit = c.querySelector('.sigaudit');
+        blocks.push({ t:'accept', title:txt(c.querySelector('h2')), text:txt(c.querySelector('p')), sigs, audit:audit && agrShown(audit) ? txt(audit) : '' });
+      }
+      else if(c.matches('p,div') && c.textContent.trim()) blocks.push({ t:'p', runs:runsOf(c), italic:c.matches('.intro') });
+    }
+  })(sheet.querySelector('.inner'));
+  const foot = sheet.querySelector('.foot');
+  return {
+    agrNo: draft ? 'DRAFT' : txt($('d_agr')), date: txt($('d_date')), org: txt($('d_org')).replace(/^_+$/, ''),
+    titleLines: sheet.querySelector('.mast .doct').innerHTML.split(/<br\s*\/?>/i).map(h => { const d = document.createElement('div'); d.innerHTML = h; return txt(d); }).filter(Boolean),
+    tagline: foot ? txt(foot.firstChild) : '', footLine: foot ? txt(foot.querySelector('span')) : '',
+    blocks, draft: !!draft,
+  };
+}
+
+async function buildAgreementPdf(opts = {}){
+  const m = agreementModel(!!opts.draft);
+  const { PDFDocument, rgb, StandardFonts, degrees } = PDFLib;
+  const pdf = await PDFDocument.create();
+  pdf.setTitle('Unarmed Security Services Agreement' + (m.draft ? ' (DRAFT)' : ' ' + pdfSafe(m.agrNo)) + (m.org ? ' - ' + pdfSafe(m.org) : ''));
+  pdf.setAuthor('Lion Security Services'); pdf.setCreator('Lion Security Services');
+  const F = {
+    r: await pdf.embedFont(StandardFonts.Helvetica), b: await pdf.embedFont(StandardFonts.HelveticaBold),
+    i: await pdf.embedFont(StandardFonts.HelveticaOblique), bi: await pdf.embedFont(StandardFonts.HelveticaBoldOblique),
+    sig: await pdf.embedFont(StandardFonts.TimesRomanItalic),
+  };
+  F.ph = F.i;   // "[… pending]" placeholders in a draft
+  const logo = await pdf.embedPng(Uint8Array.from(atob(LION_LOGO_PNG_BASE64), ch=>ch.charCodeAt(0)));
+  // Letter, 0.65in side margins
+  const W = 612, H = 792, L = 47, R = W - 47, CW = R - L, TOP = H - 42, BOTTOM = 58;
+  const NAVY = rgb(14/255,31/255,46/255), NAVY2 = rgb(27/255,53/255,80/255), GOLD = rgb(201/255,153/255,43/255),
+        GOLDDK = rgb(154/255,116/255,32/255), GOLDLT = rgb(232/255,199/255,102/255), INK = rgb(27/255,31/255,36/255),
+        MUTED = rgb(93/255,107/255,120/255), CREAM = rgb(250/255,247/255,240/255), RULE = rgb(217/255,207/255,184/255),
+        LINE = rgb(.6,.6,.6), GREEN = rgb(58/255,122/255,58/255), WHITE = rgb(1,1,1), PH = rgb(138/255,100/255,24/255);
+  const BODY = 10, LH = 14.2;
+  const S = t => pdfSafe(String(t ?? '').replace(/[\t\r]/g, ' ').replace(/✓/g, ''));
+  let page, y;
+  const pages = [];
+  function spaced(t, x, yy, size, font, color, sp){ for(const ch of S(t)){ page.drawText(ch, { x, y:yy, size, font, color }); x += font.widthOfTextAtSize(ch, size) + sp; } }
+  const spacedW = (t, size, font, sp) => [...S(t)].reduce((w, ch) => w + font.widthOfTextAtSize(ch, size) + sp, 0) - sp;
+  function newPage(){
+    page = pdf.addPage([W, H]); pages.push(page);
+    if(pages.length === 1) return letterhead();
+    // running header on later pages
+    spaced('LION SECURITY SERVICES, LLC', L, TOP - 2, 7.5, F.b, NAVY, 1.2);
+    const t = 'Unarmed Security Services Agreement · No. ' + S(m.agrNo);
+    page.drawText(t, { x:R - F.r.widthOfTextAtSize(t, 7.5), y:TOP - 2, size:7.5, font:F.r, color:MUTED });
+    page.drawLine({ start:{x:L, y:TOP-8}, end:{x:R, y:TOP-8}, thickness:0.75, color:GOLD });
+    y = TOP - 22;
+  }
+  function letterhead(){
+    // Logo tight against the name/contact block (same idea as the proposal header)
+    const hh = 70, top = TOP + 4;
+    page.drawRectangle({ x:L, y:top-hh, width:CW, height:hh, color:NAVY });
+    page.drawRectangle({ x:L, y:top-hh-3, width:CW, height:3, color:GOLD });
+    page.drawImage(logo, { x:L+8, y:top-hh+8, width:54, height:54 });
+    const tx = L + 68;
+    spaced('LION SECURITY SERVICES, LLC', tx, top-27, 13, F.b, WHITE, 1.1);
+    page.drawText('Unarmed Security · Licensed & Insured', { x:tx, y:top-41, size:8.5, font:F.b, color:GOLDLT });
+    page.drawText('253-251-4551 · contact@lionofseattle.com · www.lionofseattle.com', { x:tx, y:top-54, size:7.8, font:F.r, color:rgb(175/255,192/255,208/255) });
+    const tl = m.titleLines.length ? m.titleLines : ['UNARMED SECURITY', 'SERVICES AGREEMENT'];
+    tl.forEach((t, i) => page.drawText(S(t), { x:R - 12 - F.b.widthOfTextAtSize(S(t), 9.5), y:top-20-i*11.5, size:9.5, font:F.b, color:GOLD }));
+    [['Agreement No. ', m.agrNo], ['Date ', m.date]].forEach(([k, v], i) => {
+      const vw = F.b.widthOfTextAtSize(S(v), 8.5), kw = F.r.widthOfTextAtSize(k, 8);
+      const yy = top-46-i*11;
+      page.drawText(S(v), { x:R - 12 - vw, y:yy, size:8.5, font:F.b, color:WHITE });
+      page.drawText(k, { x:R - 12 - vw - kw, y:yy, size:8, font:F.r, color:rgb(175/255,192/255,208/255) });
+    });
+    y = top - hh - 3 - 14;
+  }
+  function need(h){ if(y - h < BOTTOM) newPage(); }
+  const atTop = () => y >= TOP - 24;
+  // Wrap runs of [text, style] into lines; honours \n
+  function wrapRuns(runs, size, maxW, styleMap){
+    const fontOf = st => F[styleMap ? (styleMap[st] || st) : st] || F.r;
+    const lines = [[]]; let w = 0;
+    for(const [text, st] of runs){
+      const font = fontOf(st);
+      String(text).split('\n').forEach((part, pi) => {
+        if(pi > 0){ lines.push([]); w = 0; }
+        for(const tok of S(part).split(/(\s+)/)){
+          if(!tok) continue;
+          const isSpace = /^\s+$/.test(tok);
+          const tw = font.widthOfTextAtSize(isSpace ? ' ' : tok, size);
+          const line = lines[lines.length-1];
+          if(isSpace){ if(line.length){ line.push([' ', font, st]); w += tw; } continue; }
+          if(w + tw > maxW && line.length){
+            while(line.length && line[line.length-1][0] === ' '){ w -= line[line.length-1][1].widthOfTextAtSize(' ', size); line.pop(); }
+            lines.push([[tok, font, st]]); w = tw;
+          } else { line.push([tok, font, st]); w += tw; }
+        }
+      });
+    }
+    return lines.filter((ln, i) => ln.length || i === 0);
+  }
+  const lineW = (ln, size) => ln.reduce((w, [t, f]) => w + f.widthOfTextAtSize(t, size), 0);
+  function drawRuns(ln, x, yy, size, color){
+    for(const [t, f, st] of ln){ page.drawText(t, { x, y:yy, size, font:f, color: st === 'ph' ? PH : color }); x += f.widthOfTextAtSize(t, size); }
+  }
+  const base = (size, lh) => y + (lh - size) * 0.42;   // baseline inside a line box whose bottom is y
+
+  function heading(text){
+    need(16 + 8 + LH * 3);
+    if(!atTop()) y -= 12;
+    y -= 13;
+    spaced(text.toUpperCase(), L, y + 2, 11, F.b, NAVY, 1.1);
+    y -= 5;
+    page.drawLine({ start:{x:L, y}, end:{x:R, y}, thickness:1.2, color:GOLD });
+    y -= 8;
+  }
+  function sub(text, x = L){
+    need(12 + LH * 2);
+    y -= 12;
+    spaced(text.toUpperCase(), x, y + 2, 8.5, F.b, GOLDDK, 1);
+    y -= 4;
+  }
+  function para(runs, { size = BODY, lh = LH, color = INK, x = L, w = CW, italic = false } = {}){
+    const lines = wrapRuns(runs, size, w, italic ? { r:'i', b:'bi' } : null);
+    lines.forEach(ln => { need(lh); y -= lh; drawRuns(ln, x, base(size, lh), size, color); });
+  }
+  function bullets(items){
+    items.forEach(runs => {
+      const lines = wrapRuns(runs, BODY, CW - 14);
+      need(lines.length * LH + 3);
+      lines.forEach((ln, i) => {
+        y -= LH;
+        if(i === 0) page.drawText('•', { x:L + 2, y:base(BODY, LH), size:BODY, font:F.b, color:GOLD });
+        drawRuns(ln, L + 14, base(BODY, LH), BODY, INK);
+      });
+      y -= 3;
+    });
+  }
+  function fields(cols){
+    const gap = 24, cw = (CW - gap) / 2;
+    const laid = cols.map(items => items.map(it => it.sub ? { sub:it.sub, h:20 } : (() => { const lines = wrapRuns(it.runs, BODY, cw); return { lines, h:lines.length * LH + 2 }; })()));
+    const hgt = Math.max(...laid.map(col => col.reduce((s, it) => s + it.h, 0)));
+    need(hgt + 4);
+    const y0 = y;
+    laid.forEach((col, ci) => {
+      const x = L + ci * (cw + gap); y = y0;
+      col.forEach(it => {
+        if(it.sub){ y -= 16; spaced(it.sub.toUpperCase(), x, y + 2, 8.5, F.b, GOLDDK, 1); y -= 4; return; }
+        it.lines.forEach(ln => { y -= LH; drawRuns(ln, x, base(BODY, LH), BODY, INK); });
+        y -= 2;
+      });
+    });
+    y = y0 - hgt - 4;
+  }
+  function stats(items){
+    const gap = 6, n = items.length, bw = (CW - gap * (n - 1)) / n;
+    const laid = items.map(s => ({ ...s, kl: wrapPdfText(F.b, S(s.k), 7, bw - 12) }));
+    const kh = Math.max(...laid.map(s => s.kl.length)) * 8.5;
+    const bh = 10 + kh + 6 + 14 + 9;
+    need(bh + 8);
+    y -= 4;
+    laid.forEach((s, i) => {
+      const x = L + i * (bw + gap);
+      page.drawRectangle({ x, y:y-bh, width:bw, height:bh, color: s.hero ? NAVY2 : CREAM });
+      page.drawRectangle({ x, y:y-2.5, width:bw, height:2.5, color:GOLD });
+      s.kl.forEach((ln, li) => page.drawText(ln, { x:x + (bw - F.b.widthOfTextAtSize(ln, 7)) / 2, y:y - 14 - li * 8.5, size:7, font:F.b, color: s.hero ? GOLDLT : GOLDDK }));
+      const v = S(s.v || '—');
+      page.drawText(v, { x:x + (bw - F.b.widthOfTextAtSize(v, 13)) / 2, y:y - bh + 10, size:13, font:F.b, color: s.hero ? WHITE : NAVY });
+    });
+    y -= bh + 6;
+  }
+  function right(runs){
+    const lines = wrapRuns(runs, 9, CW);
+    lines.forEach(ln => { need(13); y -= 13; drawRuns(ln, R - lineW(ln, 9), base(9, 13), 9, MUTED); });
+    y -= 4;
+  }
+  function callout(paras){
+    y -= 2;
+    paras.forEach(runs => {
+      const lines = wrapRuns(runs, BODY, CW - 14);
+      if(lines.length <= 12) need(lines.length * LH);
+      let segTop = y;
+      lines.forEach(ln => {
+        if(y - LH < BOTTOM){ page.drawRectangle({ x:L, y, width:2.5, height:segTop - y, color:GOLD }); newPage(); segTop = y; }
+        y -= LH; drawRuns(ln, L + 14, base(BODY, LH), BODY, INK);
+      });
+      page.drawRectangle({ x:L, y, width:2.5, height:segTop - y, color:GOLD });
+      y -= 7;
+    });
+  }
+  function accept(a){
+    // Measured first: the whole block (heading, text, both signature columns, audit trail) stays on one page
+    const textLines = wrapRuns([[a.text, 'i']], 9.5, CW);
+    const gap = 28, sw = (CW - gap) / 2;
+    const rowsH = Math.max(...a.sigs.map(s => s.rows.reduce((h, r) => h + (r.sig ? 30 : 24) + 14, 0)));
+    const auditLines = a.audit ? wrapPdfText(F.r, S(a.audit), 7.5, CW) : [];
+    const total = 12 + 13 + 13 + textLines.length * 13 + 10 + 24 + rowsH + (auditLines.length ? auditLines.length * 10 + 10 : 0) + 26;
+    need(total);
+    heading(a.title || 'Agreement & Acceptance');
+    textLines.forEach(ln => { y -= 13; drawRuns(ln, L, base(9.5, 13), 9.5, rgb(.27,.27,.27)); });
+    y -= 12;
+    const y0 = y;
+    let yEnd = y;
+    a.sigs.forEach((s, ci) => {
+      const x = L + ci * (sw + gap); y = y0;
+      spaced(S(s.who).toUpperCase(), x, y - 9, 8.5, F.b, NAVY, 1);
+      page.drawLine({ start:{x, y:y-14}, end:{x:x+sw, y:y-14}, thickness:1.2, color:GOLD });
+      y -= 24;
+      s.rows.forEach(r => {
+        const rh = r.sig ? 30 : 24;
+        y -= rh;
+        if(r.value){
+          const size = r.sig ? 17 : 10, font = r.sig ? F.sig : F.b;
+          let v = S(r.value); while(v.length > 1 && font.widthOfTextAtSize(v, size) > sw) v = v.slice(0, -1);
+          page.drawText(v, { x:x + 2, y:y + 4, size, font, color: r.sig ? NAVY : INK });
+        }
+        page.drawLine({ start:{x, y}, end:{x:x+sw, y}, thickness:0.7, color:LINE });
+        page.drawText(S(r.label), { x, y:y - 9, size:7.5, font:F.r, color:MUTED });
+        if(r.signed) page.drawText(S(r.signed).toUpperCase(), { x:x + F.r.widthOfTextAtSize(S(r.label), 7.5) + 6, y:y - 9, size:7, font:F.b, color:GREEN });
+        y -= 14;
+      });
+      yEnd = Math.min(yEnd, y);
+    });
+    y = yEnd;
+    if(auditLines.length){
+      y -= 4;
+      page.drawLine({ start:{x:L, y}, end:{x:R, y}, thickness:0.5, color:rgb(.87,.87,.87) });
+      y -= 2;
+      auditLines.forEach(ln => { y -= 10; page.drawText(ln, { x:L, y:y + 2, size:7.5, font:F.r, color:rgb(.27,.27,.27) }); });
+    }
+    if(m.tagline){
+      y -= 22;
+      const t = S(m.tagline).replace(/\s+/g, ' ');
+      spaced(t, L + (CW - spacedW(t, 7, F.b, 0.8)) / 2, y, 7, F.b, GOLDDK, 0.8);
+    }
+  }
+
+  newPage();
+  m.blocks.forEach(bk => {
+    if(bk.t === 'h') heading(bk.text);
+    else if(bk.t === 'sub') sub(bk.text);
+    else if(bk.t === 'note'){ need(LH * 2); y -= 2; para([[bk.text.toUpperCase(), 'b']], { color:NAVY, size:9.5 }); y -= 3; }
+    else if(bk.t === 'ul') bullets(bk.items);
+    else if(bk.t === 'fields') fields(bk.cols);
+    else if(bk.t === 'stats') stats(bk.items);
+    else if(bk.t === 'right') right(bk.runs);
+    else if(bk.t === 'callout') callout(bk.paras);
+    else if(bk.t === 'accept') accept(bk);
+    else if(bk.t === 'p'){ para(bk.runs, { italic:bk.italic, color: bk.italic ? rgb(.27,.27,.27) : INK }); y -= 4; }
+  });
+
+  // Footer (and the draft watermark) on every page
+  const fl = S(m.footLine || 'Lion Security Services, LLC · Greater Seattle Area · 253-251-4551 · www.lionofseattle.com');
+  pages.forEach((p, i) => {
+    if(m.draft){
+      const wm = 'DRAFT — NOT FOR SIGNATURE';
+      for(let k = 0; k < 4; k++){
+        p.drawText(wm, { x:20 + (k % 2) * 30, y:40 + k * 210, size:36, font:F.b, color:rgb(.45,.45,.45), opacity:0.11, rotate:degrees(30) });
+      }
+    }
+    p.drawLine({ start:{x:L, y:40}, end:{x:R, y:40}, thickness:1, color:GOLD });
+    p.drawText(fl, { x:L, y:28, size:7.5, font:F.r, color:MUTED });
+    const pr = (m.draft ? 'DRAFT — NOT FOR SIGNATURE  ·  ' : '') + `Page ${i+1} of ${pages.length}`;
+    p.drawText(pr, { x:R - F.r.widthOfTextAtSize(pr, 7.5), y:28, size:7.5, font: m.draft ? F.b : F.r, color: m.draft ? PH : MUTED });
+  });
+  return pdf.save();
+}
+
+function agrFileName(draft){
+  const slug = s => String(s || '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+  const org = slug(($('d_org').textContent || '').replace(/^_+$/, '')) || 'Client';
+  const no = draft ? 'DRAFT' : (slug($('d_agr').textContent) || 'Agreement');
+  return `Lion-Security-Agreement-${no}-${org}.pdf`;
+}
+// Cached by the painted sheet's content so the button tap can share right away (iOS needs a fresh tap)
+const agrPdfCache = { full:{ key:'', bytes:null }, draft:{ key:'', bytes:null } };
+function agrPdfKey(){ const s = $('sheet'); return s.querySelector('.inner').innerHTML + '|' + $('d_agr').textContent + '|' + $('d_date').textContent; }
+async function agrPdfBytes(draft){
+  const c = agrPdfCache[draft ? 'draft' : 'full'], key = agrPdfKey();
+  if(c.key !== key || !c.bytes){ const bytes = await buildAgreementPdf({ draft }); c.key = key; c.bytes = bytes; }
+  return c.bytes;
+}
+function agrWarmPdf(){
+  clearTimeout(agrWarmTimer);
+  agrWarmTimer = setTimeout(()=>{
+    if(typeof PDFLib === 'undefined') return;
+    const owner = !document.body.classList.contains('public');
+    agrPdfBytes(false).then(()=> owner ? agrPdfBytes(true) : null).catch(()=>{});
+  }, 400);
+}
+// Share sheet when the browser can share files (iPhone), otherwise a download — same as the proposal
+async function sharePdfFile(bytes, name, title, againLabel){
+  const file = typeof File === 'function' ? new File([bytes], name, { type:'application/pdf' }) : null;
+  if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+    try{ await navigator.share({ files:[file], title }); }
+    catch(e){
+      if(e && e.name === 'AbortError') {}
+      else if(e && e.name === 'NotAllowedError') toast(`PDF is ready. Tap ${againLabel} again.`);
+      else { downloadBlob(bytes, name, 'application/pdf'); toast('Downloaded the PDF.'); }
+    }
+  } else {
+    downloadBlob(bytes, name, 'application/pdf');
+    toast('Downloaded the PDF.');
+  }
+}
+async function shareAgreementPdf(btn, draft, againLabel){
+  if(btn && btn.disabled) return;
+  const original = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Making PDF…'; }
+  try{
+    const bytes = await agrPdfBytes(draft);
+    await sharePdfFile(bytes, agrFileName(draft), draft ? 'Security Services Agreement (draft)' : 'Security Services Agreement', againLabel);
+  }catch(err){ toast('Couldn\'t make the PDF: ' + err.message); }
+  finally{ if(btn){ btn.innerHTML = original; btn.disabled = false; } }
+}
+// Draft: allowed with blank license / insurance; read-only (nothing saved, no agreement number claimed).
+// Saving, sending and signing keep their missingFields() checks.
+function previewAgreementDraft(){ return shareAgreementPdf($('btnAgrDraft'), true, 'Preview PDF (draft)'); }
+$('btnPrint').addEventListener('click', ()=>shareAgreementPdf($('btnPrint'), false, 'PDF'));
+$('btnAgrDraft').addEventListener('click', previewAgreementDraft);
+// For tests: repaint from the current form (without saving settings) and build the draft
+async function agreementDraftPdfBytes(){
+  try{ paintOnly = true; render(); } finally { paintOnly = false; }
+  return buildAgreementPdf({ draft:true });
+}
+window.buildAgreementPdf = buildAgreementPdf;
+window.agreementDraftPdfBytes = agreementDraftPdfBytes;
+window.previewAgreementDraft = previewAgreementDraft;
 
 // ---- Turn into agreement: copies the basics into the agreement form ----
 // Returns false if the owner backs out of replacing an agreement that's already filled in.
