@@ -872,9 +872,9 @@ body.public .modebanner{display:none!important}
       <h2 class="sec">Licensing, Insurance &amp; Liability</h2>
       <div class="callout">
         <p><b>Company licensing.</b> Company holds a valid Washington State private security guard company license (Lic. No. <span id="d_lic">____________</span>). All personnel assigned under this Agreement hold current, valid Washington unarmed private security guard licenses.</p>
-        <p><b>Insurance.</b> Company maintains commercial general liability insurance — Carrier: <span id="d_carrier">____________</span> · Policy No.: <span id="d_policy">____________</span> · Coverage: <span id="d_cov">____________</span> per occurrence. A certificate of insurance is available on request and Client may be named as additional insured.</p>
+        <p><b>Insurance.</b> Company maintains commercial general liability insurance — Carrier: <span id="d_carrier">____________</span> · Policy No.: <span id="d_policy">____________</span> · Coverage: <span id="d_cov">____________</span> per occurrence. A certificate of insurance is available on request. Upon written request and subject to insurer approval, Client may be added as an additional insured.</p>
         <p><b>Indemnification.</b> Company shall indemnify and hold Client harmless from claims arising from the negligent acts or omissions of Company personnel in the performance of duties under this Agreement. Client shall indemnify and hold Company harmless from claims arising from undisclosed site hazards, Client's own negligence, or conditions outside Company's reasonable control. Company's total liability to Client under this Agreement, whether arising in contract, tort, or otherwise, shall not exceed the coverage limit of Company's commercial general liability insurance policy stated above.</p>
-        <p><b>Scope of authority.</b> Company provides observation, deterrence, access control, and reporting. Personnel are unarmed and do not act as law enforcement. Company is an independent contractor, not an employee or agent of Client.</p>
+        <p><b>Scope of authority.</b> Officers are unarmed and serve to observe, deter and report. They do not make arrests except a citizen's arrest where Washington law allows it, use no force beyond what Washington law permits, do not pursue or chase anyone, and do not handle cash, valuables or weapons. In an emergency they call 911 and then notify Client. Company is an independent contractor, not an employee or agent of Client.</p>
       </div>
 
       <div class="cols colsgap">
@@ -1086,7 +1086,7 @@ body.public .modebanner{display:none!important}
       <div class="field"><label for="coCoverage">Coverage per occurrence</label><input id="coCoverage" placeholder="e.g. 1,000,000" inputmode="numeric"></div>
     </div>
   </div>
-  <div class="gnote">Agreements can't be sent until the license number is filled in, because the document says you hold one. Washington requires at least $25,000 bodily injury and $25,000 property damage coverage for the company license.</div>
+  <div class="gnote">Agreements can't be sent until the license number, insurance carrier, policy number and coverage are all filled in, because the document says you hold them. Washington requires at least $25,000 bodily injury and $25,000 property damage coverage for the company license.</div>
 
   <div class="gtitle">Who signs for the company</div>
   <div class="group">
@@ -2249,6 +2249,9 @@ function missingFields(raw){
   if(raw.daysSet && !raw.daysSet.some(Boolean)) missing.push('Days worked');
   if(!raw.propType) missing.push('Property type');
   if(!raw.coLic) missing.push('WA company license number (in Settings)');
+  if(!raw.coCarrier) missing.push('Insurance carrier (in Settings)');
+  if(!raw.coPolicy) missing.push('Insurance policy number (in Settings)');
+  if(!raw.coCoverage) missing.push('Insurance coverage (in Settings)');
   return missing;
 }
 
