@@ -530,6 +530,12 @@ body.public .modebanner{display:none!important}
 .prop-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .prop-row-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px}
 .prop-row.open .t:after{content:" · open";font-weight:500;color:var(--t3);font-size:13px}
+/* Records: three segments; counts drop under the label so it fits a 390px phone */
+#recSeg button{padding:8px 4px;font-size:14px;line-height:1.2}
+#recSeg button span{display:block;font-size:12px;font-weight:500;color:var(--t3);min-height:14px}
+#recSeg button[data-rec="prop"][aria-selected="true"]{color:var(--teal);box-shadow:inset 0 -3px 0 var(--teal2),0 1px 3px rgba(14,31,46,.14)}
+#recSeg button[data-rec="prop"][aria-selected="true"] span{color:var(--teal)}
+.rec-prop-row .lead:not(.ok){background:#E6F4F2;color:var(--teal)}
 .pp-sheet{background:#fff;color:#151515;margin:0 auto;max-width:816px;padding:22px 28px 16px;box-shadow:0 4px 22px rgba(0,0,0,.12);
   font:12.5px/1.4 'Inter','Helvetica Neue',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pp-hdr{background:#0b0b0b;color:#fff;display:flex;align-items:center;gap:14px;padding:9px 16px;border-bottom:4px solid #D4A017;border-radius:4px}
@@ -1006,12 +1012,13 @@ body.public .modebanner{display:none!important}
 <!-- ======================= RECORDS ======================= -->
 <section class="page" id="pg-records">
   <div class="pagehead">
-    <div><h1>Records</h1><p>Signed agreements and cash receipts.</p></div>
+    <div><h1>Records</h1><p>Signed agreements, cash receipts and saved proposals.</p></div>
     <button class="textbtn" id="btnRecRefresh" type="button">Refresh</button>
   </div>
   <div class="seg big" id="recSeg" role="tablist">
     <button type="button" role="tab" aria-selected="true" data-rec="agr">Agreements <span id="cntAgr"></span></button>
     <button type="button" role="tab" aria-selected="false" data-rec="rcpt">Cash receipts <span id="cntRcpt"></span></button>
+    <button type="button" role="tab" aria-selected="false" data-rec="prop">Proposals <span id="cntProp"></span></button>
   </div>
   <div class="search"><svg><use href="#i-search"/></svg><input id="recSearch" type="search" placeholder="Search names, clients, numbers" autocomplete="off"></div>
   <div id="recAgrWrap">
@@ -1022,6 +1029,10 @@ body.public .modebanner{display:none!important}
     <button class="btn btn-primary btn-block" id="btnNewReceipt" style="margin-top:14px"><svg><use href="#i-plus"/></svg>New cash receipt</button>
     <div class="gtitle"><span>Cash receipts</span></div>
     <div class="group list" id="recRcpt"></div>
+  </div>
+  <div id="recPropWrap" hidden>
+    <div class="gtitle"><span>Saved proposals</span></div>
+    <div class="group list" id="recProp"></div>
   </div>
 </section>
 
@@ -2303,7 +2314,7 @@ $('btnLink').addEventListener('click', async ()=>{
 
 
 /* ================= RECORDS ================= */
-let recCache = { agr: null, rcpt: null };
+let recCache = { agr: null, rcpt: null, prop: null };
 let recView = 'agr';
 
 function namesLookMismatched(listed, signer){
@@ -2326,6 +2337,7 @@ function setRecView(v){
   document.querySelectorAll('#recSeg button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.rec===v)));
   $('recAgrWrap').hidden = v!=='agr';
   $('recRcptWrap').hidden = v!=='rcpt';
+  $('recPropWrap').hidden = v!=='prop';
   renderRecords();
 }
 document.querySelectorAll('#recSeg button').forEach(b=>b.addEventListener('click',()=>setRecView(b.dataset.rec)));
@@ -2333,12 +2345,14 @@ $('recSearch').addEventListener('input', ()=>renderRecords());
 $('btnRecRefresh').addEventListener('click', ()=>loadRecords(true));
 
 async function loadRecords(force){
-  if(force){ recCache = { agr:null, rcpt:null }; }
+  if(force){ recCache = { agr:null, rcpt:null, prop:null }; }
   if(!recCache.agr) $('recAgr').innerHTML = skeleton();
   if(!recCache.rcpt) $('recRcpt').innerHTML = skeleton();
+  if(!recCache.prop) $('recProp').innerHTML = skeleton();
   const [agr, rcpt] = await Promise.allSettled([
     rest('signed_agreements?select=*&order=signed_at.desc.nullslast'),
     rest('share_links?kind=eq.cash_receipt&select=id,data,created_at&order=created_at.desc&limit=500'),
+    fetchProposals(),   // shared with the Proposal tab; fills recCache.prop
   ]);
   recCache.agr  = agr.status==='fulfilled' ? agr.value : 'error';
   recCache.rcpt = rcpt.status==='fulfilled' ? rcpt.value : 'error';
@@ -2392,6 +2406,28 @@ function renderRecords(){
                     : `<div class="empty"><b>No cash receipts yet</b>Pay someone in cash, then send them a receipt to sign.</div>`);
     er.querySelectorAll('[data-rc]').forEach(b=>b.addEventListener('click',()=>{
       const r = recCache.rcpt.find(x=>x.id===b.dataset.rc); if(r) openReceiptRecord(r);
+    }));
+  }
+  // Proposals (same rows as the Proposal tab's Saved proposals list)
+  const ep = $('recProp');
+  if(recCache.prop === 'error'){
+    if(propIsMissingTable(propListErr)) ep.innerHTML = `<div class="empty"><b>Saved proposals aren't set up yet</b>Run supabase/03_proposals.sql in Supabase, then tap Refresh.</div>`;
+    else loadError(ep, ()=>loadRecords(true));
+  }
+  else if(Array.isArray(recCache.prop)){
+    const rows = recCache.prop.filter(r => matchesQuery(q, r.client, r.contact, r.site, r.status, (PROP_STATUSES[r.status] || PROP_STATUSES.draft)[0]));
+    ep.innerHTML = rows.length ? rows.map(r => {
+      const [label, cls] = PROP_STATUSES[r.status] || PROP_STATUSES.draft;
+      const site = String(r.site || '').trim().replace(/\s*\n\s*/g, ', ');
+      return `<button class="item rec-prop-row" type="button" data-id="${esc(r.id)}">
+        <span class="lead ${r.status === 'converted' ? 'ok' : ''}">${icon('doc')}</span>
+        <span class="main"><span class="t">${esc(r.client || 'Untitled')}</span>
+          <span class="s">${esc([site, fmtWhen(r.updated_at || r.created_at)].filter(Boolean).join(' · '))}</span></span>
+        <span class="end"><span class="chip ${cls}">${esc(label)}</span>${chev()}</span></button>`;
+    }).join('') : (q ? `<div class="empty">Nothing matches “${esc(q)}”.</div>`
+                    : `<div class="empty"><b>No saved proposals yet</b>Fill in a proposal on the Proposal tab and tap Save.</div>`);
+    ep.querySelectorAll('.rec-prop-row').forEach(b=>b.addEventListener('click',()=>{
+      if(propOpenRow(b.dataset.id)) showPage('pg-proposal');
     }));
   }
 }
@@ -4368,11 +4404,18 @@ function propSave(){
 }
 
 let propList = null, propListErr = null;
-async function loadProposals(){
-  if(!Array.isArray(propList)) $('propSavedList').innerHTML = skeleton(2);
+// One fetch feeds both the Proposal tab list and Records → Proposals.
+async function fetchProposals(){
   try{ propList = await rest('proposals?select=*&order=updated_at.desc&limit=200'); propListErr = null; }
   catch(e){ console.error('proposals load failed:', e); propListErr = e; }
+  recCache.prop = propListErr ? 'error' : propList;
+  $('cntProp').textContent = Array.isArray(recCache.prop) ? `(${recCache.prop.length})` : '';
   renderProposals();
+}
+async function loadProposals(){
+  if(!Array.isArray(propList)) $('propSavedList').innerHTML = skeleton(2);
+  await fetchProposals();
+  renderRecords();
 }
 function renderProposals(){
   const el = $('propSavedList');
@@ -4397,13 +4440,14 @@ function renderProposals(){
 }
 function propOpenRow(id){
   const r = Array.isArray(propList) && propList.find(x => x.id === id);
-  if(!r) return;
-  if(propDirty() && !confirm(id === propOpenId ? 'Discard your unsaved changes and reopen the saved copy?' : 'Discard unsaved changes to the proposal you have open?')) return;
+  if(!r) return false;
+  if(propDirty() && !confirm(id === propOpenId ? 'Discard your unsaved changes and reopen the saved copy?' : 'Discard unsaved changes to the proposal you have open?')) return false;
   propApply(propRowData(r));
   propSetOpen(r.id, propKey(propData()));
   setPropView('form'); propRender();
   window.scrollTo({ top:0 });
   toast('Opened ' + (r.client || 'proposal') + '.');
+  return true;
 }
 $('propSavedList').addEventListener('click', e => {
   const row = e.target.closest('.prop-row'); if(!row) return;
