@@ -496,29 +496,34 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
    ============================================================ */
 #propForm .choice input[type=checkbox]{border-radius:7px}
 #propTypeSeg label{font-size:13px;line-height:1.25}
-.pp-sheet{background:#fff;color:#151515;margin:0 auto;max-width:816px;padding:28px 34px 22px;box-shadow:0 4px 22px rgba(0,0,0,.12);
-  font:13px/1.45 'Inter','Helvetica Neue',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.pp-hdr{background:#0b0b0b;color:#fff;display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:4px solid #D4A017;border-radius:4px}
-.pp-hdr img{height:62px;width:auto;flex:0 0 auto}
-.pp-hdr .co{font-weight:700;letter-spacing:2px;color:#E8B923;font-size:19px;text-transform:uppercase;line-height:1.15}
-.pp-hdr .sub{font-size:11.5px;color:#ddd;margin-top:2px}
-.pp-hdr .right{margin-left:auto;text-align:right;font-size:11px;color:#ccc;line-height:1.45;white-space:nowrap}
+.prop-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.prop-row-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px}
+.prop-row.open .t:after{content:" · open";font-weight:500;color:var(--t3);font-size:13px}
+.pp-sheet{background:#fff;color:#151515;margin:0 auto;max-width:816px;padding:22px 28px 16px;box-shadow:0 4px 22px rgba(0,0,0,.12);
+  font:12.5px/1.4 'Inter','Helvetica Neue',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pp-hdr{background:#0b0b0b;color:#fff;display:flex;align-items:center;gap:14px;padding:9px 16px;border-bottom:4px solid #D4A017;border-radius:4px}
+.pp-hdr img{height:52px;width:auto;flex:0 0 auto}
+.pp-hdr .co{font-weight:700;letter-spacing:2px;color:#E8B923;font-size:18px;text-transform:uppercase;line-height:1.15}
+.pp-hdr .sub{font-size:11px;color:#ddd;margin-top:2px}
+.pp-hdr .right{margin-left:auto;text-align:right;font-size:10.5px;color:#ccc;line-height:1.4;white-space:nowrap}
 .pp-hdr .right b{color:#E8B923}
-.pp-sheet h1{font-size:21px;margin:16px 0 6px;letter-spacing:.5px;line-height:1.2}
-.pp-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin:8px 0 2px;font-size:12.5px}
-.pp-meta div{display:flex;gap:8px}.pp-meta div b{flex:0 0 96px;color:#555;font-weight:600}
-.pp-intro{margin:10px 0;white-space:pre-line}
-.pp-sheet h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:#fff;background:#1a1a1a;border-left:5px solid #D4A017;padding:5px 9px;margin:14px 0 7px;line-height:1.3}
-.pp-sheet ul,.pp-sheet ol{margin:4px 0 4px 20px;padding:0}
-.pp-sheet li{margin:3px 0}
-.pp-sheet table{width:100%;border-collapse:collapse;margin:4px 0}
-.pp-sheet td,.pp-sheet th{border:1px solid #bbb;padding:6px 9px;text-align:left;vertical-align:top;font-size:12.5px}
-.pp-sheet th{background:#f2e6c2;width:34%;font-weight:600}
-.pp-sheet .rate{font-size:14px;font-weight:700}
+.pp-sheet h1{font-size:19px;margin:12px 0 4px;letter-spacing:.5px;line-height:1.2}
+.pp-meta{display:grid;grid-template-columns:1fr 1fr;gap:2px 22px;margin:6px 0 2px;font-size:12px}
+.pp-meta div{display:flex;gap:8px}.pp-meta div b{flex:0 0 92px;color:#555;font-weight:600}
+.pp-intro{margin:7px 0;white-space:pre-line}
+.pp-sheet h2{font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:#fff;background:#1a1a1a;border-left:5px solid #D4A017;padding:3px 9px;margin:10px 0 5px;line-height:1.3}
+.pp-sheet ul,.pp-sheet ol{margin:3px 0 3px 18px;padding:0}
+.pp-sheet li{margin:1px 0}
+.pp-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pp-two>div{min-width:0}
+.pp-sheet table{width:100%;border-collapse:collapse;margin:3px 0}
+.pp-sheet td,.pp-sheet th{border:1px solid #bbb;padding:3px 7px;text-align:left;vertical-align:top;font-size:12px}
+.pp-sheet th{background:#f2e6c2;width:42%;font-weight:600}
+.pp-sheet .rate{font-size:13.5px;font-weight:700}
 .pp-sheet .tbc{color:#8a6418;font-style:italic}
-.pp-sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:22px}
-.pp-sig div{border-top:1px solid #333;padding-top:4px;font-size:11.5px;color:#444}
-.pp-foot{margin-top:16px;border-top:2px solid #D4A017;padding-top:6px;font-size:10.5px;color:#555;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pp-sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:30px}
+.pp-sig div{border-top:1px solid #333;padding-top:3px;font-size:11px;color:#444}
+.pp-foot{margin-top:12px;border-top:2px solid #D4A017;padding-top:5px;font-size:10px;color:#555;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .pp-foot b{color:#111}
 @media (max-width:560px){
   .pp-sheet{padding:16px 14px;font-size:12px}
@@ -527,20 +532,29 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   .pp-hdr .co{font-size:15px;letter-spacing:1.2px}
   .pp-hdr .right{margin-left:0;text-align:left;width:100%;font-size:10.5px}
   .pp-meta{grid-template-columns:1fr}
+  .pp-two{grid-template-columns:1fr;gap:0}
   .pp-sig{grid-template-columns:1fr;gap:18px}
 }
+/* Print: sized to fit a typical proposal on one Letter page */
 @media print{
-  .pp-sheet{box-shadow:none;max-width:none;width:100%;padding:.35in .4in;font-size:10pt;display:block!important}
-  .pp-hdr{display:flex!important;flex-wrap:nowrap}
-  .pp-hdr .right{margin-left:auto;text-align:right;width:auto}
-  .pp-hdr .co{font-size:15pt}
-  .pp-meta{grid-template-columns:1fr 1fr;font-size:9.5pt}
-  .pp-sig{grid-template-columns:1fr 1fr}
-  .pp-sheet h1{font-size:16pt}
-  .pp-sheet h2{font-size:10pt;break-after:avoid;page-break-after:avoid}
-  .pp-sheet td,.pp-sheet th{font-size:9.5pt}
-  .pp-sheet table,.pp-sig{break-inside:avoid;page-break-inside:avoid}
-  .pp-foot{font-size:8pt}
+  .pp-sheet{box-shadow:none;max-width:none;width:100%;padding:.2in .28in 0;font-size:9.5pt;line-height:1.3;display:block!important}
+  .pp-hdr{display:flex!important;flex-wrap:nowrap;padding:6px 12px}
+  .pp-hdr img{height:42px}
+  .pp-hdr .right{margin-left:auto;text-align:right;width:auto;font-size:8pt}
+  .pp-hdr .co{font-size:14pt}
+  .pp-hdr .sub{font-size:8.5pt}
+  .pp-meta{grid-template-columns:1fr 1fr;font-size:9pt;margin:3px 0 1px}
+  .pp-intro{margin:5px 0}
+  .pp-two{grid-template-columns:1fr 1fr;gap:12px}
+  .pp-sig{grid-template-columns:1fr 1fr;margin-top:28px}
+  .pp-sig div{font-size:8.5pt}
+  .pp-sheet h1{font-size:14pt;margin:8px 0 3px}
+  .pp-sheet h2{font-size:8.5pt;padding:2px 8px;margin:7px 0 4px;break-after:avoid;page-break-after:avoid}
+  .pp-sheet li{margin:0}
+  .pp-sheet td,.pp-sheet th{font-size:9pt;padding:2px 6px}
+  .pp-sheet .rate{font-size:10.5pt}
+  .pp-sheet table,.pp-sig,.pp-two{break-inside:avoid;page-break-inside:avoid}
+  .pp-foot{font-size:8pt;margin-top:10px;padding-top:4px}
 }
 </style>
 </head>
@@ -859,7 +873,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 <!-- ======================= PROPOSAL ======================= -->
 <section class="page" id="pg-proposal">
   <div class="pagehead no-print">
-    <div><h1>New proposal</h1><p>Fill it in after the walkthrough, check the preview, share the PDF.</p></div>
+    <div><h1 id="propTitle">New proposal</h1><p>Fill it in after the walkthrough, check the preview, share the PDF.</p></div>
     <button class="textbtn danger" id="btnPropClear" type="button">Clear</button>
   </div>
   <div class="seg big no-print" id="propSeg" role="tablist">
@@ -925,10 +939,24 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
         <div class="field"><label for="propValid">Valid until</label><input id="propValid" type="date"></div>
       </div>
     </div>
-    <div class="gnote">Saved on this phone as you type. Blank fields show as “To be confirmed” on the proposal.</div>
+    <div class="gnote">Blank fields show as “To be confirmed” on the proposal.</div>
+
+    <div class="gtitle">Status</div>
+    <div class="group">
+      <div class="field"><label for="propStatus">Proposal status</label>
+        <select id="propStatus"><option value="draft">Draft</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="converted">Converted</option></select></div>
+    </div>
+    <div class="prop-btns">
+      <button class="btn btn-primary" id="btnPropSave" type="button"><svg><use href="#i-check"/></svg>Save</button>
+      <button class="btn btn-secondary" id="btnPropNew" type="button"><svg><use href="#i-plus"/></svg>New proposal</button>
+    </div>
+    <div class="gnote" id="propSaveNote">Kept on this phone as you type. Tap Save to add it to Saved proposals.</div>
 
     <button class="btn btn-secondary btn-block" id="btnPropToAgr" type="button" style="margin-top:18px"><svg><use href="#i-doc"/></svg>Turn into agreement</button>
-    <div class="gnote">Copies client, contact, address, start date and rate into a new ongoing agreement.</div>
+    <div class="gnote">Copies client, contact, address, start date and rate into a new ongoing agreement, and marks the proposal Converted.</div>
+
+    <div class="gtitle">Saved proposals <button class="textbtn" id="btnPropListRefresh" type="button">Refresh</button></div>
+    <div class="group list" id="propSavedList"></div>
   </div>
 
   <div id="propDoc" class="docwrap" hidden>
@@ -2206,6 +2234,7 @@ armButton($('btnNew'), 'Tap again to clear', async ()=>{
   $('rush').checked = false;
   rateManual = false;
   $('start').value = new Date().toISOString().slice(0,10);
+  try{ propForgetPendingAgr(); }catch(e){}   // a cleared agreement no longer belongs to a converted proposal
   setAgrView('form');
   render(); toast('Cleared.');
   const b = $('btnNew'); b.disabled=false; b.classList.remove('armed'); b.textContent='Clear';
@@ -2224,6 +2253,7 @@ $('btnLink').addEventListener('click', async ()=>{
     raw.agrNo = await claimAgrNumber();
     raw.genDate = fmtDate(new Date().toISOString().slice(0,10));
     const id = await saveShareLink('agreement', raw);
+    if(id){ try{ propLinkAgreement(id); }catch(e){} }   // ties a converted proposal to this agreement; never blocks the link
     const url = id ? baseUrl() + '#id=' + id : baseUrl() + '#' + toHash(raw);
     showLinkSheet({ title:'Send to ' + (raw.clientName || raw.org), sub: esc(raw.agrNo) + ' · they read it and sign on their phone, no login',
       url, smsText: `Here's the security services agreement from ${COMPANY} for you to review and sign:` });
@@ -4099,7 +4129,13 @@ const PROP_INCLUDED = [
   'A direct line to the owners, not a call center: (253) 251-4551.',
   'Post orders written with you before day one, and updated whenever you need.',
 ];
+const PROP_SVC_VALUE = { propSvcPatrol:'patrol', propSvcLockup:'lockup', propSvcAlarm:'alarm', propSvcApt:'apt', propSvcPost:'post' };
+const PROP_STATUSES = { draft:['Draft',''], sent:['Sent','warn'], accepted:['Accepted','ok'], converted:['Converted','ok'] };
+const PROP_PENDING_AGR_KEY = 'lionProposalPendingAgr';
 let propValidManual = false;   // valid-until follows proposal date + 30 days until edited by hand
+let propOpenId = null;         // saved proposals row being edited (null = not saved yet)
+let propOpenSnap = null;       // what was last saved/opened, to spot unsaved edits
+let propPendingAgr = localGet(PROP_PENDING_AGR_KEY);   // converted proposal waiting for its agreement link id
 
 function localYmd(d=new Date()){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function addDaysYmd(ymd, n){ const [y,m,d] = (ymd||'').split('-').map(Number); if(!y) return ''; return localYmd(new Date(y, m-1, d+n)); }
@@ -4110,7 +4146,9 @@ function propData(){
   const v = {}; PROP_TEXT.forEach(id => v[id] = $(id).value);
   v.propType = document.querySelector('input[name=propType]:checked')?.value || 'retail';
   v.svcs = PROP_SVCS.filter(id => $(id).checked);
+  v.propStatus = $('propStatus').value;
   v.validManual = propValidManual;
+  v.openId = propOpenId; v.openSnap = propOpenSnap;
   return v;
 }
 // Everything the documents print, already worded (plain text, not escaped)
@@ -4166,10 +4204,10 @@ function propPreviewHtml(c){
   <p class="pp-intro">${esc(c.intro)}</p>
   <h2>Scope of services</h2>
   ${c.scope.length ? `<ul>${c.scope.map(([b,t]) => `<li><b>${esc(b)}:</b> ${esc(t)}</li>`).join('')}</ul>` : `<p class="tbc">Pick at least one service.</p>`}
-  <h2>Schedule</h2>
-  <table>${rows(c.schedule)}</table>
-  <h2>Rate &amp; term</h2>
-  <table>${rows(c.rateRows, true)}</table>
+  <div class="pp-two">
+    <div><h2>Schedule</h2><table>${rows(c.schedule)}</table></div>
+    <div><h2>Rate &amp; term</h2><table>${rows(c.rateRows, true)}</table></div>
+  </div>
   <h2>What's included</h2>
   <ul>${PROP_INCLUDED.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
   <h2>Next steps</h2>
@@ -4195,27 +4233,164 @@ function propRender(){
   localSet(PROP_KEY, v);
 }
 
-function propReset(){
-  PROP_TEXT.forEach(id => $(id).value = '');
-  PROP_SVCS.forEach(id => $(id).checked = false);
-  document.querySelector('input[name=propType][value=retail]').checked = true;
-  $('propTerm').value = PROP_DEFAULT_TERM;
-  $('propBilling').value = PROP_DEFAULT_BILLING;
-  $('propDate').value = localYmd();
-  $('propValid').value = addDaysYmd($('propDate').value, 30);
-  propValidManual = false;
+function propDefaultData(){
+  const v = {}; PROP_TEXT.forEach(id => v[id] = '');
+  v.propTerm = PROP_DEFAULT_TERM;
+  v.propBilling = PROP_DEFAULT_BILLING;
+  v.propDate = localYmd();
+  v.propValid = addDaysYmd(v.propDate, 30);
+  v.propType = 'retail'; v.svcs = []; v.propStatus = 'draft'; v.validManual = false;
+  return v;
 }
+function propApply(v){
+  PROP_TEXT.forEach(id => $(id).value = typeof v[id] === 'string' ? v[id] : '');
+  PROP_SVCS.forEach(id => $(id).checked = (v.svcs||[]).includes(id));
+  document.querySelector(`input[name=propType][value="${v.propType==='apartment'?'apartment':'retail'}"]`).checked = true;
+  $('propStatus').value = PROP_STATUSES[v.propStatus] ? v.propStatus : 'draft';
+  propValidManual = !!v.validManual;
+}
+function propReset(){ propApply(propDefaultData()); }
 function propLoad(){
   const v = localGet(PROP_KEY);
   propReset();
   if(v){
-    PROP_TEXT.forEach(id => { if(typeof v[id] === 'string') $(id).value = v[id]; });
-    PROP_SVCS.forEach(id => $(id).checked = (v.svcs||[]).includes(id));
-    const t = document.querySelector(`input[name=propType][value="${v.propType==='apartment'?'apartment':'retail'}"]`); if(t) t.checked = true;
-    propValidManual = !!v.validManual;
+    propApply(Object.assign(propDefaultData(), v));
+    propSetOpen(v.openId || null, v.openSnap || null);
   }
   propRender();
 }
+
+// ---- Saved proposals (Supabase table "proposals", owners only — see supabase/03_proposals.sql) ----
+// Form values -> table row. Blank dates/numbers are null; the rate stays empty when blank.
+function propPayload(v){
+  const txt = x => String(x ?? '').trim() || null;
+  const num = x => { const n = parseFloat(x); return isFinite(n) ? n : null; };
+  return {
+    status: PROP_STATUSES[v.propStatus] ? v.propStatus : 'draft',
+    client: txt(v.propClient), contact: txt(v.propContact), site: txt(v.propSite),
+    property_type: v.propType === 'apartment' ? 'apartment' : 'retail', heard: txt(v.propHeard),
+    services: (v.svcs||[]).map(id => PROP_SVC_VALUE[id]).filter(Boolean),
+    days: txt(v.propDays), hours: txt(v.propHours), frequency: txt(v.propFreq), start_date: v.propStart || null,
+    rate: num(v.propRate), monthly_hours: num(v.propMonthlyHours),
+    term: txt(v.propTerm), billing: txt(v.propBilling), proposal_date: v.propDate || null, valid_until: v.propValid || null,
+  };
+}
+// Table row -> form values (same shape as propData())
+function propRowData(r){
+  const str = x => x == null ? '' : String(x);
+  const v = {
+    propClient: str(r.client), propContact: str(r.contact), propSite: str(r.site), propHeard: str(r.heard),
+    propDays: str(r.days), propStart: str(r.start_date), propHours: str(r.hours), propFreq: str(r.frequency),
+    propRate: str(r.rate), propMonthlyHours: str(r.monthly_hours), propTerm: str(r.term), propBilling: str(r.billing),
+    propDate: str(r.proposal_date), propValid: str(r.valid_until),
+    propType: r.property_type === 'apartment' ? 'apartment' : 'retail',
+    svcs: PROP_SVCS.filter(id => (r.services||[]).includes(PROP_SVC_VALUE[id])),
+    propStatus: PROP_STATUSES[r.status] ? r.status : 'draft',
+  };
+  v.validManual = !!v.propValid && v.propValid !== addDaysYmd(v.propDate, 30);
+  return v;
+}
+const propKey = v => JSON.stringify(propPayload(v));
+function propDirty(){ return propKey(propData()) !== (propOpenSnap || propKey(propDefaultData())); }
+function propSetOpen(id, snap){
+  propOpenId = id; propOpenSnap = snap;
+  $('propTitle').textContent = id ? 'Edit proposal' : 'New proposal';
+  if(Array.isArray(propList)) renderProposals();
+}
+function propIsMissingTable(e){
+  const b = String((e && e.body) || '');
+  return !!e && (e.status === 404 || /PGRST205|42P01/.test(b));
+}
+function propErrText(e){
+  if(propIsMissingTable(e)) return 'saved proposals aren\'t set up in the database yet (supabase/03_proposals.sql).';
+  if(e && (e.status === 401 || e.status === 403)) return 'not allowed. Sign in again with an owner account.';
+  if(e instanceof TypeError) return 'no connection. Check your signal and try again.';
+  return (e && e.message) || 'unknown error';
+}
+
+// First save inserts and remembers the row id; later saves update that row.
+let propSaving = null;
+function propSave(){
+  if(propSaving) return propSaving;
+  propSaving = (async () => {
+    const snap = propKey(propData());
+    const opts = { headers:{ 'Prefer':'return=representation' }, body: snap };
+    const rows = propOpenId
+      ? await rest(`proposals?id=eq.${encodeURIComponent(propOpenId)}`, { ...opts, method:'PATCH' })
+      : await rest('proposals', { ...opts, method:'POST' });
+    const row = Array.isArray(rows) ? rows[0] : null;
+    if(!row || !row.id) throw new Error(propOpenId ? 'this proposal is no longer in the database (it may have been deleted). Tap New proposal to save a fresh copy.' : 'the database didn\'t return the new proposal.');
+    propSetOpen(row.id, snap);
+    propRender();
+    return row;
+  })().finally(() => { propSaving = null; });
+  return propSaving;
+}
+
+let propList = null, propListErr = null;
+async function loadProposals(){
+  if(!Array.isArray(propList)) $('propSavedList').innerHTML = skeleton(2);
+  try{ propList = await rest('proposals?select=*&order=updated_at.desc&limit=200'); propListErr = null; }
+  catch(e){ console.error('proposals load failed:', e); propListErr = e; }
+  renderProposals();
+}
+function renderProposals(){
+  const el = $('propSavedList');
+  if(propListErr && !Array.isArray(propList)){
+    if(propIsMissingTable(propListErr)) el.innerHTML = `<div class="empty"><b>Saved proposals aren't set up yet</b>Run supabase/03_proposals.sql in Supabase, then tap Refresh.</div>`;
+    else loadError(el, loadProposals);
+    return;
+  }
+  if(!Array.isArray(propList)) return;
+  el.innerHTML = propList.length ? propList.map(r => {
+    const [label, cls] = PROP_STATUSES[r.status] || PROP_STATUSES.draft;
+    const when = r.proposal_date ? fmtLongDate(r.proposal_date) : fmtWhen(r.created_at);
+    const site = String(r.site || '').trim().replace(/\s*\n\s*/g, ', ');
+    return `<div class="item prop-row${r.id === propOpenId ? ' open' : ''}" role="button" tabindex="0" data-id="${esc(r.id)}">
+      <span class="lead ${r.status === 'converted' ? 'ok' : ''}">${icon('doc')}</span>
+      <span class="main"><span class="t">${esc(r.client || 'Untitled')}</span>
+        <span class="s">${esc([site, when].filter(Boolean).join(' · '))}</span>
+        <span class="prop-row-foot"><span class="chip ${cls}">${esc(label)}</span>
+          <button class="btn btn-secondary btn-sm prop-row-agr" type="button">Turn into agreement</button></span></span>
+      ${chev()}</div>`;
+  }).join('') : `<div class="empty"><b>No saved proposals yet</b>Fill in a proposal and tap Save.</div>`;
+}
+function propOpenRow(id){
+  const r = Array.isArray(propList) && propList.find(x => x.id === id);
+  if(!r) return;
+  if(propDirty() && !confirm(id === propOpenId ? 'Discard your unsaved changes and reopen the saved copy?' : 'Discard unsaved changes to the proposal you have open?')) return;
+  propApply(propRowData(r));
+  propSetOpen(r.id, propKey(propData()));
+  setPropView('form'); propRender();
+  window.scrollTo({ top:0 });
+  toast('Opened ' + (r.client || 'proposal') + '.');
+}
+$('propSavedList').addEventListener('click', e => {
+  const row = e.target.closest('.prop-row'); if(!row) return;
+  if(e.target.closest('.prop-row-agr')) propConvertRow(row.dataset.id);
+  else propOpenRow(row.dataset.id);
+});
+$('propSavedList').addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('prop-row')){ e.preventDefault(); propOpenRow(e.target.dataset.id); }
+});
+$('btnPropListRefresh').addEventListener('click', loadProposals);
+
+$('btnPropSave').addEventListener('click', async ()=>{
+  const btn = $('btnPropSave');
+  if(btn.disabled) return;
+  const original = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{ await propSave(); toast('Saved.'); loadProposals(); }
+  catch(e){ console.error('proposal save failed:', e); toast('Couldn\'t save: ' + propErrText(e), 5200); }
+  finally{ btn.innerHTML = original; btn.disabled = false; }
+});
+$('btnPropNew').addEventListener('click', ()=>{
+  if(propDirty() && !confirm('Discard unsaved changes to this proposal?')) return;
+  propReset(); propSetOpen(null, null);
+  setPropView('form'); propRender();
+  window.scrollTo({ top:0 });
+  toast('New proposal.');
+});
 
 function setPropView(view){
   document.querySelectorAll('#propSeg button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.view===view)));
@@ -4231,7 +4406,7 @@ $('propDate').addEventListener('input', ()=>{ if(!propValidManual){ $('propValid
 $('propValid').addEventListener('input', ()=>{ propValidManual = $('propValid').value !== ''; propRender(); });
 
 armButton($('btnPropClear'), 'Tap again to clear', async ()=>{
-  propReset(); localDel(PROP_KEY); setPropView('form'); propRender(); toast('Cleared.');
+  propReset(); propSetOpen(null, null); localDel(PROP_KEY); setPropView('form'); propRender(); toast('Cleared.');
   const b = $('btnPropClear'); b.disabled=false; b.classList.remove('armed'); b.textContent='Clear';
   return true;
 });
@@ -4246,7 +4421,9 @@ async function buildProposalPdf(c){
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const ital = await pdf.embedFont(StandardFonts.HelveticaOblique);
   const logo = await pdf.embedPng(Uint8Array.from(atob(LION_LOGO_PNG_BASE64), ch=>ch.charCodeAt(0)));
-  const W = 612, H = 792, L = 40, R = W - 40, CW = R - L, TOP = H - 36, BOTTOM = 62;
+  // Sized so a typical proposal (all five services, a short "What we heard") fits on one Letter page;
+  // longer content still flows onto extra pages.
+  const W = 612, H = 792, L = 36, R = W - 36, CW = R - L, TOP = H - 30, BOTTOM = 48;
   const BLACK = rgb(11/255,11/255,11/255), BAR = rgb(26/255,26/255,26/255), GOLD = rgb(212/255,160/255,23/255),
         GOLDLT = rgb(232/255,185/255,35/255), INK = rgb(21/255,21/255,21/255), GREY = rgb(85/255,85/255,85/255),
         LIGHT = rgb(204/255,204/255,204/255), TAN = rgb(242/255,230/255,194/255), RULE = rgb(187/255,187/255,187/255),
@@ -4257,7 +4434,6 @@ async function buildProposalPdf(c){
   function need(h){ if(y - h < BOTTOM) newPage(); }
   const S = t => pdfSafe(String(t ?? '').replace(/[\t\r]/g,' '));
   function spaced(t, x, yy, size, font, color, sp){ for(const ch of t){ page.drawText(ch, { x, y:yy, size, font, color }); x += font.widthOfTextAtSize(ch, size) + sp; } }
-  function spacedW(t, size, font, sp){ let w = 0; for(const ch of t) w += font.widthOfTextAtSize(ch, size) + sp; return w - sp; }
   // Wrap runs of [text, font] into lines of runs; honours \n
   function wrapRuns(runs, size, maxW){
     const lines = [[]]; let w = 0;
@@ -4285,81 +4461,100 @@ async function buildProposalPdf(c){
     const lines = wrapRuns(runs, size, maxW);
     lines.forEach(ln => { need(lh); y -= lh; drawLine(ln, x, y + (lh - size)*0.35, size, color); });
   }
-  function section(title){
-    need(22 + 34); y -= 12;
-    page.drawRectangle({ x:L, y:y-18, width:CW, height:18, color:BAR });
-    page.drawRectangle({ x:L, y:y-18, width:4, height:18, color:GOLD });
-    spaced(title.toUpperCase(), L+11, y-12.6, 9.5, bold, WHITE, 1.1);
-    y -= 18 + 5;
+  const SEC_GAP = 8, SEC_H = 15, SEC_AFTER = 4;
+  function sectionBar(title, x, w){
+    page.drawRectangle({ x, y:y-SEC_GAP-SEC_H, width:w, height:SEC_H, color:BAR });
+    page.drawRectangle({ x, y:y-SEC_GAP-SEC_H, width:3.5, height:SEC_H, color:GOLD });
+    spaced(title.toUpperCase(), x+10, y-SEC_GAP-SEC_H+4.6, 8.5, bold, WHITE, 1);
   }
-  function table(rows){
-    const thW = Math.round(CW*0.32), pad = 7, size = 9.5, lh = 12.5;
-    rows.forEach(([k, v, strong]) => {
+  function section(title){
+    need(SEC_GAP + SEC_H + SEC_AFTER + 26);
+    sectionBar(title, L, CW);
+    y -= SEC_GAP + SEC_H + SEC_AFTER;
+  }
+  // Two-column key/value table; measured first so side-by-side tables can share a row
+  const T_SIZE = 9, T_LH = 11, T_PAD = 6;
+  function tableLayout(rows, w){
+    const thW = Math.round(w*0.42);
+    return { thW, w, rows: rows.map(([k, v, strong]) => {
       const tbc = v === 'To be confirmed';
-      const vf = tbc ? ital : (strong ? bold : reg), vs = strong && !tbc ? 11 : size;
-      const kl = wrapRuns([[k, bold]], size, thW - pad*2), vl = wrapRuns([[v, vf]], vs, CW - thW - pad*2);
-      const h = Math.max(kl.length, vl.length) * lh + 9;
-      need(h);
-      page.drawRectangle({ x:L, y:y-h, width:thW, height:h, color:TAN, borderColor:RULE, borderWidth:0.75 });
-      page.drawRectangle({ x:L+thW, y:y-h, width:CW-thW, height:h, borderColor:RULE, borderWidth:0.75 });
-      kl.forEach((ln,i) => drawLine(ln, L+pad, y - 5 - lh*(i+1) + 3.5, size, INK));
-      vl.forEach((ln,i) => drawLine(ln, L+thW+pad, y - 5 - lh*(i+1) + 3.5, vs, tbc ? TBCC : INK));
-      y -= h;
+      const vf = tbc ? ital : (strong ? bold : reg), vs = strong && !tbc ? 10.5 : T_SIZE;
+      const kl = wrapRuns([[k, bold]], T_SIZE, thW - T_PAD*2), vl = wrapRuns([[v, vf]], vs, w - thW - T_PAD*2);
+      return { kl, vl, vs, tbc, h: Math.max(kl.length, vl.length) * T_LH + 6 };
+    }) };
+  }
+  const tableHeight = t => t.rows.reduce((s, r) => s + r.h, 0);
+  function drawTable(t, x){
+    let yy = y;
+    t.rows.forEach(r => {
+      page.drawRectangle({ x, y:yy-r.h, width:t.thW, height:r.h, color:TAN, borderColor:RULE, borderWidth:0.75 });
+      page.drawRectangle({ x:x+t.thW, y:yy-r.h, width:t.w-t.thW, height:r.h, borderColor:RULE, borderWidth:0.75 });
+      r.kl.forEach((ln,i) => drawLine(ln, x+T_PAD, yy - 3 - T_LH*(i+1) + 2.8, T_SIZE, INK));
+      r.vl.forEach((ln,i) => drawLine(ln, x+t.thW+T_PAD, yy - 3 - T_LH*(i+1) + 2.8, r.vs, r.tbc ? TBCC : INK));
+      yy -= r.h;
     });
   }
+  // Schedule and Rate & term sit side by side to keep the proposal on one page
+  function tablePair([t1, rows1], [t2, rows2]){
+    const gap = 14, w = (CW - gap) / 2;
+    const a = tableLayout(rows1, w), b = tableLayout(rows2, w);
+    need(SEC_GAP + SEC_H + SEC_AFTER + Math.max(tableHeight(a), tableHeight(b)));
+    sectionBar(t1, L, w); sectionBar(t2, L + w + gap, w);
+    y -= SEC_GAP + SEC_H + SEC_AFTER;
+    drawTable(a, L); drawTable(b, L + w + gap);
+    y -= Math.max(tableHeight(a), tableHeight(b));
+  }
   function bullets(items, numbered){
+    const size = 9.5, lh = 11.8;
     items.forEach((runs, i) => {
-      const lines = wrapRuns(runs, 9.5, CW - 18), lh = 13.2;
-      need(lines.length*lh + 2);
+      const lines = wrapRuns(runs, size, CW - 16);
+      need(lines.length*lh + 1.5);
       const mark = numbered ? `${i+1}.` : '•';
       lines.forEach((ln, li) => {
         y -= lh;
-        if(li === 0) page.drawText(mark, { x: L + (numbered ? 3 : 5), y: y+3, size:9.5, font:reg, color:INK });
-        drawLine(ln, L+16, y+3, 9.5, INK);
+        if(li === 0) page.drawText(mark, { x: L + (numbered ? 2 : 4), y: y+2.8, size, font:reg, color:INK });
+        drawLine(ln, L+14, y+2.8, size, INK);
       });
-      y -= 2;
+      y -= 1.5;
     });
   }
 
   newPage();
   // Header band
-  const hh = 74;
+  const hh = 58;
   page.drawRectangle({ x:L, y:y-hh, width:CW, height:hh, color:BLACK });
-  page.drawRectangle({ x:L, y:y-hh, width:CW, height:3.5, color:GOLD });
-  page.drawImage(logo, { x:L+10, y:y-hh+9, width:58, height:58 });
-  spaced('LION SECURITY SERVICES', L+76, y-34, 15, bold, GOLDLT, 1.8);
-  page.drawText('Unarmed Security · South King County, WA', { x:L+76, y:y-49, size:9, font:reg, color:rgb(221/255,221/255,221/255) });
+  page.drawRectangle({ x:L, y:y-hh, width:CW, height:3, color:GOLD });
+  page.drawImage(logo, { x:L+9, y:y-hh+7, width:46, height:46 });
+  spaced('LION SECURITY SERVICES', L+64, y-26, 14, bold, GOLDLT, 1.6);
+  page.drawText('Unarmed Security · South King County, WA', { x:L+64, y:y-40, size:8.5, font:reg, color:rgb(221/255,221/255,221/255) });
   [['(253) 251-4551', reg, LIGHT], ['contact@lionofseattle.com', reg, LIGHT], ['Licensed & Insured', bold, GOLDLT]].forEach(([t,f,col], i) => {
-    page.drawText(t, { x: R - 14 - f.widthOfTextAtSize(t, 8.5), y: y-25-i*12, size:8.5, font:f, color:col });
+    page.drawText(t, { x: R - 12 - f.widthOfTextAtSize(t, 8), y: y-19-i*11, size:8, font:f, color:col });
   });
-  y -= hh + 26;
-  page.drawText('Security Service Proposal', { x:L, y, size:17, font:bold, color:INK });
-  y -= 8;
+  y -= hh + 21;
+  page.drawText('Security Service Proposal', { x:L, y, size:15, font:bold, color:INK });
+  y -= 5;
 
   // Meta grid
-  const colW = (CW - 24) / 2, labW = 72;
+  const colW = (CW - 20) / 2, labW = 66;
   const meta = [[['Prepared for', c.preparedFor], ['Date', c.date]], [['Site', c.site || 'To be confirmed'], ['Valid until', c.valid]],
                 [['Property type', c.type], ['Prepared by', 'Karim Harakat, COO']]];
   meta.forEach(pair => {
-    const cells = pair.map(([k, v]) => ({ k, lines: wrapRuns([[v, v==='To be confirmed' ? ital : reg]], 9.5, colW - labW) }));
-    const rh = Math.max(...cells.map(c2 => c2.lines.length)) * 12.5 + 3;
+    const cells = pair.map(([k, v]) => ({ k, lines: wrapRuns([[v, v==='To be confirmed' ? ital : reg]], 9, colW - labW) }));
+    const rh = Math.max(...cells.map(c2 => c2.lines.length)) * 11.5 + 1;
     cells.forEach((cell, ci) => {
-      const x = L + ci*(colW + 24);
-      page.drawText(cell.k, { x, y: y-10.5, size:9.5, font:bold, color:GREY });
-      cell.lines.forEach((ln, li) => drawLine(ln, x + labW, y - 10.5 - li*12.5, 9.5, INK));
+      const x = L + ci*(colW + 20);
+      page.drawText(cell.k, { x, y: y-10, size:9, font:bold, color:GREY });
+      cell.lines.forEach((ln, li) => drawLine(ln, x + labW, y - 10 - li*11.5, 9, INK));
     });
     y -= rh;
   });
-  y -= 6;
-  para([[c.intro, reg]], L, CW, 10, INK, 14);
+  y -= 3;
+  para([[c.intro, reg]], L, CW, 9.5, INK, 12.5);
 
   section('Scope of services');
   if(c.scope.length) bullets(c.scope.map(([b, t]) => [[b + ':', bold], [' ' + t, reg]]));
-  else { y -= 13; page.drawText('To be confirmed', { x:L, y:y+3, size:9.5, font:ital, color:TBCC }); }
-  section('Schedule');
-  table(c.schedule);
-  section('Rate & term');
-  table(c.rateRows.map(([k, v]) => [k, v, k === 'Rate']));
+  else { y -= 12; page.drawText('To be confirmed', { x:L, y:y+2.8, size:9.5, font:ital, color:TBCC }); }
+  tablePair(['Schedule', c.schedule], ['Rate & term', c.rateRows.map(([k, v]) => [k, v, k === 'Rate'])]);
   section("What's included");
   bullets(PROP_INCLUDED.map(t => [[t, reg]]));
   section('Next steps');
@@ -4371,23 +4566,23 @@ async function buildProposalPdf(c){
   ], true);
 
   // Signatures
-  need(56); y -= 30;
+  need(58); y -= 36;
   const sw = (CW - 28) / 2;
   [['Client signature / date', c.client], ['Karim Harakat, COO / date', 'Lion Security Services, LLC']].forEach(([a, b], i) => {
     const x = L + i*(sw + 28);
     page.drawLine({ start:{x, y}, end:{x:x+sw, y}, thickness:0.75, color:rgb(0.2,0.2,0.2) });
-    page.drawText(a, { x, y:y-11, size:8.5, font:reg, color:GREY });
-    if(b) page.drawText(S(b).slice(0, 70), { x, y:y-34, size:8.5, font:reg, color:GREY });
+    page.drawText(a, { x, y:y-10, size:8.5, font:reg, color:GREY });
+    if(b) page.drawText(S(b).slice(0, 70), { x, y:y-21, size:8.5, font:reg, color:GREY });
   });
 
   // Footer on every page
   const fl = [['Lion Security Services, LLC', bold, INK], [' · Unarmed security · Licensed & Insured', reg, GREY]];
   const fr = '(253) 251-4551 · contact@lionofseattle.com';
   pages.forEach((p, i) => {
-    p.drawLine({ start:{x:L, y:44}, end:{x:R, y:44}, thickness:1.5, color:GOLD });
-    let x = L; fl.forEach(([t, f, col]) => { p.drawText(t, { x, y:32, size:8, font:f, color:col }); x += f.widthOfTextAtSize(t, 8); });
+    p.drawLine({ start:{x:L, y:36}, end:{x:R, y:36}, thickness:1.5, color:GOLD });
+    let x = L; fl.forEach(([t, f, col]) => { p.drawText(t, { x, y:25, size:8, font:f, color:col }); x += f.widthOfTextAtSize(t, 8); });
     const right = pages.length > 1 ? `${fr}  ·  Page ${i+1} of ${pages.length}` : fr;
-    p.drawText(right, { x: R - reg.widthOfTextAtSize(right, 8), y:32, size:8, font:reg, color:GREY });
+    p.drawText(right, { x: R - reg.widthOfTextAtSize(right, 8), y:25, size:8, font:reg, color:GREY });
   });
   return pdf.save();
 }
@@ -4442,10 +4637,10 @@ $('btnPropPrint').addEventListener('click', ()=>{
 });
 
 // ---- Turn into agreement: copies the basics into the agreement form ----
-$('btnPropToAgr').addEventListener('click', ()=>{
-  const v = propData();
+// Returns false if the owner backs out of replacing an agreement that's already filled in.
+function propToAgreement(v){
   const has = ['org','clientName','addr'].some(f => $(f).value.trim());
-  if(has && !confirm('Replace the client, contact, address, start date and rate on the agreement you\'re working on?')) return;
+  if(has && !confirm('Replace the client, contact, address, start date and rate on the agreement you\'re working on?')) return false;
   $('org').value = v.propClient.trim();
   $('clientName').value = v.propContact.trim();
   $('addr').value = v.propSite.trim();
@@ -4457,7 +4652,56 @@ $('btnPropToAgr').addEventListener('click', ()=>{
   setAgrView('form');
   showPage('pg-agreement');
   toast('Agreement started. Add guards, hours and an end date.', 4200);
-});
+  return true;
+}
+// Marks the proposal Converted and remembers it, so the agreement link made next gets tied to it.
+async function propMarkConverted(id){
+  propPendingAgr = id; localSet(PROP_PENDING_AGR_KEY, id);
+  const rows = await rest(`proposals?id=eq.${encodeURIComponent(id)}`, { method:'PATCH', headers:{ 'Prefer':'return=representation' },
+    body: JSON.stringify({ status:'converted', converted_at: new Date().toISOString() }) });
+  if(!Array.isArray(rows) || !rows.length) throw new Error('proposal not found');
+  if(id === propOpenId){
+    const wasDirty = propDirty();
+    $('propStatus').value = 'converted';
+    if(!wasDirty) propOpenSnap = propKey(propData());
+    else if(propOpenSnap){ const snap = JSON.parse(propOpenSnap); snap.status = 'converted'; propOpenSnap = JSON.stringify(snap); }
+    propRender();
+  }
+  loadProposals();
+}
+const propConvertFailed = e => { console.error('proposal convert failed:', e); toast('Agreement started, but the proposal wasn\'t marked Converted: ' + propErrText(e), 5200); };
+// Open proposal: save it first if it's new or edited, then hand off
+async function propConvertOpen(){
+  const btn = $('btnPropToAgr');
+  if(btn.disabled) return;
+  let id = propOpenId, saveErr = null;
+  if(!id || propDirty()){
+    btn.disabled = true;
+    try{ id = (await propSave()).id; }
+    catch(e){ console.error('proposal save failed:', e); saveErr = e; id = null; }
+    finally{ btn.disabled = false; }
+  }
+  if(!propToAgreement(propData())) return;
+  if(id) propMarkConverted(id).catch(propConvertFailed);
+  else toast('Agreement started, but the proposal couldn\'t be saved: ' + propErrText(saveErr), 5200);
+}
+function propConvertRow(id){
+  if(id === propOpenId) return propConvertOpen();
+  const r = Array.isArray(propList) && propList.find(x => x.id === id);
+  if(!r || !propToAgreement(propRowData(r))) return;
+  propMarkConverted(id).catch(propConvertFailed);
+}
+// Called right after the agreement flow creates its share link. Never blocks or breaks that flow.
+async function propLinkAgreement(linkId){
+  const pid = propPendingAgr;
+  if(!pid || !linkId) return;
+  propForgetPendingAgr();
+  try{
+    await rest(`proposals?id=eq.${encodeURIComponent(pid)}`, { method:'PATCH', headers:{ 'Prefer':'return=minimal' }, body: JSON.stringify({ agreement_id: linkId }) });
+  }catch(e){ console.error('proposal → agreement link failed:', e); }
+}
+function propForgetPendingAgr(){ propPendingAgr = null; localDel(PROP_PENDING_AGR_KEY); }
+$('btnPropToAgr').addEventListener('click', propConvertOpen);
 
 propLoad();
 
@@ -4472,6 +4716,7 @@ function showPage(id, push=true){
   window.scrollTo(0,0);
   if(id==='pg-records') loadRecords(false);
   if(id==='pg-team') loadTeam(false);
+  if(id==='pg-proposal') loadProposals();
   if(push){ const h = '#' + id.replace('pg-',''); if(location.hash !== h) history.replaceState(null,'',h); }
 }
 document.querySelectorAll('#tabbar button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
