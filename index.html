@@ -5071,18 +5071,37 @@ $('btnPropShare').addEventListener('click', async ()=>{
   finally{ btn.innerHTML = original; btn.disabled = false; }
 });
 
-// Print keeps the page shown until the print sheet closes: iOS returns from print() right away,
-// so cleanup waits for 'afterprint' (60 s fallback) instead of a short timer.
-function printPage(pg){
-  let done = false;
-  const cleanup = () => { if(done) return; done = true; pg.classList.remove('print-me'); window.removeEventListener('afterprint', cleanup); };
-  pg.classList.add('print-me');
-  window.addEventListener('afterprint', cleanup);
-  setTimeout(()=>{ window.print(); setTimeout(cleanup, 60000); }, 150);
-}
-$('btnPropPrint').addEventListener('click', ()=>{
-  propRender(); setPropView('doc');
-  printPage($('pg-proposal'));
+// Print uses the same 1-page pdf-lib PDF as Share (window.print() gave 2 pages on iOS).
+// Mobile: share sheet (has Print). Desktop: open the PDF in a new tab, opened at tap time to dodge popup blockers.
+$('btnPropPrint').addEventListener('click', async ()=>{
+  const btn = $('btnPropPrint');
+  if(btn.disabled) return;
+  const v = propData();
+  if(!v.propClient.trim()){ toast('Add the client business name first.'); setPropView('form'); $('propClient').focus(); return; }
+  if(!v.svcs.length){ toast('Pick at least one service.'); setPropView('form'); return; }
+  const canShareFile = typeof File === 'function' && !!navigator.canShare &&
+    navigator.canShare({ files:[new File([''], 'x.pdf', { type:'application/pdf' })] });
+  const win = canShareFile ? null : window.open('', '_blank');
+  const original = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'Making PDF…';
+  try{
+    const { bytes, c } = await propPdfBytes();
+    if(canShareFile){
+      await sharePdfFile(bytes, propFileName(c), 'Security Service Proposal', 'Print');
+    } else if(win){
+      const url = URL.createObjectURL(new Blob([bytes], { type:'application/pdf' }));
+      win.location.href = url;
+      setTimeout(()=>URL.revokeObjectURL(url), 60000);
+    } else {
+      downloadBlob(bytes, propFileName(c), 'application/pdf');
+      toast('Downloaded the PDF.');
+    }
+    if(!c.hasRate) toast('Heads up: the rate is blank, so it shows as “To be confirmed”.', 4200);
+  }catch(err){
+    if(win) win.close();
+    toast('Couldn\'t make the PDF: ' + err.message);
+  }
+  finally{ btn.innerHTML = original; btn.disabled = false; }
 });
 
 /* =====================================================================
