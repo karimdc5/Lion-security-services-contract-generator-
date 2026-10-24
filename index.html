@@ -715,8 +715,16 @@ body.public .modebanner{display:none!important}
         <div class="field"><label for="clientTitle">Title</label><input id="clientTitle" placeholder="e.g. Facilities manager"></div>
         <div class="field"><label for="clientPhone">Phone</label><input id="clientPhone" placeholder="(206) 555-0100" inputmode="tel"><div class="err" id="phoneHint" style="display:none"></div></div>
       </div>
+      <div class="field"><label for="clientEmail">Client email <span class="opt">(optional — gets a signed copy)</span></label><input id="clientEmail" type="email" placeholder="name@company.com" autocomplete="email" inputmode="email"></div>
       <div class="field"><label for="addr">Service address</label><textarea id="addr" placeholder="Street, city, ZIP" rows="2" style="min-height:64px"></textarea></div>
       <div class="field"><label for="siteContact">On-site contact <span class="opt">(if different)</span></label><input id="siteContact" placeholder="Name and phone"></div>
+      <div class="field">
+        <label>Property type</label>
+        <div class="seg" id="agrPropType">
+          <label><input type="radio" name="agrPropType" value="retail">Retail store (after hours)</label>
+          <label><input type="radio" name="agrPropType" value="apartment">Private apartment complex</label>
+        </div>
+      </div>
     </div>
 
     <div class="gtitle">Coverage</div>
@@ -728,17 +736,16 @@ body.public .modebanner{display:none!important}
       <div class="field">
         <label>Engagement</label>
         <div class="seg" id="segType">
-          <label><input type="radio" name="etype" value="single" checked>One date</label>
           <label><input type="radio" name="etype" value="short">Days / weeks</label>
-          <label><input type="radio" name="etype" value="ongoing">Ongoing</label>
+          <label><input type="radio" name="etype" value="ongoing" checked>Ongoing</label>
         </div>
-        <div class="hint" id="typeHint">One date, one invoice. Ends when the job is done and paid.</div>
+        <div class="hint" id="typeHint">Recurring coverage. Term length comes from your start/end dates, and the shift total is based on the days you check below.</div>
       </div>
       <div class="cols2">
         <div class="field"><label for="start">Start date</label><input id="start" type="date"></div>
         <div class="field" id="endWrap"><label for="end">End date</label><input id="end" type="date"></div>
       </div>
-      <div class="field" id="daysWrap" style="display:none">
+      <div class="field" id="daysWrap">
         <label>Days worked</label>
         <div class="dow" id="dowPicker">
           <label><input type="checkbox" id="dow0">Sun</label>
@@ -819,6 +826,7 @@ body.public .modebanner{display:none!important}
         <div>
           <h3 class="sub">Requested coverage</h3>
           <div class="f"><b>Service type:</b> <span class="val">Unarmed security</span></div>
+          <div class="f" id="d_ptypeRow"><b>Property type:</b> <span class="val" id="d_ptype"></span></div>
           <div class="f"><b>Guards:</b> <span class="val" id="d_guards"></span> &nbsp; <b>Hours/shift:</b> <span class="val" id="d_hours"></span></div>
           <div class="f"><b>Coverage period:</b> <span class="val" id="d_period"></span></div>
           <div class="f"><b>Schedule:</b> <span class="val" id="d_pattern"></span></div>
@@ -1822,11 +1830,6 @@ function daysBetween(a,b){ if(!a||!b) return 0; return Math.round((new Date(b)-n
 
 function termLinesPure(t,start,end,termLen,termUnit,autoRenew,daysSet){
   const s=fmtDate(start), e=fmtDate(end);
-  if(t==='single') return [
-    `This Agreement covers a single engagement on ${s||'____________'} for the coverage described above.`,
-    `It terminates automatically on completion of services and payment in full. No renewal or notice period applies.`,
-    `If Client requests additional dates, a new agreement will be issued.`
-  ];
   if(t==='short'){
     const n = matchingDaysCount(start,end,daysSet);
     return [
@@ -1847,10 +1850,12 @@ function termLinesPure(t,start,end,termLen,termUnit,autoRenew,daysSet){
 }
 
 /* ---------- data collection (edit mode) ---------- */
+const AGR_PROP_TYPE_LABEL = { retail:'After-hours retail store', apartment:'Private apartment complex' };
 function collectData(){
   return {
     org:$('org').value, clientName:$('clientName').value, clientTitle:$('clientTitle').value,
-    clientPhone:$('clientPhone').value, addr:$('addr').value, siteContact:$('siteContact').value,
+    clientPhone:$('clientPhone').value, clientEmail:$('clientEmail').value.trim(), addr:$('addr').value, siteContact:$('siteContact').value,
+    propType: document.querySelector('input[name=agrPropType]:checked')?.value || '',
     guards:$('guards').value, hours:$('hours').value,
     etype: document.querySelector('input[name=etype]:checked').value,
     start:$('start').value, end:$('end').value,
@@ -1917,10 +1922,8 @@ function monthsCovered(startStr, endStr){
   return m;
 }
 
-// Standard rate tier: events and days/weeks jobs $45; ongoing contracts by term length (from start/end dates).
+// Standard rate tier by contract length (from start/end dates) — same for days/weeks and ongoing jobs.
 function autoRateInfo(raw){
-  if(raw.etype==='single') return { rate:45, label:'one-time event' };
-  if(raw.etype==='short') return { rate:45, label:'short-term job, event rate' };
   const months = monthsCovered(raw.start, raw.end);
   if(months>=24) return { rate:45, label:'24+ month contract' };
   if(months>=12) return { rate:47, label:'12+ month contract' };
@@ -1993,16 +1996,18 @@ function paint(d){
   put('d_phone',d.clientPhone,'____________');
   put('d_addr',d.addr,'____________');
   put('d_site',d.siteContact,'____________');
+  put('d_ptype', AGR_PROP_TYPE_LABEL[d.propType], '____________');
+  // links sent before property type existed simply leave the line off
+  $('d_ptypeRow').hidden = d.propType === undefined;
   put('d_guards',d.guards,'__');
   put('d_hours',d.hours,'__');
   const s=fmtDate(d.start), e=fmtDate(d.end);
-  put('d_period', d.etype==='single' ? (s||'____________')
-      : d.etype==='short' ? ((s&&e)?`${s} – ${e}`:'____________')
-      : (s?`${s} · ${d.termLen||'__'} ${d.termUnit||'months'}`:'____________'));
+  put('d_period', d.etype==='ongoing'
+      ? (s?`${s} · ${d.termLen||'__'} ${d.termUnit||'months'}`:'____________')
+      : ((s&&e)?`${s} – ${e}`:'____________'));
   put('d_pattern',
     d.etype==='ongoing' ? (d.pattern || `${dowLabel(d.daysSet)}, ${d.hours||'__'} hr shift`)
-    : d.etype==='short' ? `${dowLabel(d.daysSet)}, ${d.hours||'__'} hr shift`
-    : `${d.hours||'__'} hr shift`);
+    : `${dowLabel(d.daysSet)}, ${d.hours||'__'} hr shift`);
   put('d_posts',d.posts,'____________');
   put('d_orders',d.orders,'____________');
   put('d_haz',d.hazards,'None disclosed');
@@ -2170,16 +2175,14 @@ let rateManual = false;     // true once the user types their own rate; clearing
 function render(){
   const t = document.querySelector('input[name=etype]:checked').value;
   $('ongoingWrap').style.display = t==='ongoing' ? 'block':'none';
-  $('daysWrap').style.display    = t==='single'  ? 'none':'block';
   $('shortBillingWrap').style.display = t==='short' ? 'block':'none';
-  $('endWrap').style.display     = t==='single'  ? 'none':'block';
   const startNow = $('start').value;
   // Rate follows the standard tier unless the user typed their own (left alone while they're editing it)
   const tier = autoRateInfo({ etype:t, start:startNow, end:$('end').value });
   if(!rateManual && document.activeElement !== $('rate')) $('rate').value = tier.rate;
   $('rateHint').textContent = `Standard rate: $${tier.rate}/hr (${tier.label}). ` + (rateManual ? 'Clear the field to use it.' : 'Type to override.');
   const raw = collectData();
-  $('dowWarning').style.display = (t!=='single' && raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
+  $('dowWarning').style.display = (raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
 
   const phoneDigits = (raw.clientPhone||'').replace(/\D/g,'');
   const phoneHint = $('phoneHint');
@@ -2192,8 +2195,7 @@ function render(){
   const useFMU = t==='ongoing' || (t==='short' && $('firstMonthBilling').checked);
   updateNetTermsOptions(useFMU);
   $('typeHint').textContent =
-    t==='single' ? 'One date, one invoice. Ends when the job is done and paid.'
-    : t==='short' ? 'A defined stretch — a tournament weekend, a two-week site, a fixed-length contract. Pick which days below actually run; totals only count those days. For a month or longer, consider first-month-upfront billing below.'
+    t==='short' ? 'A defined stretch — a tournament weekend, a two-week site, a fixed-length contract. Pick which days below actually run; totals only count those days. For a month or longer, consider first-month-upfront billing below.'
     : 'Recurring coverage. Term length comes from your start/end dates, and the shift total is based on the days you check below.';
 
   const d = computeAll(raw);
@@ -2243,8 +2245,9 @@ function missingFields(raw){
   if(!(+raw.hours > 0)) missing.push('Hours per shift');
   if(!(+raw.rate > 0)) missing.push('Rate');
   if(!raw.start) missing.push('Start date');
-  if(raw.etype !== 'single' && !raw.end) missing.push('End date');
-  if(raw.etype !== 'single' && raw.daysSet && !raw.daysSet.some(Boolean)) missing.push('Days worked');
+  if(!raw.end) missing.push('End date');
+  if(raw.daysSet && !raw.daysSet.some(Boolean)) missing.push('Days worked');
+  if(!raw.propType) missing.push('Property type');
   if(!raw.coLic) missing.push('WA company license number (in Settings)');
   return missing;
 }
@@ -2342,8 +2345,9 @@ function printAgreement(){
 $('btnPrint').addEventListener('click', printAgreement);
 
 armButton($('btnNew'), 'Tap again to clear', async ()=>{
-  ['org','clientName','clientTitle','clientPhone','addr','siteContact','posts','orders','hazards','notes','pattern','start','end']
+  ['org','clientName','clientTitle','clientPhone','clientEmail','addr','siteContact','posts','orders','hazards','notes','pattern','start','end']
     .forEach(f=>$(f).value='');
+  document.querySelectorAll('input[name=agrPropType]').forEach(r=>r.checked = false);
   [0,1,2,3,4,5,6].forEach(i=>$('dow'+i).checked = (i>=1 && i<=5));
   $('firstMonthBilling').checked = false;
   $('rush').checked = false;
@@ -2367,6 +2371,7 @@ $('btnLink').addEventListener('click', async ()=>{
   try{
     raw.agrNo = await claimAgrNumber();
     raw.genDate = fmtDate(new Date().toISOString().slice(0,10));
+    raw.total = Math.round((computeAll(raw).total || 0) * 100) / 100;   // the server records this as the amount
     const id = await saveShareLink('agreement', raw);
     if(!id){ toast('Couldn\'t save the agreement — check connection and try again', 4200); return; }
     try{ propLinkAgreement(id); }catch(e){}   // ties a converted proposal to this agreement; never blocks the link
@@ -4840,6 +4845,10 @@ function propToAgreement(v){
   $('org').value = v.propClient.trim();
   $('clientName').value = v.propContact.trim();
   $('addr').value = v.propSite.trim();
+  const email = String(v.propEmail || v.email || '').trim();
+  if(email) $('clientEmail').value = email;
+  const pt = document.querySelector(`input[name=agrPropType][value="${v.propType==='apartment'?'apartment':'retail'}"]`);
+  if(pt && v.propType) pt.checked = true;
   if(v.propStart) $('start').value = v.propStart;
   const ongoing = document.querySelector('input[name=etype][value=ongoing]'); if(ongoing) ongoing.checked = true;
   const rate = parseFloat(v.propRate);
