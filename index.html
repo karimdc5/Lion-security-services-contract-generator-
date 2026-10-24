@@ -255,6 +255,8 @@ body.public .modebanner{display:none!important}
 .chip.ok{background:var(--ok-bg);color:var(--ok)}
 .chip.warn{background:var(--warn-bg);color:var(--warn)}
 .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.cosave{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:14px}
+.cosave .chip{margin-left:6px}
 .chip:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85}
 .chip.plain:before{display:none}
 
@@ -1082,6 +1084,10 @@ body.public .modebanner{display:none!important}
       <div class="field"><label for="coTitle">Title</label><input id="coTitle" placeholder="e.g. COO"></div>
     </div>
     <div class="field"><label for="coRate">Default rate per guard, per hour</label><input id="coRate" type="number" step="0.01" inputmode="decimal" placeholder="$"></div>
+  </div>
+  <div class="cosave">
+    <button type="button" class="btn btn-primary btn-block" id="btnCoSave">Save settings</button>
+    <span class="chip warn" id="coDirty" hidden>Unsaved changes</span>
   </div>
   <div class="gnote" id="coSyncNote">Saved automatically.</div>
 
@@ -2211,21 +2217,41 @@ function toHash(d){ return 's='+btoa(encodeURIComponent(JSON.stringify(d))); }
 const COFIELDS = ['coLic','coCarrier','coPolicy','coCoverage','coSigner','coTitle','coRate'];
 let saveTimer, lastSavedCompany = '', settingsRemote = null; // null = unknown, true/false after first try
 function companyValues(){ const o={}; COFIELDS.forEach(f=>o[f]=$(f).value); return o; }
+function updateCoDirty(){ $('coDirty').hidden = JSON.stringify(companyValues()) === lastSavedCompany; }
+// force = the Save button: skip the "nothing changed" check and retry the account even after a failure
+async function doSaveCompany(force){
+  clearTimeout(saveTimer);
+  const o = companyValues(); const json = JSON.stringify(o);
+  if(!force && json === lastSavedCompany) return settingsRemote ? 'account' : 'local';
+  try{ localStorage.setItem('los:company', json); }
+  catch(e){ $('coSyncNote').textContent = "Couldn't save — try again."; return 'error'; }
+  lastSavedCompany = json; updateCoDirty();
+  if(!currentSession){ if(force) $('coSyncNote').textContent = 'Saved on this phone.'; return 'local'; }
+  if(settingsRemote === false && !force) return 'local';
+  try{
+    await rest('app_settings?on_conflict=key', { method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ key:'company', value:o, updated_at:new Date().toISOString() }) });
+    settingsRemote = true; $('coSyncNote').textContent = 'Saved to your account. Shows up on any phone you sign in on.';
+    return 'account';
+  }catch(e){
+    settingsRemote = false; $('coSyncNote').textContent = "Saved on this phone only (couldn't reach your account).";
+    return 'local';
+  }
+}
 function saveCompany(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async ()=>{
-    const o = companyValues(); const json = JSON.stringify(o);
-    if(json === lastSavedCompany) return;
-    localSet('los:company', o);
-    lastSavedCompany = json;
-    if(settingsRemote === false || !currentSession) return;
-    try{
-      await rest('app_settings?on_conflict=key', { method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify({ key:'company', value:o, updated_at:new Date().toISOString() }) });
-      settingsRemote = true; $('coSyncNote').textContent = 'Saved to your account. Shows up on any phone you sign in on.';
-    }catch(e){ settingsRemote = false; $('coSyncNote').textContent = 'Saved on this phone.'; }
-  }, 700);
+  saveTimer = setTimeout(()=>doSaveCompany(false), 700);
 }
+let coSaveTimer;
+$('btnCoSave').addEventListener('click', async ()=>{
+  const b = $('btnCoSave');
+  clearTimeout(coSaveTimer); b.disabled = true; b.textContent = 'Saving…';
+  const r = await doSaveCompany(true);
+  b.disabled = false;
+  if(r === 'error'){ b.textContent = 'Save settings'; toast("Couldn't save — try again"); return; }
+  b.textContent = 'Saved ✓'; toast('Saved ✓');
+  coSaveTimer = setTimeout(()=>{ b.textContent = 'Save settings'; }, 2000);
+});
 async function loadCompany(){
   const o = localGet('los:company');
   if(o) COFIELDS.forEach(f=>{ if(o[f]!=null) $(f).value=o[f]; });
@@ -2242,6 +2268,7 @@ async function loadCompany(){
     }catch(e){ settingsRemote = false; $('coSyncNote').textContent = 'Saved on this phone.'; }
   }
   lastSavedCompany = JSON.stringify(companyValues());
+  updateCoDirty();
   seqCache = localGet('los:seq') || {};
   renderHistory();
 }
@@ -2258,6 +2285,7 @@ $('rate').addEventListener('blur', render);
 document.querySelectorAll('#agrForm input,#agrForm select,#agrForm textarea,#pg-settings input').forEach(el=>{
   el.addEventListener('input',render); el.addEventListener('change',render);
 });
+document.querySelectorAll('#pg-settings input').forEach(el=>el.addEventListener('input', updateCoDirty));
 
 // ---- Details / Preview ----
 function setAgrView(view){
