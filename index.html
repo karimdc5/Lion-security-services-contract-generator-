@@ -667,27 +667,32 @@ body.public .modebanner{display:none!important}
   .pp-two{grid-template-columns:1fr;gap:0}
   .pp-sig{grid-template-columns:1fr;gap:18px}
 }
-/* Print: page margins come from @page (Letter, ~0.65in); a typical proposal fits one to two pages */
+/* Print: the proposal gets its own 0.5in Letter page (named page; the agreement keeps its margins)
+   and is spaced so typical content fits one page. Next steps + signatures + footer move as one unit. */
+@page proposal{size:letter;margin:0.5in}
 @media print{
-  .pp-sheet{box-shadow:none;max-width:none;width:100%;padding:0;font-size:10pt;line-height:1.4;display:block!important}
-  .pp-hdr{display:flex!important;flex-wrap:nowrap;gap:12px;padding:8px 14px;break-inside:avoid;page-break-inside:avoid}
-  .pp-hdr img{height:46px}
-  .pp-hdr .right{margin-left:auto;text-align:right;width:auto;font-size:8pt}
-  .pp-hdr .co{font-size:14pt}
-  .pp-hdr .sub{font-size:8.5pt}
-  .pp-meta{grid-template-columns:1fr 1fr;font-size:9.5pt;margin:4px 0 2px}
-  .pp-intro{margin:8px 0}
-  .pp-two{grid-template-columns:1fr 1fr;gap:12px}
-  .pp-sig{grid-template-columns:1fr 1fr;margin-top:28px}
-  .pp-sig div{font-size:8.5pt}
-  .pp-sheet h1{font-size:15pt;margin:12px 0 4px;break-after:avoid;page-break-after:avoid}
-  .pp-sheet h2{font-size:9.5pt;padding:3px 9px;margin:12px 0 6px;break-after:avoid;page-break-after:avoid}
-  .pp-sheet li{margin:0 0 2px;break-inside:avoid;page-break-inside:avoid}
-  .pp-sheet td,.pp-sheet th{font-size:9.5pt;padding:3px 7px}
+  .pp-sheet{page:proposal;box-shadow:none;max-width:none;width:100%;padding:0;font-size:9.5pt;line-height:1.4;display:block!important}
+  .pp-hdr{display:flex!important;flex-wrap:nowrap;gap:10px;padding:6px 12px;break-inside:avoid;page-break-inside:avoid}
+  .pp-hdr img{height:40px}
+  .pp-hdr .right{margin-left:auto;text-align:right;width:auto;font-size:7.5pt;line-height:1.35}
+  .pp-hdr .co{font-size:13pt}
+  .pp-hdr .sub{font-size:8pt}
+  .pp-meta{grid-template-columns:1fr 1fr;font-size:9pt;margin:3px 0 2px;gap:1px 22px}
+  .pp-meta div b{flex-basis:86px}
+  .pp-intro{margin:6px 0 2px}
+  .pp-two{grid-template-columns:1fr 1fr;gap:14px}
+  .pp-sig{grid-template-columns:1fr 1fr;margin-top:30px}
+  .pp-sig div{font-size:8.5pt;line-height:1.3}
+  .pp-sheet h1{font-size:14pt;margin:9px 0 3px;break-after:avoid;page-break-after:avoid}
+  .pp-sheet h2{font-size:8.5pt;padding:2px 9px;margin:12px 0 5px;break-after:avoid;page-break-after:avoid}
+  .pp-sheet ul,.pp-sheet ol{margin:2px 0 2px 17px}
+  .pp-sheet li{margin:0 0 1px;break-inside:avoid;page-break-inside:avoid}
+  .pp-sheet th{width:46%}
+  .pp-sheet td,.pp-sheet th{font-size:9pt;padding:2px 7px;line-height:1.3}
   .pp-sheet tr{break-inside:avoid;page-break-inside:avoid}
-  .pp-sheet .rate{font-size:10.5pt}
-  .pp-sheet table,.pp-sig,.pp-two{break-inside:avoid;page-break-inside:avoid}
-  .pp-foot{font-size:8pt;margin-top:10px;padding-top:4px}
+  .pp-sheet .rate{font-size:10pt}
+  .pp-sheet table,.pp-sig,.pp-two,.pp-end{break-inside:avoid;page-break-inside:avoid}
+  .pp-foot{font-size:7.5pt;margin-top:10px;padding-top:4px}
 }
 </style>
 </head>
@@ -4598,6 +4603,7 @@ function propPreviewHtml(c){
   </div>
   <h2>What's included</h2>
   <ul>${PROP_INCLUDED.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+  <div class="pp-end">
   <h2>Next steps</h2>
   <ol>
     <li>Review this proposal and send us any changes.</li>
@@ -4609,7 +4615,8 @@ function propPreviewHtml(c){
     <div>Client signature / date<br><br>${esc(c.client || '')}</div>
     <div>Karim Harakat, COO / date<br><br>Lion Security Services, LLC</div>
   </div>
-  <div class="pp-foot"><span><b>Lion Security Services, LLC</b> · Unarmed security · Licensed &amp; Insured</span><span>(253) 251-4551 · contact@lionofseattle.com</span></div>`;
+  <div class="pp-foot"><span><b>Lion Security Services, LLC</b> · Unarmed security · Licensed &amp; Insured</span><span>(253) 251-4551 · contact@lionofseattle.com</span></div>
+  </div>`;
 }
 
 let propPdfCache = { key:'', bytes:null };
@@ -4868,8 +4875,10 @@ async function buildProposalPdf(c){
     page.drawRectangle({ x, y:y-SEC_GAP-SEC_H, width:3.5, height:SEC_H, color:GOLD });
     spaced(title.toUpperCase(), x+10, y-SEC_GAP-SEC_H+4.6, 8.5, bold, WHITE, 1);
   }
-  function section(title){
-    need(SEC_GAP + SEC_H + SEC_AFTER + 26);
+  const SEC_TOTAL = SEC_GAP + SEC_H + SEC_AFTER;
+  // firstH = height of the section's first item, so a heading never sits alone at a page bottom
+  function section(title, firstH = 26){
+    need(SEC_TOTAL + firstH);
     sectionBar(title, L, CW);
     y -= SEC_GAP + SEC_H + SEC_AFTER;
   }
@@ -4905,18 +4914,20 @@ async function buildProposalPdf(c){
     drawTable(a, L); drawTable(b, L + w + gap);
     y -= Math.max(tableHeight(a), tableHeight(b));
   }
-  function bullets(items, numbered){
-    const size = 9.5, lh = 11.8;
+  const B_SIZE = 9.5, B_LH = 11.8, B_GAP = 1.5;
+  const itemH = (runs, w) => wrapRuns(runs, B_SIZE, w - 16).length * B_LH + B_GAP;
+  const bulletsH = (items, w = CW) => items.reduce((h, runs) => h + itemH(runs, w), 0);
+  function bullets(items, numbered, x = L, w = CW){
     items.forEach((runs, i) => {
-      const lines = wrapRuns(runs, size, CW - 16);
-      need(lines.length*lh + 1.5);
+      const lines = wrapRuns(runs, B_SIZE, w - 16);
+      need(lines.length*B_LH + B_GAP);
       const mark = numbered ? `${i+1}.` : '•';
       lines.forEach((ln, li) => {
-        y -= lh;
-        if(li === 0) page.drawText(mark, { x: L + (numbered ? 2 : 4), y: y+2.8, size, font:reg, color:INK });
-        drawLine(ln, L+14, y+2.8, size, INK);
+        y -= B_LH;
+        if(li === 0) page.drawText(mark, { x: x + (numbered ? 2 : 4), y: y+2.8, size:B_SIZE, font:reg, color:INK });
+        drawLine(ln, x+14, y+2.8, B_SIZE, INK);
       });
-      y -= 1.5;
+      y -= B_GAP;
     });
   }
 
@@ -4952,29 +4963,71 @@ async function buildProposalPdf(c){
   y -= 3;
   para([[c.intro, reg]], L, CW, 9.5, INK, 12.5);
 
-  section('Scope of services');
-  if(c.scope.length) bullets(c.scope.map(([b, t]) => [[b + ':', bold], [' ' + t, reg]]));
+  const scopeItems = c.scope.map(([b, t]) => [[b + ':', bold], [' ' + t, reg]]);
+  section('Scope of services', scopeItems.length ? itemH(scopeItems[0], CW) : 14);
+  if(scopeItems.length) bullets(scopeItems);
   else { y -= 12; page.drawText('To be confirmed', { x:L, y:y+2.8, size:9.5, font:ital, color:TBCC }); }
   tablePair(['Schedule', c.schedule], ['Rate & term', c.rateRows.map(([k, v]) => [k, v, k === 'Rate'])]);
-  section("What's included");
-  bullets(PROP_INCLUDED.map(t => [[t, reg]]));
-  section('Next steps');
-  bullets([
+  // Closing block, measured before drawing. In order of preference:
+  //  A. stacked: What's included, Next steps, signatures (when it all fits on this page)
+  //  B. What's included | Next steps side by side, signatures below
+  //  C. What's included full width, then Next steps | signatures (stacked) side by side
+  //  D. long content: flows on, but Next steps + signatures move together so the signatures
+  //     never land alone on a page and a heading never sits at a page bottom.
+  const incl = PROP_INCLUDED.map(t => [[t, reg]]);
+  const steps = [
     [['Review this proposal and send us any changes.', reg]],
     [['Sign the service agreement.', reg]],
     [['Confirm the start date, keys/access, and your incident contact.', reg]],
     [['We start service on ', reg], [c.start, bold], ['.', reg]],
-  ], true);
-
-  // Signatures
-  need(58); y -= 36;
-  const sw = (CW - 28) / 2;
-  [['Client signature / date', c.client], ['Karim Harakat, COO / date', 'Lion Security Services, LLC']].forEach(([a, b], i) => {
-    const x = L + i*(sw + 28);
-    page.drawLine({ start:{x, y}, end:{x:x+sw, y}, thickness:0.75, color:rgb(0.2,0.2,0.2) });
+  ];
+  const sigs = [['Client signature / date', c.client], ['Karim Harakat, COO / date', 'Lion Security Services, LLC']];
+  const SIG_H = 58, SIG1_H = 50, COL_GAP = 16, halfW = (CW - COL_GAP) / 2;
+  function sigLine([a, b], x, w){
+    page.drawLine({ start:{x, y}, end:{x:x+w, y}, thickness:0.75, color:rgb(0.2,0.2,0.2) });
     page.drawText(a, { x, y:y-10, size:8.5, font:reg, color:GREY });
     if(b) page.drawText(S(b).slice(0, 70), { x, y:y-21, size:8.5, font:reg, color:GREY });
-  });
+  }
+  function sigRow(){   // both signatures side by side, kept together
+    need(SIG_H); y -= 36;
+    const sw = (CW - 28) / 2;
+    sigs.forEach((sg, i) => sigLine(sg, L + i*(sw + 28), sw));
+    y -= 22;
+  }
+  const inclH = SEC_TOTAL + bulletsH(incl), stepsH = SEC_TOTAL + bulletsH(steps);
+  const hA = inclH + stepsH + SIG_H;
+  const hB = SEC_TOTAL + Math.max(bulletsH(incl, halfW), bulletsH(steps, halfW)) + SIG_H;
+  const hCrow = SEC_TOTAL + Math.max(bulletsH(steps, halfW), sigs.length * SIG1_H);
+  const hC = inclH + hCrow;
+  const room = y - BOTTOM;
+  if(hA <= room){
+    section("What's included", itemH(incl[0], CW)); bullets(incl);
+    section('Next steps', itemH(steps[0], CW)); bullets(steps, true);
+    sigRow();
+  } else if(hB <= room){
+    sectionBar("What's included", L, halfW); sectionBar('Next steps', L + halfW + COL_GAP, halfW);
+    y -= SEC_TOTAL;
+    const y0 = y;
+    bullets(incl, false, L, halfW); const y1 = y;
+    y = y0; bullets(steps, true, L + halfW + COL_GAP, halfW);
+    y = Math.min(y, y1);
+    sigRow();
+  } else if(hC <= room){
+    section("What's included", itemH(incl[0], CW)); bullets(incl);
+    const xr = L + halfW + COL_GAP;
+    sectionBar('Next steps', L, halfW); sectionBar('Acceptance', xr, halfW);
+    y -= SEC_TOTAL;
+    const y0 = y;
+    bullets(steps, true, L, halfW); const y1 = y;
+    y = y0;
+    sigs.forEach(sg => { y -= SIG1_H - 22; sigLine(sg, xr, halfW); y -= 22; });
+    y = Math.min(y, y1);
+  } else {
+    section("What's included", itemH(incl[0], CW)); bullets(incl);
+    need(stepsH + SIG_H);   // Next steps + signatures as one unit
+    section('Next steps', itemH(steps[0], CW)); bullets(steps, true);
+    sigRow();
+  }
 
   // Footer on every page
   const fl = [['Lion Security Services, LLC', bold, INK], [' · Unarmed security · Licensed & Insured', reg, GREY]];
