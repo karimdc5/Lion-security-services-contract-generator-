@@ -36,6 +36,10 @@
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --tabbar-h:64px;
+  /* Proposal accent (teal), owner app only; Agreement keeps navy + gold */
+  --teal:#0F766E; --teal2:#14B8A6; --teal-ink:#0B5A54;
+  /* Active-mode tokens, overridden by body[data-mode] (set in showPage) */
+  --mode-ink:var(--navy); --mode-bar:var(--gold);
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
@@ -195,11 +199,38 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 .tabbar button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   font-size:11.5px;font-weight:600;color:#8392A1;cursor:pointer;position:relative}
 .tabbar button svg{width:25px;height:25px}
-.tabbar button[aria-selected="true"]{color:var(--navy)}
+.tabbar button[aria-selected="true"]{color:var(--mode-ink)}
 .tabbar button[aria-selected="true"]:before{content:"";position:absolute;top:0;left:50%;width:26px;height:3px;margin-left:-13px;
-  border-radius:0 0 3px 3px;background:var(--gold)}
+  border-radius:0 0 3px 3px;background:var(--mode-bar)}
 .tabbar .badge{position:absolute;top:8px;left:calc(50% + 7px);min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;
   font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+
+/* ============================================================
+   MODE: Agreement (navy/gold) vs Proposal (teal), owner app tabs only
+   ============================================================ */
+body[data-mode="proposal"]{--mode-ink:var(--teal); --mode-bar:var(--teal2)}
+.modebanner{display:flex;align-items:center;gap:12px;margin:14px 0 0;padding:12px 14px;border-radius:var(--r-l);
+  background:var(--navy);color:#fff;border-left:6px solid var(--gold);box-shadow:0 2px 10px rgba(14,31,46,.16)}
+.modebanner .mb-ic{width:40px;height:40px;flex:0 0 40px;border-radius:11px;display:grid;place-items:center;
+  background:rgba(201,153,43,.18);color:var(--goldlt)}
+.modebanner .mb-ic svg{width:24px;height:24px}
+.modebanner .mb-tx{line-height:1.25;min-width:0}
+.modebanner b{display:block;font-size:17px;font-weight:800;letter-spacing:.08em}
+.modebanner .mb-tx span{display:block;font-size:14px;color:#D5DEE7;margin-top:2px}
+.modebanner.proposal{background:var(--teal);border-left-color:var(--teal2)}
+.modebanner.proposal .mb-ic{background:rgba(255,255,255,.16);color:#fff}
+.modebanner.proposal .mb-tx span{color:#D7F3EF}
+body.public .modebanner{display:none!important}
+#pg-proposal .gtitle{color:var(--teal-ink);font-weight:700;justify-content:flex-start}
+#pg-proposal .gtitle:before{content:"";width:4px;height:13px;border-radius:2px;background:var(--teal2);margin-right:7px;align-self:center}
+#pg-proposal .gtitle > small,#pg-proposal .gtitle > .textbtn{margin-left:auto}
+#pg-proposal .gtitle .textbtn{color:var(--teal)}
+#pg-proposal input:where(:not([type=checkbox]):not([type=radio])):focus,#pg-proposal select:focus,#pg-proposal textarea:focus{
+  border-color:var(--teal2);box-shadow:0 0 0 3px rgba(20,184,166,.28)}
+#btnPropSave,#propActions .btn-primary{background:var(--teal);color:#fff}
+#agrActions{border-top:3px solid var(--gold)}
+#propActions{border-top:3px solid var(--teal2)}
+#btnLink{box-shadow:inset 0 -3px 0 var(--gold)}
 
 /* list rows */
 .list .item{display:flex;align-items:center;gap:12px;padding:13px 14px 13px 16px;border-top:1px solid var(--hair);cursor:pointer;
@@ -224,6 +255,8 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 .chip.ok{background:var(--ok-bg);color:var(--ok)}
 .chip.warn{background:var(--warn-bg);color:var(--warn)}
 .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.cosave{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:14px}
+.cosave .chip{margin-left:6px}
 .chip:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85}
 .chip.plain:before{display:none}
 
@@ -438,6 +471,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 .sheet .printline{border-bottom:1px solid #999;height:22px;margin-bottom:3px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;color:var(--ink);display:flex;align-items:flex-end;padding-bottom:2px}
 .sheet .siglab{font-size:9px;color:var(--muted);margin-bottom:11px}
 .sheet .signedtag{font-size:8.5px;color:#3a7a3a;font-weight:700;letter-spacing:.03em}
+.sheet .sigaudit{font-size:8.5px;line-height:1.45;color:#444;border-top:1px solid #ddd;margin-top:6px;padding-top:6px;overflow-wrap:anywhere}
 .sheet .foot{background:var(--navy);color:var(--goldlt);text-align:center;padding:11px;margin-top:16px;font:700 9px/1.7 Arial;letter-spacing:.13em}
 .sheet .foot span{display:block;color:#9FB3C6;font-weight:400;letter-spacing:.02em;font-size:8.5px}
 @media (max-width:560px){ .sheet{font-size:11px} .mast{padding:14px} .mast .name{font-size:20px} .sheet .inner{padding:0 16px} .sheet .cols,.sheet .sigs{flex-direction:column;gap:6px} }
@@ -447,7 +481,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 @media print{
-  .topbar,.tabbar,.actionbar,.toast,.scrim,.viewer,.no-print,.pagehead,#gate,.seg,.stepnav,.progress,.signcard,.gtitle,.group,.notice{display:none!important}
+  .topbar,.tabbar,.actionbar,.toast,.scrim,.viewer,.no-print,.modebanner,.pagehead,#gate,.seg,.stepnav,.progress,.signcard,.gtitle,.group,.notice{display:none!important}
   html,body{background:#fff;height:auto}
   main{padding:0;max-width:none;margin:0}
   .page{display:none!important}
@@ -485,10 +519,83 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   .sheet .printline{height:13px;font-size:8.5px;overflow:hidden;padding-bottom:1px}
   .sheet .siglab{margin-bottom:5px;font-size:7px}
   .sheet .sigs .who{padding-bottom:3px;margin-bottom:6px;font-size:8.5px}
+  .sheet .sigaudit{font-size:6.5px;line-height:1.3;margin-top:2px;padding-top:2px;color:#333}
   .sheet .foot{padding:3px;margin-top:2px;font-size:6px}
   .sheet .foot span{display:none}
   .mast,.sheet .stat,.sheet .callout{page-break-inside:avoid;break-inside:avoid}
   @page{size:letter;margin:0.12in}
+}
+/* ============================================================
+   PROPOSAL — black & gold sales proposal (own pp- classes so the
+   agreement sheet styles above are untouched)
+   ============================================================ */
+#propForm .choice input[type=checkbox]{border-radius:7px}
+#propTypeSeg label{font-size:13px;line-height:1.25}
+.prop-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.prop-row-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px}
+.prop-row.open .t:after{content:" · open";font-weight:500;color:var(--t3);font-size:13px}
+/* Records: three segments; counts drop under the label so it fits a 390px phone */
+#recSeg button{padding:8px 4px;font-size:14px;line-height:1.2}
+#recSeg button span{display:block;font-size:12px;font-weight:500;color:var(--t3);min-height:14px}
+#recSeg button[data-rec="prop"][aria-selected="true"]{color:var(--teal);box-shadow:inset 0 -3px 0 var(--teal2),0 1px 3px rgba(14,31,46,.14)}
+#recSeg button[data-rec="prop"][aria-selected="true"] span{color:var(--teal)}
+.rec-prop-row .lead:not(.ok){background:#E6F4F2;color:var(--teal)}
+.pp-sheet{background:#fff;color:#151515;margin:0 auto;max-width:816px;padding:22px 28px 16px;box-shadow:0 4px 22px rgba(0,0,0,.12);
+  font:12.5px/1.4 'Inter','Helvetica Neue',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pp-hdr{background:#0b0b0b;color:#fff;display:flex;align-items:center;gap:14px;padding:9px 16px;border-bottom:4px solid #D4A017;border-radius:4px}
+.pp-hdr img{height:52px;width:auto;flex:0 0 auto}
+.pp-hdr .co{font-weight:700;letter-spacing:2px;color:#E8B923;font-size:18px;text-transform:uppercase;line-height:1.15}
+.pp-hdr .sub{font-size:11px;color:#ddd;margin-top:2px}
+.pp-hdr .right{margin-left:auto;text-align:right;font-size:10.5px;color:#ccc;line-height:1.4;white-space:nowrap}
+.pp-hdr .right b{color:#E8B923}
+.pp-sheet h1{font-size:19px;margin:12px 0 4px;letter-spacing:.5px;line-height:1.2}
+.pp-meta{display:grid;grid-template-columns:1fr 1fr;gap:2px 22px;margin:6px 0 2px;font-size:12px}
+.pp-meta div{display:flex;gap:8px}.pp-meta div b{flex:0 0 92px;color:#555;font-weight:600}
+.pp-intro{margin:7px 0;white-space:pre-line}
+.pp-sheet h2{font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:#fff;background:#1a1a1a;border-left:5px solid #D4A017;padding:3px 9px;margin:10px 0 5px;line-height:1.3}
+.pp-sheet ul,.pp-sheet ol{margin:3px 0 3px 18px;padding:0}
+.pp-sheet li{margin:1px 0}
+.pp-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pp-two>div{min-width:0}
+.pp-sheet table{width:100%;border-collapse:collapse;margin:3px 0}
+.pp-sheet td,.pp-sheet th{border:1px solid #bbb;padding:3px 7px;text-align:left;vertical-align:top;font-size:12px}
+.pp-sheet th{background:#f2e6c2;width:42%;font-weight:600}
+.pp-sheet .rate{font-size:13.5px;font-weight:700}
+.pp-sheet .tbc{color:#8a6418;font-style:italic}
+.pp-sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:30px}
+.pp-sig div{border-top:1px solid #333;padding-top:3px;font-size:11px;color:#444}
+.pp-foot{margin-top:12px;border-top:2px solid #D4A017;padding-top:5px;font-size:10px;color:#555;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pp-foot b{color:#111}
+@media (max-width:560px){
+  .pp-sheet{padding:16px 14px;font-size:12px}
+  .pp-hdr{padding:10px 12px;gap:10px;flex-wrap:wrap}
+  .pp-hdr img{height:46px}
+  .pp-hdr .co{font-size:15px;letter-spacing:1.2px}
+  .pp-hdr .right{margin-left:0;text-align:left;width:100%;font-size:10.5px}
+  .pp-meta{grid-template-columns:1fr}
+  .pp-two{grid-template-columns:1fr;gap:0}
+  .pp-sig{grid-template-columns:1fr;gap:18px}
+}
+/* Print: sized to fit a typical proposal on one Letter page */
+@media print{
+  .pp-sheet{box-shadow:none;max-width:none;width:100%;padding:.2in .28in 0;font-size:9.5pt;line-height:1.3;display:block!important}
+  .pp-hdr{display:flex!important;flex-wrap:nowrap;padding:6px 12px}
+  .pp-hdr img{height:42px}
+  .pp-hdr .right{margin-left:auto;text-align:right;width:auto;font-size:8pt}
+  .pp-hdr .co{font-size:14pt}
+  .pp-hdr .sub{font-size:8.5pt}
+  .pp-meta{grid-template-columns:1fr 1fr;font-size:9pt;margin:3px 0 1px}
+  .pp-intro{margin:5px 0}
+  .pp-two{grid-template-columns:1fr 1fr;gap:12px}
+  .pp-sig{grid-template-columns:1fr 1fr;margin-top:28px}
+  .pp-sig div{font-size:8.5pt}
+  .pp-sheet h1{font-size:14pt;margin:8px 0 3px}
+  .pp-sheet h2{font-size:8.5pt;padding:2px 8px;margin:7px 0 4px;break-after:avoid;page-break-after:avoid}
+  .pp-sheet li{margin:0}
+  .pp-sheet td,.pp-sheet th{font-size:9pt;padding:2px 6px}
+  .pp-sheet .rate{font-size:10.5pt}
+  .pp-sheet table,.pp-sig,.pp-two{break-inside:avoid;page-break-inside:avoid}
+  .pp-foot{font-size:8pt;margin-top:10px;padding-top:4px}
 }
 </style>
 </head>
@@ -582,6 +689,10 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
 
 <!-- ======================= AGREEMENT ======================= -->
 <section class="page" id="pg-agreement">
+  <div class="modebanner agreement no-print" id="agrBanner" role="note">
+    <span class="mb-ic"><svg><use href="#i-doc"/></svg></span>
+    <div class="mb-tx"><b>AGREEMENT</b><span>— the binding contract the client signs</span></div>
+  </div>
   <div class="pagehead no-print" id="agrHead">
     <div><h1>New agreement</h1><p>Fill it in, check the preview, send it to the client to sign.</p></div>
     <button class="textbtn danger" id="btnNew" type="button">Clear</button>
@@ -604,8 +715,16 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
         <div class="field"><label for="clientTitle">Title</label><input id="clientTitle" placeholder="e.g. Facilities manager"></div>
         <div class="field"><label for="clientPhone">Phone</label><input id="clientPhone" placeholder="(206) 555-0100" inputmode="tel"><div class="err" id="phoneHint" style="display:none"></div></div>
       </div>
+      <div class="field"><label for="clientEmail">Client email <span class="opt">(optional — gets a signed copy)</span></label><input id="clientEmail" type="email" placeholder="name@company.com" autocomplete="email" inputmode="email"></div>
       <div class="field"><label for="addr">Service address</label><textarea id="addr" placeholder="Street, city, ZIP" rows="2" style="min-height:64px"></textarea></div>
       <div class="field"><label for="siteContact">On-site contact <span class="opt">(if different)</span></label><input id="siteContact" placeholder="Name and phone"></div>
+      <div class="field">
+        <label>Property type</label>
+        <div class="seg" id="agrPropType">
+          <label><input type="radio" name="agrPropType" value="retail">Retail store (after hours)</label>
+          <label><input type="radio" name="agrPropType" value="apartment">Private apartment complex</label>
+        </div>
+      </div>
     </div>
 
     <div class="gtitle">Coverage</div>
@@ -617,17 +736,16 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
       <div class="field">
         <label>Engagement</label>
         <div class="seg" id="segType">
-          <label><input type="radio" name="etype" value="single" checked>One date</label>
           <label><input type="radio" name="etype" value="short">Days / weeks</label>
-          <label><input type="radio" name="etype" value="ongoing">Ongoing</label>
+          <label><input type="radio" name="etype" value="ongoing" checked>Ongoing</label>
         </div>
-        <div class="hint" id="typeHint">One date, one invoice. Ends when the job is done and paid.</div>
+        <div class="hint" id="typeHint">Recurring coverage. Term length comes from your start/end dates, and the shift total is based on the days you check below.</div>
       </div>
       <div class="cols2">
         <div class="field"><label for="start">Start date</label><input id="start" type="date"></div>
         <div class="field" id="endWrap"><label for="end">End date</label><input id="end" type="date"></div>
       </div>
-      <div class="field" id="daysWrap" style="display:none">
+      <div class="field" id="daysWrap">
         <label>Days worked</label>
         <div class="dow" id="dowPicker">
           <label><input type="checkbox" id="dow0">Sun</label>
@@ -708,6 +826,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
         <div>
           <h3 class="sub">Requested coverage</h3>
           <div class="f"><b>Service type:</b> <span class="val">Unarmed security</span></div>
+          <div class="f" id="d_ptypeRow"><b>Property type:</b> <span class="val" id="d_ptype"></span></div>
           <div class="f"><b>Guards:</b> <span class="val" id="d_guards"></span> &nbsp; <b>Hours/shift:</b> <span class="val" id="d_hours"></span></div>
           <div class="f"><b>Coverage period:</b> <span class="val" id="d_period"></span></div>
           <div class="f"><b>Schedule:</b> <span class="val" id="d_pattern"></span></div>
@@ -753,9 +872,10 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
       <h2 class="sec">Licensing, Insurance &amp; Liability</h2>
       <div class="callout">
         <p><b>Company licensing.</b> Company holds a valid Washington State private security guard company license (Lic. No. <span id="d_lic">____________</span>). All personnel assigned under this Agreement hold current, valid Washington unarmed private security guard licenses.</p>
-        <p><b>Insurance.</b> Company maintains commercial general liability insurance — Carrier: <span id="d_carrier">____________</span> · Policy No.: <span id="d_policy">____________</span> · Coverage: <span id="d_cov">____________</span> per occurrence. A certificate of insurance is available on request and Client may be named as additional insured.</p>
+        <p><b>Insurance.</b> Company maintains commercial general liability insurance — Carrier: <span id="d_carrier">____________</span> · Policy No.: <span id="d_policy">____________</span> · Coverage: <span id="d_cov">____________</span> per occurrence. A certificate of insurance is available on request. Upon written request and subject to insurer approval, Client may be added as an additional insured.</p>
         <p><b>Indemnification.</b> Company shall indemnify and hold Client harmless from claims arising from the negligent acts or omissions of Company personnel in the performance of duties under this Agreement. Client shall indemnify and hold Company harmless from claims arising from undisclosed site hazards, Client's own negligence, or conditions outside Company's reasonable control. Company's total liability to Client under this Agreement, whether arising in contract, tort, or otherwise, shall not exceed the coverage limit of Company's commercial general liability insurance policy stated above.</p>
-        <p><b>Scope of authority.</b> Company provides observation, deterrence, access control, and reporting. Personnel are unarmed and do not act as law enforcement. Company is an independent contractor, not an employee or agent of Client.</p>
+        <p><b>Scope of authority.</b> Officers are unarmed and serve to observe, deter and report. They do not make arrests except a citizen's arrest where Washington law allows it, use no force beyond what Washington law permits, do not pursue or chase anyone, and do not handle cash, valuables or weapons. In an emergency they call 911 and then notify Client. Company is an independent contractor, not an employee or agent of Client.</p>
+        <p><b>Patrol records.</b> Officers use a guard-tour (checkpoint) app. Lion Security Services may place small QR checkpoint tags on the property and take photos for patrol and incident reports. These records are shared only with Client and kept confidential.</p>
       </div>
 
       <div class="cols colsgap">
@@ -794,6 +914,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
           <div class="printline" id="co_dateline"></div><div class="siglab">Date</div>
         </div>
       </div>
+      <div class="sigaudit" id="d_audit" hidden></div>
     </div>
 
     <div class="foot">LOCAL SEATTLE TEAM &nbsp;·&nbsp; FULLY LICENSED &amp; INSURED &nbsp;·&nbsp; VETTED, UNIFORMED OFFICERS &nbsp;·&nbsp; NO HIDDEN FEES
@@ -804,15 +925,114 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   <div id="signPanel" class="signcard" hidden></div>
 </section>
 
+<!-- ======================= PROPOSAL ======================= -->
+<section class="page" id="pg-proposal">
+  <div class="modebanner proposal no-print" id="propBanner" role="note">
+    <span class="mb-ic"><svg><use href="#i-pen"/></svg></span>
+    <div class="mb-tx"><b>PROPOSAL</b><span>— the pitch / quote (not binding)</span></div>
+  </div>
+  <div class="pagehead no-print">
+    <div><h1 id="propTitle">New proposal</h1><p>Fill it in after the walkthrough, check the preview, share the PDF.</p></div>
+    <button class="textbtn danger" id="btnPropClear" type="button">Clear</button>
+  </div>
+  <div class="seg big no-print" id="propSeg" role="tablist">
+    <button type="button" role="tab" aria-selected="true" data-view="form">Details</button>
+    <button type="button" role="tab" aria-selected="false" data-view="doc">Preview</button>
+  </div>
+
+  <div id="propForm">
+    <div class="gtitle">Client</div>
+    <div class="group">
+      <div class="field"><label for="propClient">Client business name</label><input id="propClient" placeholder="e.g. Valley Cycle &amp; Ski" autocomplete="organization"></div>
+      <div class="field"><label for="propContact">Contact name</label><input id="propContact" placeholder="First and last name"></div>
+      <div class="field"><label for="propSite">Site address</label><textarea id="propSite" placeholder="Street, city, ZIP" rows="2" style="min-height:64px"></textarea></div>
+      <div class="field">
+        <label>Property type</label>
+        <div class="seg" id="propTypeSeg">
+          <label><input type="radio" name="propType" value="retail" checked>Retail store (after hours)</label>
+          <label><input type="radio" name="propType" value="apartment">Private apartment complex</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="gtitle">What we heard</div>
+    <div class="group">
+      <div class="field"><textarea id="propHeard" rows="4" placeholder="The problem in their words: break-ins, alarm calls at 2 a.m., people in the lot… This becomes the opening paragraph."></textarea></div>
+    </div>
+
+    <div class="gtitle">Services</div>
+    <div class="group choices" id="propServices">
+      <label class="choice"><input type="checkbox" id="propSvcPatrol" value="patrol"><span>After-hours patrol checks</span></label>
+      <label class="choice"><input type="checkbox" id="propSvcLockup" value="lockup"><span>Lock-up checks at close</span></label>
+      <label class="choice"><input type="checkbox" id="propSvcAlarm" value="alarm"><span>Alarm response checks</span></label>
+      <label class="choice"><input type="checkbox" id="propSvcApt" value="apt"><span>Apartment lot / lobby patrols</span></label>
+      <label class="choice"><input type="checkbox" id="propSvcPost" value="post"><span>Standing overnight post</span></label>
+    </div>
+
+    <div class="gtitle">Schedule</div>
+    <div class="group">
+      <div class="cols2">
+        <div class="field"><label for="propDays">Days per week</label>
+          <select id="propDays"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
+        <div class="field"><label for="propStart">Start date</label><input id="propStart" type="date"></div>
+      </div>
+      <div class="field"><label for="propHours">Hours</label><input id="propHours" placeholder="e.g. 9:00 p.m. – 6:00 a.m."></div>
+      <div class="field"><label for="propFreq">Patrol frequency</label><input id="propFreq" placeholder="e.g. 3 checks per night at varied times"></div>
+    </div>
+
+    <div class="gtitle">Rate &amp; term</div>
+    <div class="group">
+      <div class="cols2">
+        <div class="field"><label for="propRate">Hourly rate</label><input id="propRate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ per hour"></div>
+        <div class="field"><label for="propMonthlyHours">Est. monthly hours</label><input id="propMonthlyHours" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Hours"></div>
+      </div>
+      <div class="tiles"><div class="tile hero" style="grid-column:1 / -1"><div class="k">Estimated monthly total</div><input id="propMonthlyTotal" type="text" readonly tabindex="-1" placeholder="Enter rate and hours"></div></div>
+      <div class="field" style="border-top:1px solid var(--hair)"><label for="propTerm">Term</label><input id="propTerm"></div>
+      <div class="field"><label for="propBilling">Billing</label><input id="propBilling"></div>
+    </div>
+
+    <div class="gtitle">Dates</div>
+    <div class="group">
+      <div class="cols2">
+        <div class="field"><label for="propDate">Proposal date</label><input id="propDate" type="date"></div>
+        <div class="field"><label for="propValid">Valid until</label><input id="propValid" type="date"></div>
+      </div>
+    </div>
+    <div class="gnote">Blank fields show as “To be confirmed” on the proposal.</div>
+
+    <div class="gtitle">Status</div>
+    <div class="group">
+      <div class="field"><label for="propStatus">Proposal status</label>
+        <select id="propStatus"><option value="draft">Draft</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="converted">Converted</option></select></div>
+    </div>
+    <div class="prop-btns">
+      <button class="btn btn-primary" id="btnPropSave" type="button"><svg><use href="#i-check"/></svg>Save</button>
+      <button class="btn btn-secondary" id="btnPropNew" type="button"><svg><use href="#i-plus"/></svg>New proposal</button>
+    </div>
+    <div class="gnote" id="propSaveNote">Kept on this phone as you type. Tap Save to add it to Saved proposals.</div>
+
+    <button class="btn btn-secondary btn-block" id="btnPropToAgr" type="button" style="margin-top:18px"><svg><use href="#i-doc"/></svg>Turn into agreement</button>
+    <div class="gnote">Copies client, contact, address, start date and rate into a new ongoing agreement, and marks the proposal Converted.</div>
+
+    <div class="gtitle">Saved proposals <button class="textbtn" id="btnPropListRefresh" type="button">Refresh</button></div>
+    <div class="group list" id="propSavedList"></div>
+  </div>
+
+  <div id="propDoc" class="docwrap" hidden>
+    <div class="pp-sheet" id="propSheet"></div>
+  </div>
+</section>
+
 <!-- ======================= RECORDS ======================= -->
 <section class="page" id="pg-records">
   <div class="pagehead">
-    <div><h1>Records</h1><p>Signed agreements and cash receipts.</p></div>
+    <div><h1>Records</h1><p>Signed agreements, cash receipts and saved proposals.</p></div>
     <button class="textbtn" id="btnRecRefresh" type="button">Refresh</button>
   </div>
   <div class="seg big" id="recSeg" role="tablist">
     <button type="button" role="tab" aria-selected="true" data-rec="agr">Agreements <span id="cntAgr"></span></button>
     <button type="button" role="tab" aria-selected="false" data-rec="rcpt">Cash receipts <span id="cntRcpt"></span></button>
+    <button type="button" role="tab" aria-selected="false" data-rec="prop">Proposals <span id="cntProp"></span></button>
   </div>
   <div class="search"><svg><use href="#i-search"/></svg><input id="recSearch" type="search" placeholder="Search names, clients, numbers" autocomplete="off"></div>
   <div id="recAgrWrap">
@@ -823,6 +1043,10 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
     <button class="btn btn-primary btn-block" id="btnNewReceipt" style="margin-top:14px"><svg><use href="#i-plus"/></svg>New cash receipt</button>
     <div class="gtitle"><span>Cash receipts</span></div>
     <div class="group list" id="recRcpt"></div>
+  </div>
+  <div id="recPropWrap" hidden>
+    <div class="gtitle"><span>Saved proposals</span></div>
+    <div class="group list" id="recProp"></div>
   </div>
 </section>
 
@@ -863,7 +1087,7 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
       <div class="field"><label for="coCoverage">Coverage per occurrence</label><input id="coCoverage" placeholder="e.g. 1,000,000" inputmode="numeric"></div>
     </div>
   </div>
-  <div class="gnote">Agreements can't be sent until the license number is filled in, because the document says you hold one. Washington requires at least $25,000 bodily injury and $25,000 property damage coverage for the company license.</div>
+  <div class="gnote">Agreements can't be sent until the license number, insurance carrier, policy number and coverage are all filled in, because the document says you hold them. Washington requires at least $25,000 bodily injury and $25,000 property damage coverage for the company license.</div>
 
   <div class="gtitle">Who signs for the company</div>
   <div class="group">
@@ -872,6 +1096,10 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
       <div class="field"><label for="coTitle">Title</label><input id="coTitle" placeholder="e.g. COO"></div>
     </div>
     <div class="field"><label for="coRate">Default rate per guard, per hour</label><input id="coRate" type="number" step="0.01" inputmode="decimal" placeholder="$"></div>
+  </div>
+  <div class="cosave">
+    <button type="button" class="btn btn-primary btn-block" id="btnCoSave">Save settings</button>
+    <span class="chip warn" id="coDirty" hidden>Unsaved changes</span>
   </div>
   <div class="gnote" id="coSyncNote">Saved automatically.</div>
 
@@ -903,9 +1131,17 @@ input.bad{border-color:#E7A29C;background:#FFF8F7}
   </div>
 </div>
 
+<div class="actionbar" id="propActions" hidden>
+  <div class="inner">
+    <button class="btn btn-secondary narrow" id="btnPropPrint"><svg><use href="#i-dl"/></svg>Print</button>
+    <button class="btn btn-primary" id="btnPropShare"><svg><use href="#i-share"/></svg>Share PDF</button>
+  </div>
+</div>
+
 <nav class="tabbar" id="tabbar" hidden>
   <div class="inner" role="tablist">
     <button type="button" role="tab" data-page="pg-agreement" aria-selected="true"><svg><use href="#i-doc"/></svg>Agreement</button>
+    <button type="button" role="tab" data-page="pg-proposal" aria-selected="false" id="tabProposal"><svg><use href="#i-pen"/></svg>Proposal</button>
     <button type="button" role="tab" data-page="pg-records" aria-selected="false"><svg><use href="#i-records"/></svg>Records</button>
     <button type="button" role="tab" data-page="pg-team" aria-selected="false"><svg><use href="#i-team"/></svg>Team<span class="badge" id="teamBadge" hidden></span></button>
     <button type="button" role="tab" data-page="pg-settings" aria-selected="false"><svg><use href="#i-gear"/></svg>Settings</button>
@@ -1463,24 +1699,34 @@ async function emailContractorConfirmation(d, linkId){
   }
 }
 
-async function recordSignedAgreement(raw, link){
+// The client signs through sign_agreement (see supabase/04_hardening.sql): the database reads the
+// terms from the stored link, writes signed_agreements itself and records IP / device / SHA-256.
+// The browser only sends who is signing — never the agreement data.
+async function signAgreementRpc(params){
+  const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/sign_agreement', {
+    method:'POST',
+    headers:{ ...SB_HEADERS, 'Content-Type':'application/json' },
+    body: JSON.stringify(params)
+  });
+  if(!res.ok){
+    let msg = '';
+    try{ const j = await res.json(); msg = (j && (j.message || j.hint)) || ''; }catch(e){}
+    throw new Error(msg || ('HTTP ' + res.status));
+  }
+  return res.json();
+}
+async function emailSignedAgreementCopy(d, viewLink){
+  if(!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) return 'skipped';
+  if(!d.clientEmail) return 'skipped';
+  if(!window.emailjs) return 'failed: email library did not load';
   try{
-    const res = await fetch(SUPABASE_URL + '/rest/v1/signed_agreements', {
-      method:'POST',
-      headers:{ ...SB_HEADERS, 'Content-Type':'application/json', 'Prefer':'return=minimal' },
-      body: JSON.stringify({
-        agreement_no: raw.agrNo || null,
-        org: raw.org || null,
-        client_name: raw.clientName || null,
-        signer_name: raw.sigName || null,
-        amount: raw.total ? String(raw.total) : null,
-        signed_at: raw.sigAt || null,
-        link: link
-      })
-    });
-    if(!res.ok){ console.error('Supabase insert failed:', res.status, await res.text().catch(()=>'')); return false; }
-    return true;
-  }catch(e){ console.error('Supabase insert failed:', e); return false; }
+    await withRetry(()=> emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_name: d.sigName || d.clientName || '', to_email: d.clientEmail, link: viewLink }));
+    return 'sent';
+  }catch(e){
+    console.error('signed agreement copy email failed (non-blocking):', e);
+    return 'failed: ' + ((e && (e.text || e.message)) || 'unknown');
+  }
 }
 async function fetchSignedAgreements(){
   const res = await fetch(SUPABASE_URL + '/rest/v1/signed_agreements?select=*&order=signed_at.desc.nullslast', { headers: await authedHeaders() });
@@ -1560,16 +1806,31 @@ const initials = s => (s||'').replace(/[^A-Za-z ]/g,'').trim().split(/\s+/)
   .map(w=>w[0].toUpperCase()).join('').slice(0,4) || 'XXX';
 const fmtDate = d => { if(!d) return ''; const [y,m,dd]=d.split('-'); return `${+m}/${+dd}/${y.slice(2)}`; };
 const fmtStamp = iso => { if(!iso) return ''; const d=new Date(iso); return d.toLocaleDateString('en-US')+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); };
+// Signing times are shown in Pacific time with a PT label, whatever zone the viewer is in.
+const fmtPT = iso => { if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return '';
+  return d.toLocaleString('en-US',{ timeZone:'America/Los_Angeles', month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' }) + ' PT'; };
+function shortUa(ua){
+  if(!ua) return 'not recorded';
+  const os = /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'macOS'
+    : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : '';
+  const br = /Edg\//.test(ua) ? 'Edge' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /CriOS|Chrome\//.test(ua) ? 'Chrome'
+    : /FxiOS|Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
+  return [br, os].filter(Boolean).join(' on ') || ua.slice(0, 40);
+}
+// Old links and drafts used a "One date" engagement; show them as a days/weeks job on that one day.
+function normalizeAgr(raw){
+  if(raw && raw.etype === 'single'){
+    raw.etype = 'short';
+    if(!raw.end) raw.end = raw.start;
+    raw.daysSet = [true,true,true,true,true,true,true];
+  }
+  return raw;
+}
 const put = (id,v,ph='') => { const el=$(id); if(!el) return; el.textContent = v || ph; el.classList.toggle('empty', !v); };
 function daysBetween(a,b){ if(!a||!b) return 0; return Math.round((new Date(b)-new Date(a))/86400000)+1; }
 
 function termLinesPure(t,start,end,termLen,termUnit,autoRenew,daysSet){
   const s=fmtDate(start), e=fmtDate(end);
-  if(t==='single') return [
-    `This Agreement covers a single engagement on ${s||'____________'} for the coverage described above.`,
-    `It terminates automatically on completion of services and payment in full. No renewal or notice period applies.`,
-    `If Client requests additional dates, a new agreement will be issued.`
-  ];
   if(t==='short'){
     const n = matchingDaysCount(start,end,daysSet);
     return [
@@ -1590,10 +1851,12 @@ function termLinesPure(t,start,end,termLen,termUnit,autoRenew,daysSet){
 }
 
 /* ---------- data collection (edit mode) ---------- */
+const AGR_PROP_TYPE_LABEL = { retail:'After-hours retail store', apartment:'Private apartment complex' };
 function collectData(){
   return {
     org:$('org').value, clientName:$('clientName').value, clientTitle:$('clientTitle').value,
-    clientPhone:$('clientPhone').value, addr:$('addr').value, siteContact:$('siteContact').value,
+    clientPhone:$('clientPhone').value, clientEmail:$('clientEmail').value.trim(), addr:$('addr').value, siteContact:$('siteContact').value,
+    propType: document.querySelector('input[name=agrPropType]:checked')?.value || '',
     guards:$('guards').value, hours:$('hours').value,
     etype: document.querySelector('input[name=etype]:checked').value,
     start:$('start').value, end:$('end').value,
@@ -1660,10 +1923,8 @@ function monthsCovered(startStr, endStr){
   return m;
 }
 
-// Standard rate tier: events and days/weeks jobs $45; ongoing contracts by term length (from start/end dates).
+// Standard rate tier by contract length (from start/end dates) — same for days/weeks and ongoing jobs.
 function autoRateInfo(raw){
-  if(raw.etype==='single') return { rate:45, label:'one-time event' };
-  if(raw.etype==='short') return { rate:45, label:'short-term job, event rate' };
   const months = monthsCovered(raw.start, raw.end);
   if(months>=24) return { rate:45, label:'24+ month contract' };
   if(months>=12) return { rate:47, label:'12+ month contract' };
@@ -1736,16 +1997,18 @@ function paint(d){
   put('d_phone',d.clientPhone,'____________');
   put('d_addr',d.addr,'____________');
   put('d_site',d.siteContact,'____________');
+  put('d_ptype', AGR_PROP_TYPE_LABEL[d.propType], '____________');
+  // links sent before property type existed simply leave the line off
+  $('d_ptypeRow').hidden = d.propType === undefined;
   put('d_guards',d.guards,'__');
   put('d_hours',d.hours,'__');
   const s=fmtDate(d.start), e=fmtDate(d.end);
-  put('d_period', d.etype==='single' ? (s||'____________')
-      : d.etype==='short' ? ((s&&e)?`${s} – ${e}`:'____________')
-      : (s?`${s} · ${d.termLen||'__'} ${d.termUnit||'months'}`:'____________'));
+  put('d_period', d.etype==='ongoing'
+      ? (s?`${s} · ${d.termLen||'__'} ${d.termUnit||'months'}`:'____________')
+      : ((s&&e)?`${s} – ${e}`:'____________'));
   put('d_pattern',
     d.etype==='ongoing' ? (d.pattern || `${dowLabel(d.daysSet)}, ${d.hours||'__'} hr shift`)
-    : d.etype==='short' ? `${dowLabel(d.daysSet)}, ${d.hours||'__'} hr shift`
-    : `${d.hours||'__'} hr shift`);
+    : `${dowLabel(d.daysSet)}, ${d.hours||'__'} hr shift`);
   put('d_posts',d.posts,'____________');
   put('d_orders',d.orders,'____________');
   put('d_haz',d.hazards,'None disclosed');
@@ -1818,13 +2081,19 @@ function paint(d){
   if(d.sigName){
     $('c_sigline').textContent = d.sigName;
     $('c_siglab').innerHTML = 'Signature <span class="signedtag">✓ ELECTRONICALLY SIGNED</span>';
-    $('c_nameline').textContent = d.sigName + (d.clientTitle? ', '+d.clientTitle:'');
+    // links signed through sign_agreement carry sigHash; older ones only had the contact's title
+    const sigTitle = d.sigHash ? (d.sigTitle||'') : (d.clientTitle||'');
+    $('c_nameline').textContent = d.sigName + (sigTitle ? ', '+sigTitle : '');
     $('c_dateline').textContent = fmtStamp(d.sigAt);
+    $('d_audit').textContent = `Signed electronically by ${d.sigName}${sigTitle ? ' ('+sigTitle+')' : ''} on ${fmtPT(d.sigAt) || 'date not recorded'}`
+      + ` · IP ${d.sigIp || 'not recorded'} · Device ${shortUa(d.sigUa)} · Document SHA-256 ${d.sigHash || 'not recorded'}`;
+    $('d_audit').hidden = false;
   }else{
     $('c_sigline').textContent = '';
     $('c_siglab').textContent = 'Signature';
     $('c_nameline').textContent = '';
     $('c_dateline').textContent = '';
+    $('d_audit').textContent = ''; $('d_audit').hidden = true;
   }
 }
 
@@ -1907,16 +2176,14 @@ let rateManual = false;     // true once the user types their own rate; clearing
 function render(){
   const t = document.querySelector('input[name=etype]:checked').value;
   $('ongoingWrap').style.display = t==='ongoing' ? 'block':'none';
-  $('daysWrap').style.display    = t==='single'  ? 'none':'block';
   $('shortBillingWrap').style.display = t==='short' ? 'block':'none';
-  $('endWrap').style.display     = t==='single'  ? 'none':'block';
   const startNow = $('start').value;
   // Rate follows the standard tier unless the user typed their own (left alone while they're editing it)
   const tier = autoRateInfo({ etype:t, start:startNow, end:$('end').value });
   if(!rateManual && document.activeElement !== $('rate')) $('rate').value = tier.rate;
   $('rateHint').textContent = `Standard rate: $${tier.rate}/hr (${tier.label}). ` + (rateManual ? 'Clear the field to use it.' : 'Type to override.');
   const raw = collectData();
-  $('dowWarning').style.display = (t!=='single' && raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
+  $('dowWarning').style.display = (raw.daysSet && !raw.daysSet.some(Boolean)) ? 'block' : 'none';
 
   const phoneDigits = (raw.clientPhone||'').replace(/\D/g,'');
   const phoneHint = $('phoneHint');
@@ -1929,8 +2196,7 @@ function render(){
   const useFMU = t==='ongoing' || (t==='short' && $('firstMonthBilling').checked);
   updateNetTermsOptions(useFMU);
   $('typeHint').textContent =
-    t==='single' ? 'One date, one invoice. Ends when the job is done and paid.'
-    : t==='short' ? 'A defined stretch — a tournament weekend, a two-week site, a fixed-length contract. Pick which days below actually run; totals only count those days. For a month or longer, consider first-month-upfront billing below.'
+    t==='short' ? 'A defined stretch — a tournament weekend, a two-week site, a fixed-length contract. Pick which days below actually run; totals only count those days. For a month or longer, consider first-month-upfront billing below.'
     : 'Recurring coverage. Term length comes from your start/end dates, and the shift total is based on the days you check below.';
 
   const d = computeAll(raw);
@@ -1980,34 +2246,56 @@ function missingFields(raw){
   if(!(+raw.hours > 0)) missing.push('Hours per shift');
   if(!(+raw.rate > 0)) missing.push('Rate');
   if(!raw.start) missing.push('Start date');
-  if(raw.etype !== 'single' && !raw.end) missing.push('End date');
-  if(raw.etype !== 'single' && raw.daysSet && !raw.daysSet.some(Boolean)) missing.push('Days worked');
+  if(!raw.end) missing.push('End date');
+  if(raw.daysSet && !raw.daysSet.some(Boolean)) missing.push('Days worked');
+  if(!raw.propType) missing.push('Property type');
   if(!raw.coLic) missing.push('WA company license number (in Settings)');
+  if(!raw.coCarrier) missing.push('Insurance carrier (in Settings)');
+  if(!raw.coPolicy) missing.push('Insurance policy number (in Settings)');
+  if(!raw.coCoverage) missing.push('Insurance coverage (in Settings)');
   return missing;
 }
-
-function toHash(d){ return 's='+btoa(encodeURIComponent(JSON.stringify(d))); }
 
 
 // ---- Company settings: saved on this phone AND to the account, so every phone matches ----
 const COFIELDS = ['coLic','coCarrier','coPolicy','coCoverage','coSigner','coTitle','coRate'];
 let saveTimer, lastSavedCompany = '', settingsRemote = null; // null = unknown, true/false after first try
 function companyValues(){ const o={}; COFIELDS.forEach(f=>o[f]=$(f).value); return o; }
+function updateCoDirty(){ $('coDirty').hidden = JSON.stringify(companyValues()) === lastSavedCompany; }
+// force = the Save button: skip the "nothing changed" check and retry the account even after a failure
+async function doSaveCompany(force){
+  clearTimeout(saveTimer);
+  const o = companyValues(); const json = JSON.stringify(o);
+  if(!force && json === lastSavedCompany) return settingsRemote ? 'account' : 'local';
+  try{ localStorage.setItem('los:company', json); }
+  catch(e){ $('coSyncNote').textContent = "Couldn't save — try again."; return 'error'; }
+  lastSavedCompany = json; updateCoDirty();
+  if(!currentSession){ if(force) $('coSyncNote').textContent = 'Saved on this phone.'; return 'local'; }
+  if(settingsRemote === false && !force) return 'local';
+  try{
+    await rest('app_settings?on_conflict=key', { method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ key:'company', value:o, updated_at:new Date().toISOString() }) });
+    settingsRemote = true; $('coSyncNote').textContent = 'Saved to your account. Shows up on any phone you sign in on.';
+    return 'account';
+  }catch(e){
+    settingsRemote = false; $('coSyncNote').textContent = "Saved on this phone only (couldn't reach your account).";
+    return 'local';
+  }
+}
 function saveCompany(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async ()=>{
-    const o = companyValues(); const json = JSON.stringify(o);
-    if(json === lastSavedCompany) return;
-    localSet('los:company', o);
-    lastSavedCompany = json;
-    if(settingsRemote === false || !currentSession) return;
-    try{
-      await rest('app_settings?on_conflict=key', { method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify({ key:'company', value:o, updated_at:new Date().toISOString() }) });
-      settingsRemote = true; $('coSyncNote').textContent = 'Saved to your account. Shows up on any phone you sign in on.';
-    }catch(e){ settingsRemote = false; $('coSyncNote').textContent = 'Saved on this phone.'; }
-  }, 700);
+  saveTimer = setTimeout(()=>doSaveCompany(false), 700);
 }
+let coSaveTimer;
+$('btnCoSave').addEventListener('click', async ()=>{
+  const b = $('btnCoSave');
+  clearTimeout(coSaveTimer); b.disabled = true; b.textContent = 'Saving…';
+  const r = await doSaveCompany(true);
+  b.disabled = false;
+  if(r === 'error'){ b.textContent = 'Save settings'; toast("Couldn't save — try again"); return; }
+  b.textContent = 'Saved ✓'; toast('Saved ✓');
+  coSaveTimer = setTimeout(()=>{ b.textContent = 'Save settings'; }, 2000);
+});
 async function loadCompany(){
   const o = localGet('los:company');
   if(o) COFIELDS.forEach(f=>{ if(o[f]!=null) $(f).value=o[f]; });
@@ -2024,6 +2312,7 @@ async function loadCompany(){
     }catch(e){ settingsRemote = false; $('coSyncNote').textContent = 'Saved on this phone.'; }
   }
   lastSavedCompany = JSON.stringify(companyValues());
+  updateCoDirty();
   seqCache = localGet('los:seq') || {};
   renderHistory();
 }
@@ -2040,6 +2329,7 @@ $('rate').addEventListener('blur', render);
 document.querySelectorAll('#agrForm input,#agrForm select,#agrForm textarea,#pg-settings input').forEach(el=>{
   el.addEventListener('input',render); el.addEventListener('change',render);
 });
+document.querySelectorAll('#pg-settings input').forEach(el=>el.addEventListener('input', updateCoDirty));
 
 // ---- Details / Preview ----
 function setAgrView(view){
@@ -2059,13 +2349,15 @@ function printAgreement(){
 $('btnPrint').addEventListener('click', printAgreement);
 
 armButton($('btnNew'), 'Tap again to clear', async ()=>{
-  ['org','clientName','clientTitle','clientPhone','addr','siteContact','posts','orders','hazards','notes','pattern','start','end']
+  ['org','clientName','clientTitle','clientPhone','clientEmail','addr','siteContact','posts','orders','hazards','notes','pattern','start','end']
     .forEach(f=>$(f).value='');
+  document.querySelectorAll('input[name=agrPropType]').forEach(r=>r.checked = false);
   [0,1,2,3,4,5,6].forEach(i=>$('dow'+i).checked = (i>=1 && i<=5));
   $('firstMonthBilling').checked = false;
   $('rush').checked = false;
   rateManual = false;
   $('start').value = new Date().toISOString().slice(0,10);
+  try{ propForgetPendingAgr(); }catch(e){}   // a cleared agreement no longer belongs to a converted proposal
   setAgrView('form');
   render(); toast('Cleared.');
   const b = $('btnNew'); b.disabled=false; b.classList.remove('armed'); b.textContent='Clear';
@@ -2083,18 +2375,20 @@ $('btnLink').addEventListener('click', async ()=>{
   try{
     raw.agrNo = await claimAgrNumber();
     raw.genDate = fmtDate(new Date().toISOString().slice(0,10));
+    raw.total = Math.round((computeAll(raw).total || 0) * 100) / 100;   // the server records this as the amount
     const id = await saveShareLink('agreement', raw);
-    const url = id ? baseUrl() + '#id=' + id : baseUrl() + '#' + toHash(raw);
+    if(!id){ toast('Couldn\'t save the agreement — check connection and try again', 4200); return; }
+    try{ propLinkAgreement(id); }catch(e){}   // ties a converted proposal to this agreement; never blocks the link
+    const url = baseUrl() + '#id=' + id;
     showLinkSheet({ title:'Send to ' + (raw.clientName || raw.org), sub: esc(raw.agrNo) + ' · they read it and sign on their phone, no login',
       url, smsText: `Here's the security services agreement from ${COMPANY} for you to review and sign:` });
-    if(!id) toast('Saved as a long link because the database didn\'t answer.');
   }catch(err){ toast('Couldn\'t make the link: ' + err.message); }
   finally{ btn.innerHTML = original; btn.disabled = false; }
 });
 
 
 /* ================= RECORDS ================= */
-let recCache = { agr: null, rcpt: null };
+let recCache = { agr: null, rcpt: null, prop: null };
 let recView = 'agr';
 
 function namesLookMismatched(listed, signer){
@@ -2117,6 +2411,7 @@ function setRecView(v){
   document.querySelectorAll('#recSeg button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.rec===v)));
   $('recAgrWrap').hidden = v!=='agr';
   $('recRcptWrap').hidden = v!=='rcpt';
+  $('recPropWrap').hidden = v!=='prop';
   renderRecords();
 }
 document.querySelectorAll('#recSeg button').forEach(b=>b.addEventListener('click',()=>setRecView(b.dataset.rec)));
@@ -2124,12 +2419,14 @@ $('recSearch').addEventListener('input', ()=>renderRecords());
 $('btnRecRefresh').addEventListener('click', ()=>loadRecords(true));
 
 async function loadRecords(force){
-  if(force){ recCache = { agr:null, rcpt:null }; }
+  if(force){ recCache = { agr:null, rcpt:null, prop:null }; }
   if(!recCache.agr) $('recAgr').innerHTML = skeleton();
   if(!recCache.rcpt) $('recRcpt').innerHTML = skeleton();
+  if(!recCache.prop) $('recProp').innerHTML = skeleton();
   const [agr, rcpt] = await Promise.allSettled([
     rest('signed_agreements?select=*&order=signed_at.desc.nullslast'),
     rest('share_links?kind=eq.cash_receipt&select=id,data,created_at&order=created_at.desc&limit=500'),
+    fetchProposals(),   // shared with the Proposal tab; fills recCache.prop
   ]);
   recCache.agr  = agr.status==='fulfilled' ? agr.value : 'error';
   recCache.rcpt = rcpt.status==='fulfilled' ? rcpt.value : 'error';
@@ -2185,6 +2482,28 @@ function renderRecords(){
       const r = recCache.rcpt.find(x=>x.id===b.dataset.rc); if(r) openReceiptRecord(r);
     }));
   }
+  // Proposals (same rows as the Proposal tab's Saved proposals list)
+  const ep = $('recProp');
+  if(recCache.prop === 'error'){
+    if(propIsMissingTable(propListErr)) ep.innerHTML = `<div class="empty"><b>Saved proposals aren't set up yet</b>Run supabase/03_proposals.sql in Supabase, then tap Refresh.</div>`;
+    else loadError(ep, ()=>loadRecords(true));
+  }
+  else if(Array.isArray(recCache.prop)){
+    const rows = recCache.prop.filter(r => matchesQuery(q, r.client, r.contact, r.site, r.status, (PROP_STATUSES[r.status] || PROP_STATUSES.draft)[0]));
+    ep.innerHTML = rows.length ? rows.map(r => {
+      const [label, cls] = PROP_STATUSES[r.status] || PROP_STATUSES.draft;
+      const site = String(r.site || '').trim().replace(/\s*\n\s*/g, ', ');
+      return `<button class="item rec-prop-row" type="button" data-id="${esc(r.id)}">
+        <span class="lead ${r.status === 'converted' ? 'ok' : ''}">${icon('doc')}</span>
+        <span class="main"><span class="t">${esc(r.client || 'Untitled')}</span>
+          <span class="s">${esc([fmtWhen(r.updated_at || r.created_at), site].filter(Boolean).join(' · '))}</span></span>
+        <span class="end"><span class="chip ${cls}">${esc(label)}</span>${chev()}</span></button>`;
+    }).join('') : (q ? `<div class="empty">Nothing matches “${esc(q)}”.</div>`
+                    : `<div class="empty"><b>No saved proposals yet</b>Fill in a proposal on the Proposal tab and tap Save.</div>`);
+    ep.querySelectorAll('.rec-prop-row').forEach(b=>b.addEventListener('click',()=>{
+      if(propOpenRow(b.dataset.id)) showPage('pg-proposal');
+    }));
+  }
 }
 
 // Older records saved links to wherever the app was hosted at the time (e.g. an old Netlify site).
@@ -2199,9 +2518,16 @@ function openAgreementRecord(r){
   openSheet({ title: r.org || 'Agreement', sub: esc(r.agreement_no||''), html: `
     <div class="group" style="margin-top:8px">
       <div class="kv"><span class="k">Signed by</span><span class="v">${esc(r.signer_name||'—')}</span></div>
+      <div class="kv"><span class="k">Signer title</span><span class="v">${esc(r.signer_title||'—')}</span></div>
       <div class="kv"><span class="k">Listed contact</span><span class="v">${esc(r.client_name||'—')}</span></div>
-      <div class="kv"><span class="k">Signed</span><span class="v">${esc(r.signed_at ? fmtStamp(r.signed_at) : '—')}</span></div>
+      <div class="kv"><span class="k">Signed at</span><span class="v">${esc(r.signed_at ? fmtPT(r.signed_at) : '—')}</span></div>
       <div class="kv"><span class="k">Estimated total</span><span class="v">${r.amount ? money(r.amount) : '—'}</span></div>
+    </div>
+    <div class="gtitle">Audit trail</div>
+    <div class="group">
+      <div class="kv"><span class="k">IP</span><span class="v">${esc(r.signer_ip||'Not recorded')}</span></div>
+      <div class="kv"><span class="k">User agent</span><span class="v" style="overflow-wrap:anywhere">${esc(r.user_agent||'Not recorded')}</span></div>
+      <div class="kv"><span class="k">SHA-256</span><span class="v" style="overflow-wrap:anywhere;font-family:ui-monospace,Menlo,monospace;font-size:12px">${esc(r.data_sha256||'Not recorded')}</span></div>
     </div>
     ${namesLookMismatched(r.client_name, r.signer_name) ? `<div class="notice warn">${icon('alert')}<div>The signer's name doesn't match the contact on the agreement. Worth a quick check with the client.</div></div>` : ''}
     <div class="stack" style="margin-top:14px">
@@ -2295,6 +2621,7 @@ const FILING_STATUS = {
   mfj: 'Married filing jointly or qualifying surviving spouse',
   hoh: 'Head of household',
 };
+const GPS_NOTICE = 'GPS notice. While you are clocked in on a shift, the patrol app tracks your location. It never tracks you off-shift, and it does not record audio.';
 const I9_STATUS = {
   citizen: 'A citizen of the United States',
   national: 'A noncitizen national of the United States',
@@ -2483,6 +2810,7 @@ async function buildEmployeePacketPdf(pub, sen, photos=[]){
   if(pub.ddMethod==='direct') st.push(`Direct deposit: I authorize ${COMPANY} to deposit my pay into the account above and, if a deposit is made in error, to correct it. This stays in effect until I tell the company in writing to change or stop it.`);
   st.push(`Uniform: I received one ${COMPANY} uniform shirt. It belongs to the company and I will return it when I leave. If it is lost or damaged beyond normal wear, I agree to pay the replacement cost of ${money(pub.uniformCost)}. Any payroll deduction for this will only be made with my separate written OK at that time and will never take my pay below minimum wage.`);
   st.push('Handbook: I have read and agree to follow the Lion Security employee handbook.');
+  if(at.gpsNotice) st.push((at.gpsNoticeText || GPS_NOTICE) + ' I\'ve read and understand the GPS notice.');
   st.push('Electronic signature: I agree to sign these forms electronically. My typed name is my signature.');
   st.forEach(s => para('•  ' + s, reg, 9));
   need(50);
@@ -3183,6 +3511,7 @@ function hireReviewHtml(){
     <div class="gtitle">Sign</div>
     <div class="group">
       ${hCheck('cert.i9','My Form I-9 answers are true', 'I am aware that federal law provides for imprisonment and/or fines for false statements, or the use of false documents, in connection with the completion of this form. I attest, under penalty of perjury, that this information, including my selection of the box attesting to my citizenship/immigration status, is true and correct.')}
+      ${hCheck('cert.gps','I\'ve read and understand the GPS notice.', GPS_NOTICE)}
       ${hCheck('cert.esign','I agree to sign electronically','My typed name below is my legal signature on these forms.')}
       ${hField('sigName','Type your full legal name',{ac:'name'})}
     </div>
@@ -3233,7 +3562,7 @@ function hireErrors(key){
     if(!hv('ack.handbook')) e['ack.handbook'] = 'Required';
   }
   if(key==='review'){
-    ['cert.i9','cert.esign'].forEach(k=>{ if(!hv(k)) e[k]='Required'; });
+    ['cert.i9','cert.gps','cert.esign'].forEach(k=>{ if(!hv(k)) e[k]='Required'; });
     need('sigName');
     const sig = String(hv('sigName')||'').toLowerCase();
     const last = String(hv('legal.last')||'').toLowerCase().trim();
@@ -3352,7 +3681,7 @@ async function submitHire(){
     legal: f.legal, address: f.address, emergency: f.emergency,
     i9: f.i9, license: f.license,
     ack: f.ack, cert: f.cert,
-    attest: { signedName: pub.signedName, signedAt: now, userAgent: navigator.userAgent.slice(0,200) },
+    attest: { signedName: pub.signedName, signedAt: now, userAgent: navigator.userAgent.slice(0,200), gpsNotice: true, gpsNoticeText: GPS_NOTICE },
   };
   try{
     await withRetry(()=> rpc('submit_employee_onboarding', { p_link_id: HIRE.id, p_public: pub, p_sensitive: sen }, false));
@@ -3421,6 +3750,7 @@ async function enterHireMode(id){
 /* ================= PUBLIC LINK PAGES (no login) ================= */
 function enterPublicShell(subtitle){
   document.body.classList.add('public','sign-mode');
+  document.body.removeAttribute('data-mode');
   $('tabbar').hidden = true; $('agrActions').hidden = true; $('gate').hidden = true;
   $('barTitle').textContent = 'Lion Security';
   $('barSub').textContent = subtitle;
@@ -3433,11 +3763,40 @@ function publicMessage(title, text){
 }
 
 // ---- Client agreement: read, sign ----
-function fromHash(h){
-  const m = (h||'').match(/(?:^|&)s=([^&]+)/); if(!m) return null;
-  try{ return JSON.parse(decodeURIComponent(atob(m[1]))); }catch(e){ return null; }
+// status: undefined = re-opened later; 'pending' = just signed, notifications in flight;
+// { admin, client } = results of those sends.
+function renderSignedPanel(raw, status){
+  const panel = $('signPanel'), pg = $('pg-agreement');
+  const keepCopy = () => { pg.classList.add('print-me'); setTimeout(()=>{ window.print(); setTimeout(()=>pg.classList.remove('print-me'),1000); }, 120); };
+  const done = status && typeof status === 'object';
+  const warn = done && status.admin !== 'sent';
+  const emailed = done && status.client === 'sent' && raw.clientEmail ? ` A signed copy was emailed to ${esc(raw.clientEmail)}.` : '';
+  const line = !status ? 'Signed and on file with Lion Security Services.'
+    : status === 'pending' ? 'Letting Lion Security Services know…'
+    : warn ? `We couldn't confirm it reached Lion Security Services. Please send them this link too.${emailed}`
+    : `Lion Security Services has been notified.${emailed} Nothing else to do.`;
+  panel.innerHTML = `
+    <div class="notice ${warn?'warn':'ok'}">${icon(warn?'alert':'check')}<div>Signed by <b>${esc(raw.sigName)}</b> on ${esc(fmtPT(raw.sigAt))}.
+      ${line}</div></div>
+    <div class="stack" style="margin-top:12px">
+      ${warn ? `<button class="btn btn-primary btn-block" id="btnShareSigned">${icon('share')}Send confirmation</button>` : ''}
+      <button class="btn ${warn?'btn-secondary':'btn-primary'} btn-block" id="btnDownloadSigned">${icon('dl')}Save a copy (PDF)</button>
+    </div>`;
+  const sh = $('btnShareSigned');
+  if(sh) sh.addEventListener('click', ()=>shareLink(baseUrl() + '#id=' + raw._linkId, 'Signed: '+(raw.agrNo||'Agreement'), `${raw.sigName} signed ${raw.agrNo||'the agreement'} for ${raw.org||''}.`));
+  $('btnDownloadSigned').addEventListener('click', keepCopy);
 }
-function enterSignMode(raw){
+// Runs after a successful sign. Never blocks or undoes the signature.
+async function notifyAgreementSigned(raw){
+  const viewLink = baseUrl() + '#id=' + raw._linkId;
+  const total = +raw.total > 0 ? +raw.total : computeAll(raw).total;
+  const [admin, client] = await Promise.all([
+    sendAdminAlert('Agreement signed', `${raw.sigName} signed ${raw.agrNo||'the agreement'} for ${raw.org||'(no organization)'}. Estimated total ${money(total)}.`, viewLink).catch(()=>'failed'),
+    raw.clientEmail ? emailSignedAgreementCopy(raw, viewLink).catch(()=>'failed') : Promise.resolve('skipped')
+  ]);
+  renderSignedPanel(raw, { admin, client });
+}
+function enterSignMode(raw, justSigned){
   enterPublicShell('Review and sign');
   $('pg-public').classList.remove('on');
   const pg = $('pg-agreement');
@@ -3445,58 +3804,69 @@ function enterSignMode(raw){
   ['agrHead','agrNoRow','agrSeg','agrForm'].forEach(id=>$(id).hidden = true);
   $('agrDoc').hidden = false;
 
+  normalizeAgr(raw);
   const d = computeAll(raw);
   d.agrNo = raw.agrNo; d.genDate = raw.genDate;
   paint(d);
 
   const panel = $('signPanel');
   panel.hidden = false;
-  const keepCopy = () => { pg.classList.add('print-me'); setTimeout(()=>{ window.print(); setTimeout(()=>pg.classList.remove('print-me'),1000); }, 120); };
 
-  if(!raw.sigName){
-    const missing = missingFields(raw);
-    if(missing.length){
-      panel.innerHTML = `<div class="notice warn">${icon('alert')}<div><b>This agreement isn't ready to sign.</b> Some details are missing. Ask ${COMPANY} for an updated link and don't sign this one.</div></div>`;
-      return;
-    }
-  }
   if(raw.sigName){
-    const warn = raw._recorded === false;
-    panel.innerHTML = `
-      <div class="notice ${warn?'warn':'ok'}">${icon(warn?'alert':'check')}<div>Signed by <b>${esc(raw.sigName)}</b> on ${esc(fmtStamp(raw.sigAt))}.
-        ${warn ? `We couldn't confirm it reached ${COMPANY}. Please send them this link too.` : `${COMPANY} has been notified. Nothing else to do.`}</div></div>
-      <div class="stack" style="margin-top:12px">
-        ${warn ? `<button class="btn btn-primary btn-block" id="btnShareSigned">${icon('share')}Send confirmation</button>` : ''}
-        <button class="btn ${warn?'btn-secondary':'btn-primary'} btn-block" id="btnDownloadSigned">${icon('dl')}Save a copy (PDF)</button>
-      </div>`;
-    const sh = $('btnShareSigned');
-    if(sh) sh.addEventListener('click', ()=>shareLink(location.href, 'Signed: '+(raw.agrNo||'Agreement'), `${raw.sigName} signed ${raw.agrNo||'the agreement'} for ${raw.org||''}.`));
-    $('btnDownloadSigned').addEventListener('click', keepCopy);
+    renderSignedPanel(raw, justSigned ? 'pending' : undefined);
+    if(justSigned) notifyAgreementSigned(raw);
+    return;
+  }
+  const linkId = raw._linkId;
+  // Property type is new; links sent before it existed can still be signed.
+  const missing = missingFields(raw).filter(m => !(m === 'Property type' && raw.propType === undefined));
+  if(!linkId || missing.length){
+    panel.innerHTML = `<div class="notice warn">${icon('alert')}<div><b>This agreement isn't ready to sign.</b> ${linkId ? 'Some details are missing.' : 'This link can\'t be signed.'} Ask ${COMPANY} for an updated link and don't sign this one.</div></div>`;
     return;
   }
 
   panel.innerHTML = `
     <div class="gtitle">Sign this agreement</div>
     <div class="group">
-      <div class="field"><label for="sigInput">Type your full legal name</label><input id="sigInput" class="sigfield" placeholder="Full legal name" autocomplete="name"></div>
+      <div class="cols2">
+        <div class="field"><label for="sigInput">Type your full legal name</label><input id="sigInput" class="sigfield" placeholder="Full legal name" autocomplete="name"></div>
+        <div class="field"><label for="sigTitleInput">Your title <span class="opt">(optional)</span></label><input id="sigTitleInput" placeholder="e.g. Facilities manager" autocomplete="organization-title"></div>
+      </div>
       <label class="check"><input type="checkbox" id="sigAgree"><span>I've read this agreement and agree to its terms on behalf of the client named above.</span></label>
     </div>
     <button class="btn btn-gold btn-block" id="btnSign" disabled style="margin-top:14px">${icon('pen')}Sign agreement</button>
-    <div class="gnote">Typing your name and checking the box is a legal electronic signature under the U.S. ESIGN Act and Washington's Uniform Electronic Transactions Act. The signing time is recorded.</div>`;
-  const nameEl=$('sigInput'), chk=$('sigAgree'), btn=$('btnSign');
+    <div class="gnote">Typing your name and checking the box is a legal electronic signature under the U.S. ESIGN Act and Washington's Uniform Electronic Transactions Act. The signing time, IP address and device are recorded.</div>`;
+  const nameEl=$('sigInput'), titleEl=$('sigTitleInput'), chk=$('sigAgree'), btn=$('btnSign');
+  titleEl.value = raw.clientTitle || '';
   const upd = () => { btn.disabled = !(nameEl.value.trim().length>1 && chk.checked); };
   nameEl.addEventListener('input',upd); chk.addEventListener('change',upd);
+  const reopen = async (justSigned, fallback) => {
+    let row = null;
+    try{ row = await loadShareLink(linkId); }catch(e){ row = null; }
+    const data = row && row.kind==='agreement' && row.data ? row.data : fallback;
+    if(!data){ location.reload(); return; }
+    data._linkId = linkId;
+    enterSignMode(data, justSigned && !!data.sigName);
+    window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' });
+  };
   btn.addEventListener('click', async ()=>{
     if(btn.disabled) return;
     btn.disabled = true; btn.textContent = 'Signing…';
-    raw.sigName = nameEl.value.trim();
-    raw.sigAt = new Date().toISOString();
-    let url;
-    if(raw._linkId){ url = baseUrl() + '#id=' + raw._linkId; await updateShareLink(raw._linkId, raw); }
-    else { url = baseUrl() + '#' + toHash(raw); history.replaceState(null,'',url); }
-    raw._recorded = await recordSignedAgreement(computeAll(raw), url);
-    enterSignMode(raw);
-    window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' });
+    const name = nameEl.value.trim(), title = titleEl.value.trim();
+    let res;
+    try{
+      res = await signAgreementRpc({ p_link_id: linkId, p_signer_name: name, p_signer_title: title || null, p_page_url: location.href });
+    }catch(e){
+      if(/already signed/i.test(e.message)){ toast('This agreement was already signed.'); await reopen(false, null); return; }
+      console.error('sign_agreement failed:', e);
+      toast('Couldn\'t sign: ' + (/agreement link not found/i.test(e.message) ? 'this link no longer works. Ask ' + COMPANY + ' for a new one.' : 'check your connection and try again.'), 5200);
+      btn.innerHTML = `${icon('pen')}Sign agreement`; upd();
+      return;
+    }
+    // Server copy is the source of truth; fall back to what the RPC returned if the re-fetch fails.
+    const fallback = Object.assign({}, raw, { sigName: name, sigTitle: title || undefined, sigAt: res && res.signed_at,
+      sigIp: res && res.signer_ip, sigUa: res && res.user_agent, sigHash: res && res.sha256 });
+    await reopen(true, fallback);
   });
 }
 
@@ -3930,16 +4300,636 @@ async function enterOnboardSignMode(id, justSigned){
   });
 }
 
+/* ================= PROPOSAL ================= */
+// Sales proposal: client-facing name is always "Lion Security Services". No preset prices —
+// the rate stays blank until it's typed in.
+const PROP_KEY = 'lionProposalDraft';
+const PROP_TEXT = ['propClient','propContact','propSite','propHeard','propDays','propStart','propHours','propFreq',
+  'propRate','propMonthlyHours','propTerm','propBilling','propDate','propValid'];
+const PROP_SVCS = ['propSvcPatrol','propSvcLockup','propSvcAlarm','propSvcApt','propSvcPost'];
+const PROP_DEFAULT_TERM = "Month-to-month, 30 days' written notice";
+const PROP_DEFAULT_BILLING = 'Invoiced monthly, net 15';
+const PROP_TYPE_LABEL = { retail:'Retail store (after hours)', apartment:'Private apartment complex' };
+const PROP_SVC_TEXT = {
+  propSvcPatrol: { retail:  ['After-hours patrol checks', 'a uniformed officer checks the storefront, doors, and lot on varied rounds between close and open.'],
+                   apartment:['After-hours patrol checks', 'a uniformed officer checks building exteriors, entrances, and grounds on varied rounds overnight.'] },
+  propSvcLockup: { retail:  ['Lock-up checks', 'doors, gates, and lights checked at close, and the alarm confirmed set.'],
+                   apartment:['Lock-up checks', 'entry doors, gates, and amenity rooms checked and secured at closing time.'] },
+  propSvcAlarm:  { retail:  ['Alarm response', 'an officer goes to the site when your alarm company calls, checks the building, and reports back to you.'],
+                   apartment:['Alarm response', 'an officer goes to the property when an alarm trips, checks the area, and reports back to management.'] },
+  propSvcApt:    { retail:  ['Lot & lobby patrols', 'rounds through parking areas, entrances, and common areas; trespass issues reported to you.'],
+                   apartment:['Apartment lot & lobby patrols', 'rounds through parking areas, lobbies, mail rooms, and common areas; trespass issues reported to management.'] },
+  propSvcPost:   { retail:  ['Standing overnight post', 'a uniformed officer stays on site through the overnight hours, watching entrances and the lot and responding as issues come up.'],
+                   apartment:['Standing overnight post', 'a uniformed officer stays on site through the overnight hours, watching entrances and common areas and responding as issues come up.'] },
+};
+const PROP_INCLUDED = [
+  'Written incident reports emailed to you after anything happens on site, with photos when useful.',
+  'Every officer holds a current Washington security guard license (guard card).',
+  'Licensed & insured: general liability coverage, certificate of insurance on request.',
+  'A direct line to the owners, not a call center: (253) 251-4551.',
+  'Post orders written with you before day one, and updated whenever you need.',
+];
+const PROP_SVC_VALUE = { propSvcPatrol:'patrol', propSvcLockup:'lockup', propSvcAlarm:'alarm', propSvcApt:'apt', propSvcPost:'post' };
+const PROP_STATUSES = { draft:['Draft',''], sent:['Sent','warn'], accepted:['Accepted','ok'], converted:['Converted','ok'] };
+const PROP_PENDING_AGR_KEY = 'lionProposalPendingAgr';
+let propValidManual = false;   // valid-until follows proposal date + 30 days until edited by hand
+let propOpenId = null;         // saved proposals row being edited (null = not saved yet)
+let propOpenSnap = null;       // what was last saved/opened, to spot unsaved edits
+let propPendingAgr = localGet(PROP_PENDING_AGR_KEY);   // converted proposal waiting for its agreement link id
+
+function localYmd(d=new Date()){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function addDaysYmd(ymd, n){ const [y,m,d] = (ymd||'').split('-').map(Number); if(!y) return ''; return localYmd(new Date(y, m-1, d+n)); }
+function propMoney(n){ return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function propRateText(r){ return '$' + (Number.isInteger(r) ? String(r) : r.toFixed(2)) + '/hr'; }
+
+function propData(){
+  const v = {}; PROP_TEXT.forEach(id => v[id] = $(id).value);
+  v.propType = document.querySelector('input[name=propType]:checked')?.value || 'retail';
+  v.svcs = PROP_SVCS.filter(id => $(id).checked);
+  v.propStatus = $('propStatus').value;
+  v.validManual = propValidManual;
+  v.openId = propOpenId; v.openSnap = propOpenSnap;
+  return v;
+}
+// Everything the documents print, already worded (plain text, not escaped)
+function propContent(v){
+  const TBC = 'To be confirmed';
+  const rate = parseFloat(v.propRate), hrs = parseFloat(v.propMonthlyHours);
+  const hasRate = isFinite(rate) && rate > 0, hasHrs = isFinite(hrs) && hrs > 0;
+  const days = parseInt(v.propDays, 10);
+  const client = v.propClient.trim(), contact = v.propContact.trim();
+  const site = v.propSite.trim().replace(/\s*\n\s*/g, ', ');
+  const heard = v.propHeard.trim();
+  return {
+    client, contact, site,
+    preparedFor: [contact, client].filter(Boolean).join(', ') || TBC,
+    date: fmtLongDate(v.propDate) || TBC,
+    valid: fmtLongDate(v.propValid) || TBC,
+    type: PROP_TYPE_LABEL[v.propType],
+    intro: heard || `Thank you for the chance to propose security services${client ? ' for ' + client : ''}. Below is the coverage we recommend, the schedule, and the rate.`,
+    scope: v.svcs.map(id => PROP_SVC_TEXT[id][v.propType]),
+    schedule: [
+      ['Days', days ? `${days} day${days===1?'':'s'} a week` : TBC],
+      ['Hours', v.propHours.trim() || TBC],
+      ['Patrol frequency', v.propFreq.trim() || TBC],
+      ['Start date', fmtLongDate(v.propStart) || TBC],
+    ],
+    rateRows: [
+      ['Rate', hasRate ? propRateText(rate) : TBC],
+      ['Estimated monthly hours', hasHrs ? String(hrs) : TBC],
+      ['Estimated monthly total', hasRate && hasHrs ? propMoney(rate*hrs) : TBC],
+      ['Term', v.propTerm.trim() || TBC],
+      ['Billing', v.propBilling.trim() || TBC],
+    ],
+    start: fmtLongDate(v.propStart) || 'the agreed start date',
+    hasRate,
+  };
+}
+
+function propPreviewHtml(c){
+  const val = s => s === 'To be confirmed' ? `<span class="tbc">${s}</span>` : esc(s);
+  const rows = (list, rateRow) => list.map(([k,x]) => `<tr><th>${esc(k)}</th><td${rateRow && k==='Rate' ? ' class="rate"' : ''}>${val(x)}</td></tr>`).join('');
+  return `
+  <div class="pp-hdr"><img src="${LOGO}" alt=""><div><div class="co">Lion Security Services</div><div class="sub">Unarmed Security · South King County, WA</div></div>
+    <div class="right">(253) 251-4551<br>contact@lionofseattle.com<br><b>Licensed &amp; Insured</b></div></div>
+  <h1>Security Service Proposal</h1>
+  <div class="pp-meta">
+    <div><b>Prepared for</b><span>${val(c.preparedFor)}</span></div>
+    <div><b>Date</b><span>${val(c.date)}</span></div>
+    <div><b>Site</b><span>${val(c.site || 'To be confirmed')}</span></div>
+    <div><b>Valid until</b><span>${val(c.valid)}</span></div>
+    <div><b>Property type</b><span>${esc(c.type)}</span></div>
+    <div><b>Prepared by</b><span>Karim Harakat, COO</span></div>
+  </div>
+  <p class="pp-intro">${esc(c.intro)}</p>
+  <h2>Scope of services</h2>
+  ${c.scope.length ? `<ul>${c.scope.map(([b,t]) => `<li><b>${esc(b)}:</b> ${esc(t)}</li>`).join('')}</ul>` : `<p class="tbc">Pick at least one service.</p>`}
+  <div class="pp-two">
+    <div><h2>Schedule</h2><table>${rows(c.schedule)}</table></div>
+    <div><h2>Rate &amp; term</h2><table>${rows(c.rateRows, true)}</table></div>
+  </div>
+  <h2>What's included</h2>
+  <ul>${PROP_INCLUDED.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+  <h2>Next steps</h2>
+  <ol>
+    <li>Review this proposal and send us any changes.</li>
+    <li>Sign the service agreement.</li>
+    <li>Confirm the start date, keys/access, and your incident contact.</li>
+    <li>We start service on <b>${esc(c.start)}</b>.</li>
+  </ol>
+  <div class="pp-sig">
+    <div>Client signature / date<br><br>${esc(c.client || '')}</div>
+    <div>Karim Harakat, COO / date<br><br>Lion Security Services, LLC</div>
+  </div>
+  <div class="pp-foot"><span><b>Lion Security Services, LLC</b> · Unarmed security · Licensed &amp; Insured</span><span>(253) 251-4551 · contact@lionofseattle.com</span></div>`;
+}
+
+let propPdfCache = { key:'', bytes:null };
+function propRender(){
+  const v = propData();
+  const rate = parseFloat(v.propRate), hrs = parseFloat(v.propMonthlyHours);
+  $('propMonthlyTotal').value = (rate > 0 && hrs > 0) ? propMoney(rate*hrs) : '';
+  $('propSheet').innerHTML = propPreviewHtml(propContent(v));
+  localSet(PROP_KEY, v);
+}
+
+function propDefaultData(){
+  const v = {}; PROP_TEXT.forEach(id => v[id] = '');
+  v.propTerm = PROP_DEFAULT_TERM;
+  v.propBilling = PROP_DEFAULT_BILLING;
+  v.propDate = localYmd();
+  v.propValid = addDaysYmd(v.propDate, 30);
+  v.propType = 'retail'; v.svcs = []; v.propStatus = 'draft'; v.validManual = false;
+  return v;
+}
+function propApply(v){
+  PROP_TEXT.forEach(id => $(id).value = typeof v[id] === 'string' ? v[id] : '');
+  PROP_SVCS.forEach(id => $(id).checked = (v.svcs||[]).includes(id));
+  document.querySelector(`input[name=propType][value="${v.propType==='apartment'?'apartment':'retail'}"]`).checked = true;
+  $('propStatus').value = PROP_STATUSES[v.propStatus] ? v.propStatus : 'draft';
+  propValidManual = !!v.validManual;
+}
+function propReset(){ propApply(propDefaultData()); }
+function propLoad(){
+  const v = localGet(PROP_KEY);
+  propReset();
+  if(v){
+    propApply(Object.assign(propDefaultData(), v));
+    propSetOpen(v.openId || null, v.openSnap || null);
+  }
+  propRender();
+}
+
+// ---- Saved proposals (Supabase table "proposals", owners only — see supabase/03_proposals.sql) ----
+// Form values -> table row. Blank dates/numbers are null; the rate stays empty when blank.
+function propPayload(v){
+  const txt = x => String(x ?? '').trim() || null;
+  const num = x => { const n = parseFloat(x); return isFinite(n) ? n : null; };
+  return {
+    status: PROP_STATUSES[v.propStatus] ? v.propStatus : 'draft',
+    client: txt(v.propClient), contact: txt(v.propContact), site: txt(v.propSite),
+    property_type: v.propType === 'apartment' ? 'apartment' : 'retail', heard: txt(v.propHeard),
+    services: (v.svcs||[]).map(id => PROP_SVC_VALUE[id]).filter(Boolean),
+    days: txt(v.propDays), hours: txt(v.propHours), frequency: txt(v.propFreq), start_date: v.propStart || null,
+    rate: num(v.propRate), monthly_hours: num(v.propMonthlyHours),
+    term: txt(v.propTerm), billing: txt(v.propBilling), proposal_date: v.propDate || null, valid_until: v.propValid || null,
+  };
+}
+// Table row -> form values (same shape as propData())
+function propRowData(r){
+  const str = x => x == null ? '' : String(x);
+  const v = {
+    propClient: str(r.client), propContact: str(r.contact), propSite: str(r.site), propHeard: str(r.heard),
+    propDays: str(r.days), propStart: str(r.start_date), propHours: str(r.hours), propFreq: str(r.frequency),
+    propRate: str(r.rate), propMonthlyHours: str(r.monthly_hours), propTerm: str(r.term), propBilling: str(r.billing),
+    propDate: str(r.proposal_date), propValid: str(r.valid_until),
+    propType: r.property_type === 'apartment' ? 'apartment' : 'retail',
+    svcs: PROP_SVCS.filter(id => (r.services||[]).includes(PROP_SVC_VALUE[id])),
+    propStatus: PROP_STATUSES[r.status] ? r.status : 'draft',
+  };
+  v.validManual = !!v.propValid && v.propValid !== addDaysYmd(v.propDate, 30);
+  return v;
+}
+const propKey = v => JSON.stringify(propPayload(v));
+function propDirty(){ return propKey(propData()) !== (propOpenSnap || propKey(propDefaultData())); }
+function propSetOpen(id, snap){
+  propOpenId = id; propOpenSnap = snap;
+  $('propTitle').textContent = id ? 'Edit proposal' : 'New proposal';
+  if(Array.isArray(propList)) renderProposals();
+}
+function propIsMissingTable(e){
+  const b = String((e && e.body) || '');
+  return !!e && (e.status === 404 || /PGRST205|42P01/.test(b));
+}
+function propErrText(e){
+  if(propIsMissingTable(e)) return 'saved proposals aren\'t set up in the database yet (supabase/03_proposals.sql).';
+  if(e && (e.status === 401 || e.status === 403)) return 'not allowed. Sign in again with an owner account.';
+  if(e instanceof TypeError) return 'no connection. Check your signal and try again.';
+  return (e && e.message) || 'unknown error';
+}
+
+// First save inserts and remembers the row id; later saves update that row.
+let propSaving = null;
+function propSave(){
+  if(propSaving) return propSaving;
+  propSaving = (async () => {
+    const snap = propKey(propData());
+    const opts = { headers:{ 'Prefer':'return=representation' }, body: snap };
+    const rows = propOpenId
+      ? await rest(`proposals?id=eq.${encodeURIComponent(propOpenId)}`, { ...opts, method:'PATCH' })
+      : await rest('proposals', { ...opts, method:'POST' });
+    const row = Array.isArray(rows) ? rows[0] : null;
+    if(!row || !row.id) throw new Error(propOpenId ? 'this proposal is no longer in the database (it may have been deleted). Tap New proposal to save a fresh copy.' : 'the database didn\'t return the new proposal.');
+    propSetOpen(row.id, snap);
+    propRender();
+    return row;
+  })().finally(() => { propSaving = null; });
+  return propSaving;
+}
+
+let propList = null, propListErr = null;
+// One fetch feeds both the Proposal tab list and Records → Proposals.
+async function fetchProposals(){
+  try{ propList = await rest('proposals?select=*&order=updated_at.desc&limit=200'); propListErr = null; }
+  catch(e){ console.error('proposals load failed:', e); propListErr = e; }
+  recCache.prop = propListErr ? 'error' : propList;
+  $('cntProp').textContent = Array.isArray(recCache.prop) ? `(${recCache.prop.length})` : '';
+  renderProposals();
+}
+async function loadProposals(){
+  if(!Array.isArray(propList)) $('propSavedList').innerHTML = skeleton(2);
+  await fetchProposals();
+  renderRecords();
+}
+function renderProposals(){
+  const el = $('propSavedList');
+  if(propListErr && !Array.isArray(propList)){
+    if(propIsMissingTable(propListErr)) el.innerHTML = `<div class="empty"><b>Saved proposals aren't set up yet</b>Run supabase/03_proposals.sql in Supabase, then tap Refresh.</div>`;
+    else loadError(el, loadProposals);
+    return;
+  }
+  if(!Array.isArray(propList)) return;
+  el.innerHTML = propList.length ? propList.map(r => {
+    const [label, cls] = PROP_STATUSES[r.status] || PROP_STATUSES.draft;
+    const when = r.proposal_date ? fmtLongDate(r.proposal_date) : fmtWhen(r.created_at);
+    const site = String(r.site || '').trim().replace(/\s*\n\s*/g, ', ');
+    return `<div class="item prop-row${r.id === propOpenId ? ' open' : ''}" role="button" tabindex="0" data-id="${esc(r.id)}">
+      <span class="lead ${r.status === 'converted' ? 'ok' : ''}">${icon('doc')}</span>
+      <span class="main"><span class="t">${esc(r.client || 'Untitled')}</span>
+        <span class="s">${esc([site, when].filter(Boolean).join(' · '))}</span>
+        <span class="prop-row-foot"><span class="chip ${cls}">${esc(label)}</span>
+          <button class="btn btn-secondary btn-sm prop-row-agr" type="button">Turn into agreement</button></span></span>
+      ${chev()}</div>`;
+  }).join('') : `<div class="empty"><b>No saved proposals yet</b>Fill in a proposal and tap Save.</div>`;
+}
+function propOpenRow(id){
+  const r = Array.isArray(propList) && propList.find(x => x.id === id);
+  if(!r) return false;
+  if(propDirty() && !confirm(id === propOpenId ? 'Discard your unsaved changes and reopen the saved copy?' : 'Discard unsaved changes to the proposal you have open?')) return false;
+  propApply(propRowData(r));
+  propSetOpen(r.id, propKey(propData()));
+  setPropView('form'); propRender();
+  window.scrollTo({ top:0 });
+  toast('Opened ' + (r.client || 'proposal') + '.');
+  return true;
+}
+$('propSavedList').addEventListener('click', e => {
+  const row = e.target.closest('.prop-row'); if(!row) return;
+  if(e.target.closest('.prop-row-agr')) propConvertRow(row.dataset.id);
+  else propOpenRow(row.dataset.id);
+});
+$('propSavedList').addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('prop-row')){ e.preventDefault(); propOpenRow(e.target.dataset.id); }
+});
+$('btnPropListRefresh').addEventListener('click', loadProposals);
+
+$('btnPropSave').addEventListener('click', async ()=>{
+  const btn = $('btnPropSave');
+  if(btn.disabled) return;
+  const original = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{ await propSave(); toast('Saved.'); loadProposals(); }
+  catch(e){ console.error('proposal save failed:', e); toast('Couldn\'t save: ' + propErrText(e), 5200); }
+  finally{ btn.innerHTML = original; btn.disabled = false; }
+});
+$('btnPropNew').addEventListener('click', ()=>{
+  if(propDirty() && !confirm('Discard unsaved changes to this proposal?')) return;
+  propReset(); propSetOpen(null, null);
+  setPropView('form'); propRender();
+  window.scrollTo({ top:0 });
+  toast('New proposal.');
+});
+
+function setPropView(view){
+  document.querySelectorAll('#propSeg button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.view===view)));
+  $('propForm').hidden = view !== 'form';
+  $('propDoc').hidden = view !== 'doc';
+  if(view==='doc'){ window.scrollTo({top:0}); propWarmPdf(); }
+}
+document.querySelectorAll('#propSeg button').forEach(b=>b.addEventListener('click',()=>setPropView(b.dataset.view)));
+document.querySelectorAll('#propForm input,#propForm select,#propForm textarea').forEach(el=>{
+  el.addEventListener('input',propRender); el.addEventListener('change',propRender);
+});
+$('propDate').addEventListener('input', ()=>{ if(!propValidManual){ $('propValid').value = addDaysYmd($('propDate').value, 30); propRender(); } });
+$('propValid').addEventListener('input', ()=>{ propValidManual = $('propValid').value !== ''; propRender(); });
+
+armButton($('btnPropClear'), 'Tap again to clear', async ()=>{
+  propReset(); propSetOpen(null, null); localDel(PROP_KEY); setPropView('form'); propRender(); toast('Cleared.');
+  const b = $('btnPropClear'); b.disabled=false; b.classList.remove('armed'); b.textContent='Clear';
+  return true;
+});
+
+// ---- PDF (pdf-lib, same look as the preview) ----
+async function buildProposalPdf(c){
+  const { PDFDocument, rgb, StandardFonts } = PDFLib;
+  const pdf = await PDFDocument.create();
+  pdf.setTitle('Security Service Proposal' + (c.client ? ' - ' + pdfSafe(c.client) : ''));
+  pdf.setAuthor('Lion Security Services'); pdf.setCreator('Lion Security Services');
+  const reg = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const ital = await pdf.embedFont(StandardFonts.HelveticaOblique);
+  const logo = await pdf.embedPng(Uint8Array.from(atob(LION_LOGO_PNG_BASE64), ch=>ch.charCodeAt(0)));
+  // Sized so a typical proposal (all five services, a short "What we heard") fits on one Letter page;
+  // longer content still flows onto extra pages.
+  const W = 612, H = 792, L = 36, R = W - 36, CW = R - L, TOP = H - 30, BOTTOM = 48;
+  const BLACK = rgb(11/255,11/255,11/255), BAR = rgb(26/255,26/255,26/255), GOLD = rgb(212/255,160/255,23/255),
+        GOLDLT = rgb(232/255,185/255,35/255), INK = rgb(21/255,21/255,21/255), GREY = rgb(85/255,85/255,85/255),
+        LIGHT = rgb(204/255,204/255,204/255), TAN = rgb(242/255,230/255,194/255), RULE = rgb(187/255,187/255,187/255),
+        TBCC = rgb(138/255,100/255,24/255), WHITE = rgb(1,1,1);
+  let page, y;
+  const pages = [];
+  function newPage(){ page = pdf.addPage([W, H]); pages.push(page); y = TOP; }
+  function need(h){ if(y - h < BOTTOM) newPage(); }
+  const S = t => pdfSafe(String(t ?? '').replace(/[\t\r]/g,' '));
+  function spaced(t, x, yy, size, font, color, sp){ for(const ch of t){ page.drawText(ch, { x, y:yy, size, font, color }); x += font.widthOfTextAtSize(ch, size) + sp; } }
+  // Wrap runs of [text, font] into lines of runs; honours \n
+  function wrapRuns(runs, size, maxW){
+    const lines = [[]]; let w = 0;
+    for(const [text, font] of runs){
+      const parts = String(text).split('\n');
+      parts.forEach((part, pi) => {
+        if(pi > 0){ lines.push([]); w = 0; }
+        for(const tok of S(part).split(/(\s+)/)){
+          if(!tok) continue;
+          const isSpace = /^\s+$/.test(tok);
+          const tw = font.widthOfTextAtSize(isSpace ? ' ' : tok, size);
+          const line = lines[lines.length-1];
+          if(isSpace){ if(line.length) { line.push([' ', font]); w += tw; } continue; }
+          if(w + tw > maxW && line.length){
+            while(line.length && line[line.length-1][0] === ' '){ w -= line[line.length-1][1].widthOfTextAtSize(' ', size); line.pop(); }
+            lines.push([[tok, font]]); w = tw;
+          } else { line.push([tok, font]); w += tw; }
+        }
+      });
+    }
+    return lines;
+  }
+  function drawLine(runs, x, yy, size, color){ for(const [t, f] of runs){ page.drawText(t, { x, y:yy, size, font:f, color }); x += f.widthOfTextAtSize(t, size); } }
+  function para(runs, x, maxW, size, color, lh){
+    const lines = wrapRuns(runs, size, maxW);
+    lines.forEach(ln => { need(lh); y -= lh; drawLine(ln, x, y + (lh - size)*0.35, size, color); });
+  }
+  const SEC_GAP = 8, SEC_H = 15, SEC_AFTER = 4;
+  function sectionBar(title, x, w){
+    page.drawRectangle({ x, y:y-SEC_GAP-SEC_H, width:w, height:SEC_H, color:BAR });
+    page.drawRectangle({ x, y:y-SEC_GAP-SEC_H, width:3.5, height:SEC_H, color:GOLD });
+    spaced(title.toUpperCase(), x+10, y-SEC_GAP-SEC_H+4.6, 8.5, bold, WHITE, 1);
+  }
+  function section(title){
+    need(SEC_GAP + SEC_H + SEC_AFTER + 26);
+    sectionBar(title, L, CW);
+    y -= SEC_GAP + SEC_H + SEC_AFTER;
+  }
+  // Two-column key/value table; measured first so side-by-side tables can share a row
+  const T_SIZE = 9, T_LH = 11, T_PAD = 6;
+  function tableLayout(rows, w){
+    const thW = Math.round(w*0.42);
+    return { thW, w, rows: rows.map(([k, v, strong]) => {
+      const tbc = v === 'To be confirmed';
+      const vf = tbc ? ital : (strong ? bold : reg), vs = strong && !tbc ? 10.5 : T_SIZE;
+      const kl = wrapRuns([[k, bold]], T_SIZE, thW - T_PAD*2), vl = wrapRuns([[v, vf]], vs, w - thW - T_PAD*2);
+      return { kl, vl, vs, tbc, h: Math.max(kl.length, vl.length) * T_LH + 6 };
+    }) };
+  }
+  const tableHeight = t => t.rows.reduce((s, r) => s + r.h, 0);
+  function drawTable(t, x){
+    let yy = y;
+    t.rows.forEach(r => {
+      page.drawRectangle({ x, y:yy-r.h, width:t.thW, height:r.h, color:TAN, borderColor:RULE, borderWidth:0.75 });
+      page.drawRectangle({ x:x+t.thW, y:yy-r.h, width:t.w-t.thW, height:r.h, borderColor:RULE, borderWidth:0.75 });
+      r.kl.forEach((ln,i) => drawLine(ln, x+T_PAD, yy - 3 - T_LH*(i+1) + 2.8, T_SIZE, INK));
+      r.vl.forEach((ln,i) => drawLine(ln, x+t.thW+T_PAD, yy - 3 - T_LH*(i+1) + 2.8, r.vs, r.tbc ? TBCC : INK));
+      yy -= r.h;
+    });
+  }
+  // Schedule and Rate & term sit side by side to keep the proposal on one page
+  function tablePair([t1, rows1], [t2, rows2]){
+    const gap = 14, w = (CW - gap) / 2;
+    const a = tableLayout(rows1, w), b = tableLayout(rows2, w);
+    need(SEC_GAP + SEC_H + SEC_AFTER + Math.max(tableHeight(a), tableHeight(b)));
+    sectionBar(t1, L, w); sectionBar(t2, L + w + gap, w);
+    y -= SEC_GAP + SEC_H + SEC_AFTER;
+    drawTable(a, L); drawTable(b, L + w + gap);
+    y -= Math.max(tableHeight(a), tableHeight(b));
+  }
+  function bullets(items, numbered){
+    const size = 9.5, lh = 11.8;
+    items.forEach((runs, i) => {
+      const lines = wrapRuns(runs, size, CW - 16);
+      need(lines.length*lh + 1.5);
+      const mark = numbered ? `${i+1}.` : '•';
+      lines.forEach((ln, li) => {
+        y -= lh;
+        if(li === 0) page.drawText(mark, { x: L + (numbered ? 2 : 4), y: y+2.8, size, font:reg, color:INK });
+        drawLine(ln, L+14, y+2.8, size, INK);
+      });
+      y -= 1.5;
+    });
+  }
+
+  newPage();
+  // Header band
+  const hh = 58;
+  page.drawRectangle({ x:L, y:y-hh, width:CW, height:hh, color:BLACK });
+  page.drawRectangle({ x:L, y:y-hh, width:CW, height:3, color:GOLD });
+  page.drawImage(logo, { x:L+9, y:y-hh+7, width:46, height:46 });
+  spaced('LION SECURITY SERVICES', L+64, y-26, 14, bold, GOLDLT, 1.6);
+  page.drawText('Unarmed Security · South King County, WA', { x:L+64, y:y-40, size:8.5, font:reg, color:rgb(221/255,221/255,221/255) });
+  [['(253) 251-4551', reg, LIGHT], ['contact@lionofseattle.com', reg, LIGHT], ['Licensed & Insured', bold, GOLDLT]].forEach(([t,f,col], i) => {
+    page.drawText(t, { x: R - 12 - f.widthOfTextAtSize(t, 8), y: y-19-i*11, size:8, font:f, color:col });
+  });
+  y -= hh + 21;
+  page.drawText('Security Service Proposal', { x:L, y, size:15, font:bold, color:INK });
+  y -= 5;
+
+  // Meta grid
+  const colW = (CW - 20) / 2, labW = 66;
+  const meta = [[['Prepared for', c.preparedFor], ['Date', c.date]], [['Site', c.site || 'To be confirmed'], ['Valid until', c.valid]],
+                [['Property type', c.type], ['Prepared by', 'Karim Harakat, COO']]];
+  meta.forEach(pair => {
+    const cells = pair.map(([k, v]) => ({ k, lines: wrapRuns([[v, v==='To be confirmed' ? ital : reg]], 9, colW - labW) }));
+    const rh = Math.max(...cells.map(c2 => c2.lines.length)) * 11.5 + 1;
+    cells.forEach((cell, ci) => {
+      const x = L + ci*(colW + 20);
+      page.drawText(cell.k, { x, y: y-10, size:9, font:bold, color:GREY });
+      cell.lines.forEach((ln, li) => drawLine(ln, x + labW, y - 10 - li*11.5, 9, INK));
+    });
+    y -= rh;
+  });
+  y -= 3;
+  para([[c.intro, reg]], L, CW, 9.5, INK, 12.5);
+
+  section('Scope of services');
+  if(c.scope.length) bullets(c.scope.map(([b, t]) => [[b + ':', bold], [' ' + t, reg]]));
+  else { y -= 12; page.drawText('To be confirmed', { x:L, y:y+2.8, size:9.5, font:ital, color:TBCC }); }
+  tablePair(['Schedule', c.schedule], ['Rate & term', c.rateRows.map(([k, v]) => [k, v, k === 'Rate'])]);
+  section("What's included");
+  bullets(PROP_INCLUDED.map(t => [[t, reg]]));
+  section('Next steps');
+  bullets([
+    [['Review this proposal and send us any changes.', reg]],
+    [['Sign the service agreement.', reg]],
+    [['Confirm the start date, keys/access, and your incident contact.', reg]],
+    [['We start service on ', reg], [c.start, bold], ['.', reg]],
+  ], true);
+
+  // Signatures
+  need(58); y -= 36;
+  const sw = (CW - 28) / 2;
+  [['Client signature / date', c.client], ['Karim Harakat, COO / date', 'Lion Security Services, LLC']].forEach(([a, b], i) => {
+    const x = L + i*(sw + 28);
+    page.drawLine({ start:{x, y}, end:{x:x+sw, y}, thickness:0.75, color:rgb(0.2,0.2,0.2) });
+    page.drawText(a, { x, y:y-10, size:8.5, font:reg, color:GREY });
+    if(b) page.drawText(S(b).slice(0, 70), { x, y:y-21, size:8.5, font:reg, color:GREY });
+  });
+
+  // Footer on every page
+  const fl = [['Lion Security Services, LLC', bold, INK], [' · Unarmed security · Licensed & Insured', reg, GREY]];
+  const fr = '(253) 251-4551 · contact@lionofseattle.com';
+  pages.forEach((p, i) => {
+    p.drawLine({ start:{x:L, y:36}, end:{x:R, y:36}, thickness:1.5, color:GOLD });
+    let x = L; fl.forEach(([t, f, col]) => { p.drawText(t, { x, y:25, size:8, font:f, color:col }); x += f.widthOfTextAtSize(t, 8); });
+    const right = pages.length > 1 ? `${fr}  ·  Page ${i+1} of ${pages.length}` : fr;
+    p.drawText(right, { x: R - reg.widthOfTextAtSize(right, 8), y:25, size:8, font:reg, color:GREY });
+  });
+  return pdf.save();
+}
+
+function propFileName(c){
+  const slug = (c.client || 'Client').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) || 'Client';
+  return `Lion-Security-Proposal-${slug}-${$('propDate').value || localYmd()}.pdf`;
+}
+async function propPdfBytes(){
+  const c = propContent(propData());
+  const key = JSON.stringify(c);
+  if(propPdfCache.key !== key) propPdfCache = { key, bytes: await buildProposalPdf(c) };
+  return { bytes: propPdfCache.bytes, c };
+}
+// Build ahead of time so the Share tap can call navigator.share right away (iOS needs the tap to be fresh)
+let propWarmTimer;
+function propWarmPdf(){ clearTimeout(propWarmTimer); propWarmTimer = setTimeout(()=>{ propPdfBytes().catch(()=>{}); }, 250); }
+
+$('btnPropShare').addEventListener('click', async ()=>{
+  const btn = $('btnPropShare');
+  if(btn.disabled) return;
+  const v = propData();
+  if(!v.propClient.trim()){ toast('Add the client business name first.'); setPropView('form'); $('propClient').focus(); return; }
+  if(!v.svcs.length){ toast('Pick at least one service.'); setPropView('form'); return; }
+  const original = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'Making PDF…';
+  try{
+    const { bytes, c } = await propPdfBytes();
+    const name = propFileName(c);
+    const file = typeof File === 'function' ? new File([bytes], name, { type:'application/pdf' }) : null;
+    if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+      try{ await navigator.share({ files:[file], title:'Security Service Proposal' }); }
+      catch(e){
+        if(e && e.name === 'AbortError') {}
+        else if(e && e.name === 'NotAllowedError') toast('PDF is ready. Tap Share PDF again.');
+        else { downloadBlob(bytes, name, 'application/pdf'); toast('Downloaded the PDF.'); }
+      }
+    } else {
+      downloadBlob(bytes, name, 'application/pdf');
+      toast('Downloaded the PDF.');
+    }
+    if(!c.hasRate) toast('Heads up: the rate is blank, so it shows as “To be confirmed”.', 4200);
+  }catch(err){ toast('Couldn\'t make the PDF: ' + err.message); }
+  finally{ btn.innerHTML = original; btn.disabled = false; }
+});
+
+$('btnPropPrint').addEventListener('click', ()=>{
+  propRender(); setPropView('doc');
+  const pg = $('pg-proposal');
+  pg.classList.add('print-me');
+  setTimeout(()=>{ window.print(); setTimeout(()=>pg.classList.remove('print-me'), 1000); }, 150);
+});
+
+// ---- Turn into agreement: copies the basics into the agreement form ----
+// Returns false if the owner backs out of replacing an agreement that's already filled in.
+function propToAgreement(v){
+  const has = ['org','clientName','addr'].some(f => $(f).value.trim());
+  if(has && !confirm('Replace the client, contact, address, start date and rate on the agreement you\'re working on?')) return false;
+  $('org').value = v.propClient.trim();
+  $('clientName').value = v.propContact.trim();
+  $('addr').value = v.propSite.trim();
+  const email = String(v.propEmail || v.email || '').trim();
+  if(email) $('clientEmail').value = email;
+  const pt = document.querySelector(`input[name=agrPropType][value="${v.propType==='apartment'?'apartment':'retail'}"]`);
+  if(pt && v.propType) pt.checked = true;
+  if(v.propStart) $('start').value = v.propStart;
+  const ongoing = document.querySelector('input[name=etype][value=ongoing]'); if(ongoing) ongoing.checked = true;
+  const rate = parseFloat(v.propRate);
+  if(rate > 0){ $('rate').value = String(rate); rateManual = true; }
+  render();
+  setAgrView('form');
+  showPage('pg-agreement');
+  toast('Agreement started. Add guards, hours and an end date.', 4200);
+  return true;
+}
+// Marks the proposal Converted and remembers it, so the agreement link made next gets tied to it.
+async function propMarkConverted(id){
+  propPendingAgr = id; localSet(PROP_PENDING_AGR_KEY, id);
+  const rows = await rest(`proposals?id=eq.${encodeURIComponent(id)}`, { method:'PATCH', headers:{ 'Prefer':'return=representation' },
+    body: JSON.stringify({ status:'converted', converted_at: new Date().toISOString() }) });
+  if(!Array.isArray(rows) || !rows.length) throw new Error('proposal not found');
+  if(id === propOpenId){
+    const wasDirty = propDirty();
+    $('propStatus').value = 'converted';
+    if(!wasDirty) propOpenSnap = propKey(propData());
+    else if(propOpenSnap){ const snap = JSON.parse(propOpenSnap); snap.status = 'converted'; propOpenSnap = JSON.stringify(snap); }
+    propRender();
+  }
+  loadProposals();
+}
+const propConvertFailed = e => { console.error('proposal convert failed:', e); toast('Agreement started, but the proposal wasn\'t marked Converted: ' + propErrText(e), 5200); };
+// Open proposal: save it first if it's new or edited, then hand off
+async function propConvertOpen(){
+  const btn = $('btnPropToAgr');
+  if(btn.disabled) return;
+  let id = propOpenId, saveErr = null;
+  if(!id || propDirty()){
+    btn.disabled = true;
+    try{ id = (await propSave()).id; }
+    catch(e){ console.error('proposal save failed:', e); saveErr = e; id = null; }
+    finally{ btn.disabled = false; }
+  }
+  if(!propToAgreement(propData())) return;
+  if(id) propMarkConverted(id).catch(propConvertFailed);
+  else toast('Agreement started, but the proposal couldn\'t be saved: ' + propErrText(saveErr), 5200);
+}
+function propConvertRow(id){
+  if(id === propOpenId) return propConvertOpen();
+  const r = Array.isArray(propList) && propList.find(x => x.id === id);
+  if(!r || !propToAgreement(propRowData(r))) return;
+  propMarkConverted(id).catch(propConvertFailed);
+}
+// Called right after the agreement flow creates its share link. Never blocks or breaks that flow.
+async function propLinkAgreement(linkId){
+  const pid = propPendingAgr;
+  if(!pid || !linkId) return;
+  propForgetPendingAgr();
+  try{
+    await rest(`proposals?id=eq.${encodeURIComponent(pid)}`, { method:'PATCH', headers:{ 'Prefer':'return=minimal' }, body: JSON.stringify({ agreement_id: linkId }) });
+  }catch(e){ console.error('proposal → agreement link failed:', e); }
+}
+function propForgetPendingAgr(){ propPendingAgr = null; localDel(PROP_PENDING_AGR_KEY); }
+$('btnPropToAgr').addEventListener('click', propConvertOpen);
+
+propLoad();
+
 /* ================= APP SHELL: navigation, sign-in, boot ================= */
-const PAGE_TITLES = { 'pg-agreement':'Agreements', 'pg-records':'Records', 'pg-team':'Team', 'pg-settings':'Settings' };
+const PAGE_TITLES = { 'pg-agreement':'Agreements', 'pg-proposal':'Proposals', 'pg-records':'Records', 'pg-team':'Team', 'pg-settings':'Settings' };
 function showPage(id, push=true){
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on', p.id===id));
   document.querySelectorAll('#tabbar button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.page===id)));
   $('agrActions').hidden = id !== 'pg-agreement';
+  $('propActions').hidden = id !== 'pg-proposal';
   $('barSub').textContent = PAGE_TITLES[id] || 'Operations';
+  document.body.dataset.mode = id==='pg-proposal' ? 'proposal' : id==='pg-agreement' ? 'agreement' : 'other';
   window.scrollTo(0,0);
   if(id==='pg-records') loadRecords(false);
   if(id==='pg-team') loadTeam(false);
+  if(id==='pg-proposal') loadProposals();
   if(push){ const h = '#' + id.replace('pg-',''); if(location.hash !== h) history.replaceState(null,'',h); }
 }
 document.querySelectorAll('#tabbar button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
@@ -4038,7 +5028,7 @@ function startApp(){
   renderDbNotice();
   if(!$('start').value) $('start').value = new Date().toISOString().slice(0,10);
   loadCompany().then(render);
-  const want = { '#records':'pg-records', '#team':'pg-team', '#settings':'pg-settings', '#agreement':'pg-agreement' }[location.hash] || 'pg-agreement';
+  const want = { '#records':'pg-records', '#team':'pg-team', '#settings':'pg-settings', '#agreement':'pg-agreement', '#proposal':'pg-proposal' }[location.hash] || 'pg-agreement';
   showPage(want, false);
   // warm the lists in the background so the tabs open instantly
   setTimeout(()=>{ loadRecords(false); loadTeam(false); }, 400);
@@ -4073,8 +5063,6 @@ function startApp(){
     else publicMessage('This link doesn\'t work', `It may be broken or replaced. Ask ${COMPANY} for a new one.`);
     return;
   }
-  const legacy = fromHash(hash);
-  if(legacy){ enterSignMode(legacy); return; }
 
   // Owner side
   const { data } = await sb.auth.getSession();
@@ -4090,7 +5078,7 @@ sb.auth.onAuthStateChange((event, session) => {
 
 // A different link opened in the same tab (hash-only change) → load it fresh.
 window.addEventListener('hashchange', ()=>{
-  if(/(?:^|[#&])(id|cr|hire|onboard|s)=/.test(location.hash) || /type=recovery/.test(location.hash)) location.reload();
+  if(/(?:^|[#&])(id|cr|hire|onboard)=/.test(location.hash) || /type=recovery/.test(location.hash)) location.reload();
 });
 
 </script>
