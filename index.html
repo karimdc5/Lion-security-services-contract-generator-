@@ -1660,9 +1660,10 @@ function monthsCovered(startStr, endStr){
   return m;
 }
 
-// Standard rate tier: events $45; contracts by term length (from start/end dates).
+// Standard rate tier: events and days/weeks jobs $45; ongoing contracts by term length (from start/end dates).
 function autoRateInfo(raw){
   if(raw.etype==='single') return { rate:45, label:'one-time event' };
+  if(raw.etype==='short') return { rate:45, label:'short-term job, event rate' };
   const months = monthsCovered(raw.start, raw.end);
   if(months>=24) return { rate:45, label:'24+ month contract' };
   if(months>=12) return { rate:47, label:'12+ month contract' };
@@ -1686,8 +1687,8 @@ function computeAll(raw){
   const g=+raw.guards||0, h=+raw.hours||0, r=(+raw.rate>0) ? +raw.rate : autoRate(raw);
   const bh = h>0 ? Math.max(h,4) : 0; // 4-hour minimum per guard, per shift
   const perShiftHours = g*bh;
-  // events only: hours past 8 per guard per shift at 1.5×; holiday shifts are 1.5× on all hours (no stacking)
-  const otHours = raw.etype==='single' ? Math.max(bh-8,0) : 0;
+  // events and days/weeks jobs: hours past 8 per guard per shift at 1.5×; holiday shifts are 1.5× on all hours (no stacking)
+  const otHours = raw.etype!=='ongoing' ? Math.max(bh-8,0) : 0;
   const perShiftTotal = g*((bh-otHours)*r + otHours*r*1.5);
   const holidayShiftTotal = perShiftHours*r*1.5;
   const rushMult = raw.rush ? 1.15 : 1;
@@ -1781,7 +1782,7 @@ function paint(d){
   $('d_latefee').textContent = isNetBased
     ? '5% late fee if not received within 30 days past due · additional 1.5% per month after 60 days'
     : '5% late fee if not received within 30 days of completion · additional 1.5% per month after 60 days';
-  $('d_extra').textContent = d.etype==='single'
+  $('d_extra').textContent = d.etype!=='ongoing'
     ? 'Hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client’s prior written approval'
     : 'Additional hours beyond the scheduled coverage require Client’s prior written approval and are billed at the same hourly rate';
   $('d_min').textContent = '4-hour minimum per guard, per shift';
