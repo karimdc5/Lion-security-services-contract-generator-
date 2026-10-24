@@ -460,6 +460,8 @@ body.public .modebanner{display:none!important}
 .sheet .stat.hero .k{color:var(--goldlt)}
 .sheet .stat .v{font:700 15px/1 Arial;color:var(--navy);margin-top:7px}
 .sheet .stat.hero .v{color:#fff}
+.sheet .taxline{font-size:10.5px;text-align:right;color:#444;margin:-6px 0 12px}
+.sheet .taxline b{color:var(--navy)}
 .sheet .callout{background:var(--cream);padding:13px 16px;font-size:10.5px;line-height:1.5}
 .sheet .callout p{margin:0 0 6px}.sheet .callout p:last-child{margin:0}
 .sheet .callout b{color:var(--navy)}
@@ -778,6 +780,8 @@ body.public .modebanner{display:none!important}
       <div class="tiles">
         <div class="tile"><div class="k" id="ghLbl">Billable guard-hours</div><input id="ghours" type="text" readonly tabindex="-1" placeholder="—"></div>
         <div class="tile"><div class="k" id="depositLbl">Deposit due at signing</div><input id="deposit" type="text" readonly tabindex="-1" placeholder="—"></div>
+        <div class="tile" id="subTile"><div class="k">Services subtotal</div><input id="subtotal" type="text" readonly tabindex="-1" placeholder="—"></div>
+        <div class="tile" id="taxTile"><div class="k" id="taxLbl">WA sales tax</div><input id="taxAmt" type="text" readonly tabindex="-1" placeholder="—"></div>
         <div class="tile hero" style="grid-column:1 / -1"><div class="k" id="totLbl">Estimated total</div><input id="total" type="text" readonly tabindex="-1" placeholder="Enter a rate"></div>
       </div>
       <div class="field" style="border-top:1px solid var(--hair)"><div class="hint" id="depHint" style="margin:0">The deposit is figured automatically.</div></div>
@@ -843,6 +847,7 @@ body.public .modebanner{display:none!important}
         <div class="stat"><div class="k" id="d_depk">DEPOSIT (50% OF TOTAL)</div><div class="v" id="d_dep">—</div></div>
         <div class="stat hero"><div class="k" id="d_totk">ESTIMATED TOTAL</div><div class="v" id="d_total">—</div></div>
       </div>
+      <div class="taxline" id="d_taxRow" style="display:none">Services subtotal <b id="d_sub">—</b> &nbsp;·&nbsp; <span id="d_taxk">WA sales tax</span> <b id="d_tax">—</b> &nbsp;·&nbsp; Total incl. tax <b id="d_totx">—</b></div>
       <div class="cols">
         <div>
           <h3 class="sub">Payment terms</h3>
@@ -852,9 +857,10 @@ body.public .modebanner{display:none!important}
             <li id="d_discount">3% discount for payment received within 7 days of invoice</li>
             <li id="d_latefee">5% late fee if not received within 30 days past due · additional 1.5% per month after 60 days</li>
             <li id="d_min">4-hour minimum per guard, per shift</li>
-            <li id="d_extra">Hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client's prior written approval</li>
-            <li id="d_holiday">Shifts on New Year's Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year's Eve are billed at 1.5× on all hours (not combined with overtime)</li>
+            <li id="d_extra">Extended-shift rate: hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client's prior written approval</li>
+            <li id="d_holiday">Shifts on New Year's Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year's Eve are billed at 1.5× on all hours (not combined with the extended-shift rate)</li>
             <li id="d_rush" style="display:none">Rush booking (under 48 hours' notice): 15% surcharge included in the total</li>
+            <li id="d_taxterm" style="display:none"></li>
           </ul>
         </div>
         <div>
@@ -986,7 +992,11 @@ body.public .modebanner{display:none!important}
         <div class="field"><label for="propRate">Hourly rate</label><input id="propRate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ per hour"></div>
         <div class="field"><label for="propMonthlyHours">Est. monthly hours</label><input id="propMonthlyHours" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Hours"></div>
       </div>
-      <div class="tiles"><div class="tile hero" style="grid-column:1 / -1"><div class="k">Estimated monthly total</div><input id="propMonthlyTotal" type="text" readonly tabindex="-1" placeholder="Enter rate and hours"></div></div>
+      <div class="tiles">
+        <div class="tile" id="propSubTile"><div class="k">Monthly subtotal</div><input id="propMonthlySub" type="text" readonly tabindex="-1" placeholder="—"></div>
+        <div class="tile" id="propTaxTile"><div class="k" id="propTaxLbl">WA sales tax</div><input id="propMonthlyTax" type="text" readonly tabindex="-1" placeholder="—"></div>
+        <div class="tile hero" style="grid-column:1 / -1"><div class="k" id="propTotLbl">Estimated monthly total</div><input id="propMonthlyTotal" type="text" readonly tabindex="-1" placeholder="Enter rate and hours"></div>
+      </div>
       <div class="field" style="border-top:1px solid var(--hair)"><label for="propTerm">Term</label><input id="propTerm"></div>
       <div class="field"><label for="propBilling">Billing</label><input id="propBilling"></div>
     </div>
@@ -1097,6 +1107,12 @@ body.public .modebanner{display:none!important}
     </div>
     <div class="field"><label for="coRate">Default rate per guard, per hour</label><input id="coRate" type="number" step="0.01" inputmode="decimal" placeholder="$"></div>
   </div>
+
+  <div class="gtitle">Sales tax</div>
+  <div class="group">
+    <div class="field"><label for="coTax">WA sales tax rate (%)</label><input id="coTax" type="number" min="0" step="0.01" inputmode="decimal" value="10.4" placeholder="10.4"></div>
+  </div>
+  <div class="gnote">Added on top of agreement and proposal totals, and to the deposit. Left blank, it uses 10.4%. Enter 0 to leave sales tax off.</div>
   <div class="cosave">
     <button type="button" class="btn btn-primary btn-block" id="btnCoSave">Save settings</button>
     <span class="chip warn" id="coDirty" hidden>Unsaved changes</span>
@@ -1801,6 +1817,15 @@ async function deleteShareLink(id){
 
 /* ---------- pure helpers ---------- */
 const money = n => (n||n===0) ? '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+const cents = x => Math.round((+x||0)*100)/100;
+// WA sales tax rate from Settings: blank or invalid falls back to 10.4%, 0 turns tax off.
+const DEFAULT_TAX_RATE = 10.4;
+function taxRateOf(v){
+  const s = String(v ?? '').trim();
+  const n = Number(s);
+  return s !== '' && isFinite(n) && n >= 0 && n < 100 ? n : DEFAULT_TAX_RATE;
+}
+const taxLabel = r => `WA sales tax (${r}%)`;
 const initials = s => (s||'').replace(/[^A-Za-z ]/g,'').trim().split(/\s+/)
   .filter(w=>w && !['the','of','and','for','a','an'].includes(w.toLowerCase()))
   .map(w=>w[0].toUpperCase()).join('').slice(0,4) || 'XXX';
@@ -1863,7 +1888,7 @@ function collectData(){
     autoRenew:$('autoRenew')?.checked,
     daysSet: [0,1,2,3,4,5,6].map(i => $('dow'+i) ? $('dow'+i).checked : true),
     pattern:$('pattern').value, posts:$('posts').value, orders:$('orders').value, hazards:$('hazards').value,
-    rate:$('rate').value, netTerms:$('netTerms').value,
+    rate:$('rate').value, taxRate: taxRateOf($('coTax').value), netTerms:$('netTerms').value,
     firstMonthBilling: $('firstMonthBilling')?.checked || false,
     rush: $('rush')?.checked || false,
     coLic:$('coLic').value, coCarrier:$('coCarrier').value, coPolicy:$('coPolicy').value, coCoverage:$('coCoverage').value,
@@ -1944,11 +1969,11 @@ function dowLabel(daysSet){
   return checked.map(i=>names[i]).join(', ');
 }
 
-function computeAll(raw){
+function computeAllPreTax(raw){
   const g=+raw.guards||0, h=+raw.hours||0, r=(+raw.rate>0) ? +raw.rate : autoRate(raw);
   const bh = h>0 ? Math.max(h,4) : 0; // 4-hour minimum per guard, per shift
   const perShiftHours = g*bh;
-  // events and days/weeks jobs: hours past 8 per guard per shift at 1.5×; holiday shifts are 1.5× on all hours (no stacking)
+  // events and days/weeks jobs: extended-shift rate — hours past 8 per guard per shift at 1.5×; holiday shifts are 1.5× on all hours (no stacking)
   const otHours = raw.etype!=='ongoing' ? Math.max(bh-8,0) : 0;
   const perShiftTotal = g*((bh-otHours)*r + otHours*r*1.5);
   const holidayShiftTotal = perShiftHours*r*1.5;
@@ -1987,6 +2012,25 @@ function computeAll(raw){
   return {...raw, rate:r, gh, shifts, holidayShifts, otHours, total, deposit, depositPct};
 }
 
+// WA sales tax goes on top of the services subtotal; the deposit is figured on the tax-inclusive amount.
+// Links made before sales tax have no taxRate and stay untaxed. A sent link stores taxRate, subtotal,
+// taxAmt, total and deposit, and those stored values are what the client sees and signs (and what
+// sign_agreement hashes), never the viewer's own Settings.
+function computeAll(raw){
+  const d = computeAllPreTax(raw);
+  const taxRate = raw.taxRate != null && raw.taxRate !== '' ? (+raw.taxRate || 0) : 0;
+  const subtotal = cents(d.total), taxAmt = cents(subtotal*taxRate/100), total = cents(subtotal + taxAmt);
+  let deposit;
+  if(d.depositPct) deposit = cents(total*d.depositPct);
+  else{ const depSub = cents(d.deposit); deposit = cents(depSub + cents(depSub*taxRate/100)); }   // first month upfront, plus tax
+  const out = {...d, perShiftTotal: d.perShiftTotal != null ? cents(d.perShiftTotal) : d.perShiftTotal, taxRate, subtotal, taxAmt, total, deposit};
+  if(raw.subtotal != null && raw.taxAmt != null && raw.total != null){
+    out.subtotal = +raw.subtotal; out.taxAmt = +raw.taxAmt; out.total = +raw.total;
+    if(raw.deposit != null) out.deposit = +raw.deposit;
+  }
+  return out;
+}
+
 /* ---------- paint the document ---------- */
 function paint(d){
   put('d_agr', d.agrNo||'—');
@@ -2020,14 +2064,20 @@ function paint(d){
   const isFMU = isOngoing || (d.etype==='short' && d.firstMonthBilling);
   $('d_ghk').textContent = isFMU ? 'BILLABLE GUARD-HOURS / SHIFT' : 'BILLABLE GUARD-HOURS';
   $('d_depk').textContent = isFMU ? 'DUE AT SIGNING (1ST MONTH)' : `DEPOSIT (${pct}% OF TOTAL)`;
-  $('d_totk').textContent = isFMU ? 'EST. TOTAL (FULL TERM)' : 'ESTIMATED TOTAL';
+  const taxed = d.taxRate > 0;
+  $('d_totk').textContent = (isFMU ? 'EST. TOTAL (FULL TERM)' : 'ESTIMATED TOTAL') + (taxed ? ' INCL. TAX' : '');
   put('d_dep', d.deposit?money(d.deposit):'—');
   put('d_total', d.total?money(d.total):'—');
+  $('d_taxRow').style.display = taxed ? '' : 'none';
+  $('d_taxk').textContent = taxLabel(d.taxRate);
+  put('d_sub', d.total?money(d.subtotal):'—');
+  put('d_tax', d.total?money(d.taxAmt):'—');
+  put('d_totx', d.total?money(d.total):'—');
   const net=d.netTerms||'NET 15';
   if(isFMU){
     $('d_net').textContent = `First month (${money(d.deposit)}, ${d.firstMonthShifts||0} shifts) due upfront to begin service. Remaining months billed ${net} per invoice`;
     if(d.perShiftTotal){
-      $('d_net').textContent += ` — billed at ${money(d.perShiftTotal)} per shift, approximately ${d.totalShifts||0} shifts over the ${d.termLen||'__'}-${(d.termUnit||'month').replace(/s$/,'')} term`
+      $('d_net').textContent += ` — billed at ${money(d.perShiftTotal)} per shift${taxed ? ' plus WA sales tax' : ''}, approximately ${d.totalShifts||0} shifts over the ${d.termLen||'__'}-${(d.termUnit||'month').replace(/s$/,'')} term`
         + (d.holidayShifts ? ` (${d.holidayShifts} holiday shift${d.holidayShifts>1?'s':''} at 1.5×)` : '');
     }
   }else{
@@ -2046,12 +2096,16 @@ function paint(d){
     ? '5% late fee if not received within 30 days past due · additional 1.5% per month after 60 days'
     : '5% late fee if not received within 30 days of completion · additional 1.5% per month after 60 days';
   $('d_extra').textContent = d.etype!=='ongoing'
-    ? 'Hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client’s prior written approval'
+    ? 'Extended-shift rate: hours beyond 8 per guard per shift are billed at 1.5× the hourly rate; additional hours require Client’s prior written approval'
     : 'Additional hours beyond the scheduled coverage require Client’s prior written approval and are billed at the same hourly rate';
   $('d_min').textContent = '4-hour minimum per guard, per shift';
-  $('d_holiday').textContent = 'Shifts on New Year’s Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year’s Eve are billed at 1.5× on all hours (not combined with overtime)';
+  $('d_holiday').textContent = 'Shifts on New Year’s Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas and New Year’s Eve are billed at 1.5× on all hours (not combined with the extended-shift rate)';
   $('d_rush').textContent = 'Rush booking (under 48 hours’ notice): 15% surcharge included in the total';
   $('d_rush').style.display = d.rush ? '' : 'none';
+  $('d_taxterm').textContent = taxed
+    ? `${taxLabel(d.taxRate)} is added to every invoice and is included in the Estimated Total and the amount due at signing`
+    : '';
+  $('d_taxterm').style.display = taxed ? '' : 'none';
 
   if(isFMU){
     $('d_cx1').textContent = `The first month\u2019s payment is due at signing, before service begins, and is non-refundable`;
@@ -2212,14 +2266,19 @@ function render(){
   $('deposit').value = d.deposit ? money(d.deposit) : '';
   $('depositLbl').textContent = useFMU ? 'Due at signing (1st month)' : 'Deposit due at signing';
   $('ghLbl').textContent = useFMU ? 'Billable guard-hours per shift' : 'Billable guard-hours';
-  $('totLbl').textContent = useFMU ? 'Estimated total (full term)' : 'Estimated total';
+  $('totLbl').textContent = (useFMU ? 'Estimated total (full term)' : 'Estimated total') + (d.taxRate > 0 ? ', incl. tax' : '');
+  $('subTile').style.display = $('taxTile').style.display = d.taxRate > 0 ? '' : 'none';
+  $('taxLbl').textContent = taxLabel(d.taxRate);
+  $('subtotal').value = d.total ? money(d.subtotal) : '';
+  $('taxAmt').value = d.total ? money(d.taxAmt) : '';
   const pctH = Math.round((d.depositPct||0.5)*100);
   const extras = (+d.hours>0 && +d.hours<4 ? ' Hours include the 4-hour minimum per guard, per shift.' : '')
-    + (d.otHours ? ` Includes ${d.otHours} overtime hr per guard at 1.5×.` : '')
+    + (d.otHours ? ` Includes ${d.otHours} extended-shift hr per guard at 1.5×.` : '')
     + (d.holidayShifts ? ` Includes ${d.holidayShifts} holiday shift${d.holidayShifts>1?'s':''} at 1.5×.` : '')
-    + (d.rush ? ' Includes the 15% rush surcharge.' : '');
+    + (d.rush ? ' Includes the 15% rush surcharge.' : '')
+    + (d.taxRate > 0 && d.total ? ` Total and ${useFMU ? 'first month' : 'deposit'} include ${taxLabel(d.taxRate)}.` : '');
   $('depHint').textContent = useFMU
-    ? (d.perShiftTotal ? `Estimated total is the full term: ${money(d.perShiftTotal)}/shift × ${d.totalShifts||0} shifts (${dowLabel(d.daysSet)}) over ${d.termLen||'__'} ${d.termUnit||'months'}. First month (${money(d.deposit)}) is due upfront to begin service — pick NET 15 or NET 30 below for how the rest gets billed.` : 'Fill in start date, end date, and which days are worked to calculate the full-term total.')
+    ? (d.perShiftTotal ? `Estimated total is the full term: ${money(d.perShiftTotal)}/shift${d.taxRate > 0 ? ' plus tax' : ''} × ${d.totalShifts||0} shifts (${dowLabel(d.daysSet)}) over ${d.termLen||'__'} ${d.termUnit||'months'}. First month (${money(d.deposit)}) is due upfront to begin service — pick NET 15 or NET 30 below for how the rest gets billed.` : 'Fill in start date, end date, and which days are worked to calculate the full-term total.')
     : t==='short'
     ? `Deposit is calculated automatically — ${pctH}% of the estimated total, based on ${d.shifts||0} shift${d.shifts===1?'':'s'} (${dowLabel(d.daysSet)}). Non-refundable once the date is reserved.`
     : `Deposit is calculated automatically — ${pctH}% of the estimated total. Non-refundable once the date is reserved.`;
@@ -2258,7 +2317,7 @@ function missingFields(raw){
 
 
 // ---- Company settings: saved on this phone AND to the account, so every phone matches ----
-const COFIELDS = ['coLic','coCarrier','coPolicy','coCoverage','coSigner','coTitle','coRate'];
+const COFIELDS = ['coLic','coCarrier','coPolicy','coCoverage','coSigner','coTitle','coRate','coTax'];
 let saveTimer, lastSavedCompany = '', settingsRemote = null; // null = unknown, true/false after first try
 function companyValues(){ const o={}; COFIELDS.forEach(f=>o[f]=$(f).value); return o; }
 function updateCoDirty(){ $('coDirty').hidden = JSON.stringify(companyValues()) === lastSavedCompany; }
@@ -2330,6 +2389,7 @@ document.querySelectorAll('#agrForm input,#agrForm select,#agrForm textarea,#pg-
   el.addEventListener('input',render); el.addEventListener('change',render);
 });
 document.querySelectorAll('#pg-settings input').forEach(el=>el.addEventListener('input', updateCoDirty));
+$('coTax').addEventListener('input', ()=>{ try{ propRender(); }catch(e){} });
 
 // ---- Details / Preview ----
 function setAgrView(view){
@@ -2375,7 +2435,10 @@ $('btnLink').addEventListener('click', async ()=>{
   try{
     raw.agrNo = await claimAgrNumber();
     raw.genDate = fmtDate(new Date().toISOString().slice(0,10));
-    raw.total = Math.round((computeAll(raw).total || 0) * 100) / 100;   // the server records this as the amount
+    // Money is stored on the link itself, so the client view, the signed copy and the SHA-256 that
+    // sign_agreement takes all cover the exact tax rate and amounts. total (incl. tax) is what the server records as the amount.
+    const c = computeAll(raw);
+    Object.assign(raw, { taxRate: c.taxRate, subtotal: c.subtotal, taxAmt: c.taxAmt, total: c.total, deposit: c.deposit });
     const id = await saveShareLink('agreement', raw);
     if(!id){ toast('Couldn\'t save the agreement — check connection and try again', 4200); return; }
     try{ propLinkAgreement(id); }catch(e){}   // ties a converted proposal to this agreement; never blocks the link
@@ -4341,6 +4404,14 @@ function localYmd(d=new Date()){ return `${d.getFullYear()}-${String(d.getMonth(
 function addDaysYmd(ymd, n){ const [y,m,d] = (ymd||'').split('-').map(Number); if(!y) return ''; return localYmd(new Date(y, m-1, d+n)); }
 function propMoney(n){ return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}); }
 function propRateText(r){ return '$' + (Number.isInteger(r) ? String(r) : r.toFixed(2)) + '/hr'; }
+// Monthly estimate with WA sales tax from Settings (null when rate or hours are missing)
+function propMonthly(v){
+  const rate = parseFloat(v.propRate), hrs = parseFloat(v.propMonthlyHours);
+  const taxRate = taxRateOf($('coTax').value);
+  if(!(rate > 0 && hrs > 0)) return { taxRate, subtotal:null, taxAmt:null, total:null };
+  const subtotal = cents(rate*hrs), taxAmt = cents(subtotal*taxRate/100);
+  return { taxRate, subtotal, taxAmt, total: cents(subtotal + taxAmt) };
+}
 
 function propData(){
   const v = {}; PROP_TEXT.forEach(id => v[id] = $(id).value);
@@ -4360,6 +4431,7 @@ function propContent(v){
   const client = v.propClient.trim(), contact = v.propContact.trim();
   const site = v.propSite.trim().replace(/\s*\n\s*/g, ', ');
   const heard = v.propHeard.trim();
+  const m = propMonthly(v), est = n => n != null ? propMoney(n) : TBC;
   return {
     client, contact, site,
     preparedFor: [contact, client].filter(Boolean).join(', ') || TBC,
@@ -4377,7 +4449,9 @@ function propContent(v){
     rateRows: [
       ['Rate', hasRate ? propRateText(rate) : TBC],
       ['Estimated monthly hours', hasHrs ? String(hrs) : TBC],
-      ['Estimated monthly total', hasRate && hasHrs ? propMoney(rate*hrs) : TBC],
+      ...(m.taxRate > 0
+        ? [['Estimated monthly subtotal', est(m.subtotal)], [taxLabel(m.taxRate), est(m.taxAmt)], ['Estimated monthly total (incl. tax)', est(m.total)]]
+        : [['Estimated monthly total', est(m.total)]]),
       ['Term', v.propTerm.trim() || TBC],
       ['Billing', v.propBilling.trim() || TBC],
     ],
@@ -4427,8 +4501,13 @@ function propPreviewHtml(c){
 let propPdfCache = { key:'', bytes:null };
 function propRender(){
   const v = propData();
-  const rate = parseFloat(v.propRate), hrs = parseFloat(v.propMonthlyHours);
-  $('propMonthlyTotal').value = (rate > 0 && hrs > 0) ? propMoney(rate*hrs) : '';
+  const m = propMonthly(v), taxed = m.taxRate > 0;
+  $('propSubTile').style.display = $('propTaxTile').style.display = taxed ? '' : 'none';
+  $('propTaxLbl').textContent = taxLabel(m.taxRate);
+  $('propTotLbl').textContent = taxed ? 'Estimated monthly total, incl. tax' : 'Estimated monthly total';
+  $('propMonthlySub').value = m.subtotal != null ? propMoney(m.subtotal) : '';
+  $('propMonthlyTax').value = m.taxAmt != null ? propMoney(m.taxAmt) : '';
+  $('propMonthlyTotal').value = m.total != null ? propMoney(m.total) : '';
   $('propSheet').innerHTML = propPreviewHtml(propContent(v));
   localSet(PROP_KEY, v);
 }
@@ -5027,7 +5106,7 @@ function startApp(){
   setAvatar();
   renderDbNotice();
   if(!$('start').value) $('start').value = new Date().toISOString().slice(0,10);
-  loadCompany().then(render);
+  loadCompany().then(()=>{ render(); propRender(); });   // proposal totals use the saved sales tax rate
   const want = { '#records':'pg-records', '#team':'pg-team', '#settings':'pg-settings', '#agreement':'pg-agreement', '#proposal':'pg-proposal' }[location.hash] || 'pg-agreement';
   showPage(want, false);
   // warm the lists in the background so the tabs open instantly
