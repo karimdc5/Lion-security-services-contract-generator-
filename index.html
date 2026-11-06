@@ -905,7 +905,7 @@ body.public .modebanner{display:none!important}
         <div class="brandtx">
           <div class="name">LION SECURITY</div>
           <div class="llc">SERVICES, LLC</div>
-          <div class="contact">253-251-4551 &nbsp;·&nbsp; contact@lionofseattle.com &nbsp;·&nbsp; www.lionofseattle.com</div>
+          <div class="contact">253-251-4551 &nbsp;·&nbsp; contact@lionofseattle.com &nbsp;·&nbsp; www.lionofseattle.com<br>WA Security Guard Company License #26029315</div>
         </div>
       </div>
       <div class="right">
@@ -978,7 +978,7 @@ body.public .modebanner{display:none!important}
 
       <h2 class="sec">Licensing, Insurance &amp; Liability</h2>
       <div class="callout">
-        <p><b>Company licensing.</b> Company holds a valid Washington State private security guard company license (Lic. No. <span id="d_lic">____________</span><span class="ph-draft">[WA license # pending]</span>). All personnel assigned under this Agreement hold current, valid Washington unarmed private security guard licenses.</p>
+        <p><b>Company licensing.</b> Company holds a valid Washington State private security guard company license — <span id="d_lic">WA Security Guard Company License #26029315</span>. All personnel assigned under this Agreement hold current, valid Washington unarmed private security guard licenses.</p>
         <p><b>Insurance.</b> Company maintains commercial general liability insurance — Carrier: <span id="d_carrier">____________</span><span class="ph-draft">[Insurance carrier pending]</span> · Policy No.: <span id="d_policy">____________</span><span class="ph-draft">[Policy # pending]</span> · Coverage: <span id="d_cov">____________</span><span class="ph-draft">[Coverage pending]</span> per occurrence. A certificate of insurance is available on request. Upon written request and subject to insurer approval, Client may be added as an additional insured.</p>
         <p><b>Indemnification.</b> Company shall indemnify and hold Client harmless from claims arising from the negligent acts or omissions of Company personnel in the performance of duties under this Agreement. Client shall indemnify and hold Company harmless from claims arising from undisclosed site hazards, Client's own negligence, or conditions outside Company's reasonable control. Company's total liability to Client under this Agreement, whether arising in contract, tort, or otherwise, shall not exceed the coverage limit of Company's commercial general liability insurance policy stated above.</p>
         <p><b>Scope of authority.</b> Officers are unarmed and serve to observe, deter and report. They do not make arrests except a citizen's arrest where Washington law allows it, use no force beyond what Washington law permits, do not pursue or chase anyone, and do not handle cash, valuables or weapons. In an emergency they call 911 and then notify Client. Company is an independent contractor, not an employee or agent of Client.</p>
@@ -1193,14 +1193,14 @@ body.public .modebanner{display:none!important}
   <div class="pagehead"><div><h1>Settings</h1><p id="setSub">Company details that go on every agreement.</p></div></div>
   <div class="gtitle">Licensing and insurance</div>
   <div class="group">
-    <div class="field"><label for="coLic">WA security company license number</label><input id="coLic" placeholder="Leave blank until it's issued" autocomplete="off"></div>
+    <div class="field"><label for="coLic">WA security company license number</label><input id="coLic" value="WA Security Guard Company License #26029315" placeholder="WA Security Guard Company License #26029315" autocomplete="off"></div>
     <div class="field"><label for="coCarrier">Insurance company</label><input id="coCarrier" placeholder="Carrier name"></div>
     <div class="cols2">
       <div class="field"><label for="coPolicy">Policy number</label><input id="coPolicy" placeholder="Policy no."></div>
       <div class="field"><label for="coCoverage">Coverage per occurrence</label><input id="coCoverage" placeholder="e.g. 1,000,000" inputmode="numeric"></div>
     </div>
   </div>
-  <div class="gnote">Agreements can't be sent until the license number, insurance carrier, policy number and coverage are all filled in, because the document says you hold them. Washington requires at least $25,000 bodily injury and $25,000 property damage coverage for the company license.</div>
+  <div class="gnote">Company license on file: WA Security Guard Company License #26029315. Agreements can't be sent until the insurance carrier, policy number and coverage are filled in, because the document says you hold them. Washington requires at least $25,000 bodily injury and $25,000 property damage coverage for the company license.</div>
 
   <div class="gtitle">Who signs for the company</div>
   <div class="group">
@@ -1300,6 +1300,14 @@ $('btnTheme').addEventListener('click', () => {
 });
 
 const COMPANY = 'Lion Security Services, LLC';
+// Washington DOL security guard company license (UBI 606 130 172). Not the principal's personal guard license.
+const COMPANY_GUARD_LICENSE = 'WA Security Guard Company License #26029315';
+function companyGuardLicenseText(value){
+  const s = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if(!s || /pending|applied for|not yet|to be issued|leave blank|tbd|n\/a|^none$|^_+$/i.test(s)) return COMPANY_GUARD_LICENSE;
+  if(s === '26029315' || s === '#26029315') return COMPANY_GUARD_LICENSE;
+  return s;
+}
 const APP_VERSION = '2.0';
 const SUPABASE_URL = 'https://djkinciawtoqlxkpiesq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_29IrAUCUNA1zdT3qny3c9A_0wV339Ns';
@@ -2015,7 +2023,7 @@ function collectData(){
     rate:$('rate').value, taxRate: taxRateOf($('coTax').value), netTerms:$('netTerms').value,
     firstMonthBilling: $('firstMonthBilling')?.checked || false,
     rush: $('rush')?.checked || false,
-    coLic:$('coLic').value, coCarrier:$('coCarrier').value, coPolicy:$('coPolicy').value, coCoverage:$('coCoverage').value,
+    coLic:companyGuardLicenseText($('coLic').value), coCarrier:$('coCarrier').value, coPolicy:$('coPolicy').value, coCoverage:$('coCoverage').value,
     coSigner:$('coSigner').value, coTitle:$('coTitle').value,
   };
 }
@@ -2240,7 +2248,7 @@ function paint(d){
     $('d_cx2').textContent = 'Cancellation within 72 hours of start: full balance remains due — no refund';
   }
 
-  put('d_lic',d.coLic,'____________');
+  put('d_lic', companyGuardLicenseText(d.coLic));
   put('d_carrier',d.coCarrier,'____________');
   put('d_policy',d.coPolicy,'____________');
   put('d_cov',d.coCoverage?('$'+d.coCoverage):'','____________');
@@ -2434,7 +2442,7 @@ function missingFields(raw){
   if(!raw.end) missing.push('End date');
   if(raw.daysSet && !raw.daysSet.some(Boolean)) missing.push('Days worked');
   if(!raw.propType) missing.push('Property type');
-  if(!raw.coLic) missing.push('WA company license number (in Settings)');
+  if(!companyGuardLicenseText(raw.coLic)) missing.push('WA company license number (in Settings)');
   if(!raw.coCarrier) missing.push('Insurance carrier (in Settings)');
   if(!raw.coPolicy) missing.push('Insurance policy number (in Settings)');
   if(!raw.coCoverage) missing.push('Insurance coverage (in Settings)');
@@ -2496,6 +2504,9 @@ async function loadCompany(){
       $('coSyncNote').textContent = 'Saved to your account. Shows up on any phone you sign in on.';
     }catch(e){ settingsRemote = false; $('coSyncNote').textContent = 'Saved on this phone.'; }
   }
+  const licEl = $('coLic');
+  const licText = companyGuardLicenseText(licEl.value);
+  if(licEl.value !== licText) licEl.value = licText;
   lastSavedCompany = JSON.stringify(companyValues());
   updateCoDirty();
   seqCache = localGet('los:seq') || {};
@@ -5219,14 +5230,15 @@ async function buildAgreementPdf(opts = {}){
   }
   function letterhead(){
     // Logo tight against the name/contact block (same idea as the proposal header)
-    const hh = 70, top = TOP + 4;
+    const hh = 82, top = TOP + 4;
     page.drawRectangle({ x:L, y:top-hh, width:CW, height:hh, color:NAVY });
     page.drawRectangle({ x:L, y:top-hh-3, width:CW, height:3, color:GOLD });
-    page.drawImage(logo, { x:L+8, y:top-hh+8, width:54, height:54 });
+    page.drawImage(logo, { x:L+8, y:top-hh+14, width:54, height:54 });
     const tx = L + 68;
-    spaced('LION SECURITY SERVICES, LLC', tx, top-27, 13, F.b, WHITE, 1.1);
-    page.drawText('Unarmed Security · Licensed & Insured', { x:tx, y:top-41, size:8.5, font:F.b, color:GOLDLT });
-    page.drawText('253-251-4551 · contact@lionofseattle.com · www.lionofseattle.com', { x:tx, y:top-54, size:7.8, font:F.r, color:rgb(175/255,192/255,208/255) });
+    spaced('LION SECURITY SERVICES, LLC', tx, top-22, 12.5, F.b, WHITE, 1.05);
+    page.drawText(COMPANY_GUARD_LICENSE, { x:tx, y:top-36, size:8, font:F.b, color:GOLDLT });
+    page.drawText('Unarmed Security · Licensed & Insured', { x:tx, y:top-49, size:8, font:F.b, color:GOLDLT });
+    page.drawText('253-251-4551 · contact@lionofseattle.com · www.lionofseattle.com', { x:tx, y:top-62, size:7.5, font:F.r, color:rgb(175/255,192/255,208/255) });
     const tl = m.titleLines.length ? m.titleLines : ['UNARMED SECURITY', 'SERVICES AGREEMENT'];
     tl.forEach((t, i) => page.drawText(S(t), { x:R - 12 - F.b.widthOfTextAtSize(S(t), 9.5), y:top-20-i*11.5, size:9.5, font:F.b, color:GOLD }));
     [['Agreement No. ', m.agrNo], ['Date ', m.date]].forEach(([k, v], i) => {
